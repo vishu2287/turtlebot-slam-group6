@@ -1,0 +1,4 @@
+Map.Topic=/map
+[Display0]
+ClassName=rviz::MapDisplay
+Name=Map
