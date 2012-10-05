@@ -12,18 +12,22 @@ void transformPoint(const tf::TransformListener& listener){
   //transform object storing our robot's position
   tf::StampedTransform transform;
   try{
-    geometry_msgs::PointStamped base_point;
+
+geometry_msgs::PointStamped base_point;
     //listener.transformPoint("odom", laser_point, base_point);
 
-	listener.lookupTransform("/map", "/odom", ros::Time(0), transform);
-	// X and Y translation coordinate from the origin, where the robot started
- 	double x = transform.getOrigin().x();
- 	double y = transform.getOrigin().y();
-	//Print out current translated position of the robot
-	double turn = tf::getYaw(transform.getRotation());
-	// = transform.getRotation();
-	ROS_INFO("X Origin : %f Y Origin : %f current turnangle : %f",x,y,turn);
+    listener.lookupTransform("/map", "/odom", ros::Time(0), transform);
+    // X and Y translation coordinate from the origin, where the robot started
 
+    //Print out current translated position of the robot
+   
+    listener.lookupTransform("/odom", "/base_link", ros::Time(0), transform);
+         double x = transform.getOrigin().x();
+     double y = transform.getOrigin().y();
+        double turn = tf::getYaw(transform.getRotation());
+    //double turn =    transform.getRotation().getAngle();
+    // = transform.getRotation();
+    ROS_INFO("X Origin : %f Y Origin : %f current turnangle : %f",x,y,turn);
   }
   catch(tf::TransformException& ex){
     ROS_ERROR("Received an exception trying to transform a point from \"map\" to \"odom\": %s", ex.what());
