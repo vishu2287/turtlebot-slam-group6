@@ -5,6 +5,15 @@
 #include <cstdlib> // Needed for rand()
 #include <ctime> // Needed to seed random number generator with a time value
 
+// Some new includes (some are probably not used)
+#include <geometry_msgs/PointStamped.h>
+#include <tf/transform_listener.h>
+#include <std_msgs/String.h>
+#include <tf/transform_listener.h>
+#include <tf/transform_broadcaster.h>
+#include <geometry_msgs/Vector3.h>
+#include <std_msgs/Float64.h>
+#include <std_msgs/Float64MultiArray.h>
 
 class RandomWalk {
 
@@ -147,10 +156,46 @@ protected:
   ros::Duration rotateDuration; // Duration of the rotation
 };
 
+///////////////////////////
+// TRANSFORMATION METHOD //
+///////////////////////////
+void transformPoint(const tf::TransformListener& listener) {
+	geometry_msgs::PointStamped laser_point;
+	laser_point.header.frame_id = "map"; //The top-most frame
+	//transform object storing our robot's position
+	tf::StampedTransform transform;
+	try {
+		geometry_msgs::PointStamped base_point;
+		//listener.transformPoint("odom", laser_point, base_point);
+		listener.lookupTransform("/map", "/odom", ros::Time(0), transform);
+		// X and Y translation coordinate from the origin, where the robot started
+		listener.lookupTransform("/odom", "/base_link", ros::Time(0),
+				transform);
+		double x = transform.getOrigin().x();
+		double y = transform.getOrigin().y();
+		double turn = tf::getYaw(transform.getRotation());
+		//Print out current translated position of the robot
+		ROS_INFO("X Origin : %f Y Origin : %f current turnangle : %f", x, y,
+				turn);
+	} catch (tf::TransformException& ex) {
+		ROS_ERROR(
+				"Received an exception trying to transform a point from \"map\" to \"odom\": %s",
+				ex.what());
+	}
+
+}
+
 int main(int argc, char **argv) {
-  ros::init(argc, argv, "random_walk"); // Initiate new ROS node named "random_walk"
-  ros::NodeHandle n;
-  RandomWalk walker(n); // Create new random walk object
-  walker.spin(); // Execute FSM loop
-  return 0;
-};
+	ros::init(argc, argv, "random_walk"); // Initiate new ROS node named "random_walk"
+	ros::NodeHandle n;
+
+	// Code added to listen to the transforms
+	tf::TransformListener listener(ros::Duration(10));
+	// Listen once a second
+	ros::Timer timer = n.createTimer(ros::Duration(1.0),
+			boost::bind(&transformPoint, boost::ref(listener)));
+
+	RandomWalk walker(n); // Create new random walk object
+	walker.spin(); // Execute FSM loop
+	return 0;
+}
