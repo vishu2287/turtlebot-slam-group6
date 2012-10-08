@@ -32,11 +32,56 @@ public:
 		// this->commandCallback() whenever a new message is published on that topic
 		laserSub = nh.subscribe("base_scan", 1, &RandomWalk::commandCallback,
 				this);
-
+		occupSub = nh.subscribe("/map",1,&RandomWalk::occupantCallback,this);
 		timer = nh.createTimer(ros::Duration(0.1), &RandomWalk::timerCallback,
 				this);
 	}
-
+	void occupantCallback(const nav_msgs::OccupancyGrid occupied)
+	{
+		ROS_INFO("LIKE A CHARM %i",occupied.data[0]);
+		//occupancy grid from left to right
+	};
+ bool vec_contain(std::vector< std::vector<double> > test_vec , std::vector<double> comp_vec){
+  	for (int i = 0; i < test_vec.size();i++){
+		for ( int z = 0; z < comp_vec.size();z++){
+			if(comp_vec[z] != test_vec[i][z]){
+				break;
+			}
+			if ( z == comp_vec.size()-1){
+				return true;
+			}
+		}		
+  	}
+        return false;
+  }
+  void frontierDetection() {
+		//initialize queue_m
+		
+		std::vector<double> start;
+		start.push_back(robot_pos[0]);
+		start.push_back(robot_pos[1]);
+		start.push_back(robot_pos[2]);
+		//create neccessary lists
+		std::vector<std::vector<double> > queue_m;
+		std::vector<std::vector<double> > map_open_list;
+		std::vector<std::vector<double> > map_close_list;
+		queue_m.push_back(start);
+		map_open_list.push_back(start);
+                while(!queue_m.empty())
+		{
+		   // dequeue
+		   std::vector<double> current = queue_m.back() ;
+                   queue_m.erase(queue_m.end() - 1);
+		   //if map close list contains current, continue
+		   if(vec_contain(map_close_list, current)){
+			continue;
+		   }
+		   //IF p current is a frontier point :
+		   std::vector<std::vector<double> > queue_f;
+		   std::vector<std::vector<double> > newFrontier;
+		   queue_f.push_back(start);
+		}
+  };
 	// Send a velocity command
 	void move(double linearVelMPS, double angularVelRadPS) {
 		geometry_msgs::Twist msg; // The default constructor will set all commands to 0
@@ -195,6 +240,7 @@ protected:
 	ros::Time rotateStartTime; // Start time of the rotation
 	ros::Duration rotateDuration; // Duration of the rotation
 	ros::Timer timer;
+	ros::Subscriber occupSub; // OCCUPANCY GRID Subscriber
 };
 
 int main(int argc, char **argv) {
