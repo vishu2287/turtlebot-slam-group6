@@ -115,14 +115,15 @@ void occupantCallback(const nav_msgs::OccupancyGrid occupied)
 			//Print out current translated position of the robot
 			ROS_INFO("X Origin : %f Y Origin : %f current turnangle : %f", x, y,
 					turn);
+			robot_pos[0] = x;
+			robot_pos[1] = y;
+			robot_pos[2] = turn;
 		} catch (tf::TransformException& ex) {
 			ROS_ERROR(
 					"Received an exception trying to transform a point from \"map\" to \"odom\": %s",
 					ex.what());
 		}
-			robot_pos[0] = x;
-			robot_pos[1] = y;
-			robot_pos[2] = turn;
+			
 	}
 
 	// Process the incoming laser scan message
