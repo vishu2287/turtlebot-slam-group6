@@ -44,7 +44,7 @@ void occupantCallback(const nav_msgs::OccupancyGrid occupied)
 	//occupancy grid from left to right
 };
  bool vec_contain(std::vector< std::vector<double> > test_vec , std::vector<double> comp_vec){
-  	for (int i = 0; i < test_vec.size();i++){
+  	/*for (int i = 0; i < test_vec.size();i++){
 		for ( int z = 0; z < comp_vec.size();z++){
 			if(comp_vec[z] != test_vec[i][z]){
 				break;
@@ -54,6 +54,7 @@ void occupantCallback(const nav_msgs::OccupancyGrid occupied)
 			}
 		}		
   	}
+*/
         return false;
   }
   void frontierDetection() {
@@ -119,6 +120,9 @@ void occupantCallback(const nav_msgs::OccupancyGrid occupied)
 					"Received an exception trying to transform a point from \"map\" to \"odom\": %s",
 					ex.what());
 		}
+			robot_pos[0] = x;
+			robot_pos[1] = y;
+			robot_pos[2] = turn;
 	}
 
 	// Process the incoming laser scan message
@@ -243,6 +247,7 @@ protected:
 	ros::Duration rotateDuration; // Duration of the rotation
 	ros::Timer timer;
 	ros::Subscriber occupSub; // OCCUPANCY GRID Subscriber
+	double robot_pos[3];
 };
 
 int main(int argc, char **argv) {
