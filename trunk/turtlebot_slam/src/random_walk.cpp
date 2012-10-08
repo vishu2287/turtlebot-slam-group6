@@ -4,7 +4,6 @@
 #include "sensor_msgs/LaserScan.h"
 #include <cstdlib> // Needed for rand()
 #include <ctime> // Needed to seed random number generator with a time value
-// Some new includes (some are probably not used)
 #include <geometry_msgs/PointStamped.h>
 #include <tf/transform_listener.h>
 #include <std_msgs/String.h>
@@ -12,7 +11,10 @@
 #include <tf/transform_broadcaster.h>
 #include <geometry_msgs/Vector3.h>
 #include <std_msgs/Float64.h>
+#include <nav_msgs/OccupancyGrid.h>
 #include <std_msgs/Float64MultiArray.h>
+#include <list>
+#include <vector>
 
 class RandomWalk {
 
@@ -36,11 +38,11 @@ public:
 		timer = nh.createTimer(ros::Duration(0.1), &RandomWalk::timerCallback,
 				this);
 	}
-	void occupantCallback(const nav_msgs::OccupancyGrid occupied)
-	{
-		ROS_INFO("LIKE A CHARM %i",occupied.data[0]);
-		//occupancy grid from left to right
-	};
+void occupantCallback(const nav_msgs::OccupancyGrid occupied)
+{
+	ROS_INFO("LIKE A CHARM %i",occupied.data[0]);
+	//occupancy grid from left to right
+};
  bool vec_contain(std::vector< std::vector<double> > test_vec , std::vector<double> comp_vec){
   	for (int i = 0; i < test_vec.size();i++){
 		for ( int z = 0; z < comp_vec.size();z++){
