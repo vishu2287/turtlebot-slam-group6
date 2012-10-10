@@ -19,6 +19,12 @@
 // Include for Ocupancy Grid
 #include <nav_msgs/OccupancyGrid.h>
 
+//includes for navigation stack
+#include <move_base_msgs/MoveBaseAction.h>
+#include <actionlib/client/simple_action_client.h>
+#include <tf/transform_broadcaster.h>
+typedef actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> MoveBaseClient;
+
 class RandomWalk {
 
 public:
@@ -42,6 +48,31 @@ public:
 
 		timer = nh.createTimer(ros::Duration(0.1), &RandomWalk::timerCallback,
 				this);
+	}
+	void run(){
+	
+		MoveBaseClient ac("move_base", true);
+		
+		move_base_msgs::MoveBaseGoal goal;
+			
+		 // we'll send a goal to the robot to move 1 meter forward
+ 	 	 goal.target_pose.header.frame_id = "map";
+ 		 goal.target_pose.header.stamp = ros::Time::now();
+
+  		 goal.target_pose.pose.position.x = 10.0;
+ 		 goal.target_pose.pose.position.y = -2.0;
+
+ 		 ROS_INFO("Sending goal");
+ 		 ac.sendGoal(goal);
+
+ 		 ac.waitForResult();
+	
+  		 if(ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
+  	 	 ROS_INFO("Hooray, the base moved 1 meter forward");
+ 			 else
+  		  ROS_INFO("The base failed to move forward 1 meter for some reason");
+
+ 		// return 0;
 	}
 
 	// algorithm implementation
@@ -284,6 +315,7 @@ public:
 			///////////////////////////
 			// TRANSFORMATION METHOD //
 			///////////////////////////
+			
 			void timerCallback(const ros::TimerEvent& event) {
 				tf::TransformListener listener(ros::Duration(10));
 				//transform object storing our robot's position
@@ -314,7 +346,7 @@ public:
 							"Received an exception trying to transform a point from \"map\" to \"odom\": %s",
 							ex.what());
 				}
-
+				run();
 			}
 
 			// Process the incoming laser scan message
