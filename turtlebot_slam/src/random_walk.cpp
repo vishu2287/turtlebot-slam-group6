@@ -41,13 +41,11 @@ public:
 		commandPub = nh.advertise < geometry_msgs::Twist > ("cmd_vel", 1);
 		// Subscribe to the simulated robot's laser scan topic and tell ROS to call
 		// this->commandCallback() whenever a new message is published on that topic
-		laserSub = nh.subscribe("base_scan", 1, &RandomWalk::commandCallback,
-				this);
+		//laserSub = nh.subscribe("base_scan", 1, &RandomWalk::commandCallback, this);
 		mapSub = nh.subscribe("/map", 1, &RandomWalk::occupancyGridCallback,
 				this);
 
-		timer = nh.createTimer(ros::Duration(0.1), &RandomWalk::timerCallback,
-				this);
+       // timer = nh.createTimer(ros::Duration(0.1), &RandomWalk::timerCallback, this);
 	}
 	void run(){
 	
@@ -59,9 +57,10 @@ public:
  	 	 goal.target_pose.header.frame_id = "map";
  		 goal.target_pose.header.stamp = ros::Time::now();
 
-  		 goal.target_pose.pose.position.x = 10.0;
- 		 goal.target_pose.pose.position.y = -2.0;
-
+  		 goal.target_pose.pose.position.x = -20.0;
+ 		 goal.target_pose.pose.position.y = 1.0;
+ 		 goal.target_pose.pose.orientation.w = 1.0;
+ 		 ROS_INFO("POINT (-20,1)");
  		 ROS_INFO("Sending goal");
  		 ac.sendGoal(goal);
 
@@ -78,10 +77,10 @@ public:
 	// algorithm implementation
 	void frontierDetection() {
 		//initialize queue_m
-
+        ROS_INFO("WFD starts...");
 		// queue for robot coordinates
 		std::vector<int> start;
-
+		
 		// @ TODO: IST DIE POS NUN DOUBLE ODER INT??
 		start.push_back((int)robot_pos[0]); // x-coordinate robot
 		start.push_back((int)robot_pos[1]); // y-coordinate robot
@@ -92,7 +91,7 @@ public:
 		std::vector<std::vector<int> > map_close_list;
 		std::vector<std::vector<int> > frontier_open_list;
 		std::vector<std::vector<int> > frontier_close_list;
-
+		ROS_INFO("WFD starts...");
 		queue_m.push_back(start);
 		map_open_list.push_back(start);
 
@@ -158,7 +157,7 @@ public:
 
 						// Save data of newFrontier and mark points as map_close_list
 						for (int i = 0; i < newFrontier.size(); i++) {
-							frontiersList.push_back(std::vector<int>(newFrontier[i])); //@TODO: TESTEN!
+                            frontiersList.push_back(std::vector<int>(newFrontier[i])); //@TODO: TESTEN!
 							map_close_list.push_back(newFrontier[i]);
 
 							// @TODO: newFrontier[i] aus map_open_list entfernen
@@ -203,6 +202,7 @@ public:
 					map_close_list.push_back(p);
 					eraseEfromVector(map_open_list, p); //@TODO: ??
 				} // end of queue_m (loop)
+        ROS_INFO("WFD terminated");
 			}
 
 			// checks, whether the given coordinate is a frontier point or not.
@@ -262,6 +262,17 @@ public:
 			// get the grid from gmapping by listener
 			void occupancyGridCallback(const nav_msgs::OccupancyGrid occupancyGrid) {
 				grid = occupancyGrid;
+				//run();
+				float resolution = occupancyGrid.info.resolution;
+				float map_x = occupancyGrid.info.origin.position.x / resolution;
+				float map_y = occupancyGrid.info.origin.position.y / resolution;
+				float x = 0. - map_x;
+				float y = 0. - map_y;
+				ROS_INFO(
+							"X Origin : %f Y Origin : %f",
+							x, y);
+                    robot_pos[0] = x;
+					robot_pos[1] = y;
 			}
 
 			// returns the value of position [x,y] from the occupancy grid
@@ -290,8 +301,8 @@ public:
 			// @ TODO: fertig machen
 			bool vec_contain(std::vector<std::vector<int> > test_vec,
 					std::vector<int> comp_vec) {
-				/*for (int i = 0; i < test_vec.size();i++){
-				 for ( int z = 0; z < comp_vec.size();z++){
+				for (unsigned int i = 0; i < test_vec.size();i++){
+				 for (unsigned int z = 0; z < comp_vec.size();z++){
 				 if(comp_vec[z] != test_vec[i][z]){
 				 break;
 				 }
@@ -300,7 +311,7 @@ public:
 				 }
 				 }
 				 }
-				 */
+				 
 				return false;
 			}
 
@@ -320,7 +331,7 @@ public:
 				tf::TransformListener listener(ros::Duration(10));
 				//transform object storing our robot's position
 				tf::StampedTransform transform;
-				try {
+				try {	
 					ros::Time now = ros::Time::now();
 					geometry_msgs::PointStamped base_point;
 					//listener.transformPoint("odom", laser_point, base_point);
@@ -338,7 +349,7 @@ public:
 					ROS_INFO(
 							"X Origin : %f Y Origin : %f current turnangle : %f",
 							x, y, turn);
-					robot_pos[0] = x;
+                    robot_pos[0] = x;
 					robot_pos[1] = y;
 					robot_pos[2] = turn;
 				} catch (tf::TransformException& ex) {
@@ -346,76 +357,12 @@ public:
 							"Received an exception trying to transform a point from \"map\" to \"odom\": %s",
 							ex.what());
 				}
-				run();
+                //run();
+                frontierDetection();
+				//ROS_INFO("Moving to...");
 			}
 
-			// Process the incoming laser scan message
-			void commandCallback(const sensor_msgs::LaserScan::ConstPtr& msg) {
-
-				if (fsm == FSM_MOVE_FORWARD) {
-					// Compute the average range value between MIN_SCAN_ANGLE and MAX_SCAN_ANGLE
-					//
-					// NOTE: ideally, the following loop should have additional checks to ensure
-					//       that indices are not out of bounds, by computing:
-					//
-					//       - currAngle = msg->angle_min + msg->angle_increment*currIndex
-					//
-					//       and then ensuring that currAngle <= msg->angle_max
-					unsigned int minIndex = ceil(
-							(MIN_SCAN_ANGLE_RAD - msg->angle_min)
-									/ msg->angle_increment);
-					unsigned int maxIndex = ceil(
-							(MAX_SCAN_ANGLE_RAD - msg->angle_min)
-									/ msg->angle_increment);
-					float closestRange = msg->ranges[minIndex];
-					for (unsigned int currIndex = minIndex + 1;
-							currIndex < maxIndex; currIndex++) {
-						if (msg->ranges[currIndex] < closestRange) {
-							closestRange = msg->ranges[currIndex];
-						}
-					}
-					//ROS_INFO_STREAM("Range: " << closestRange);
-					// TODO: if range is smaller than PROXIMITY_RANGE_M, update fsm and rotateStartTime,
-					//       and also choose a reasonable rotateDuration (keeping in mind of the value
-					//       of ROTATE_SPEED_RADPS)
-					//
-					// HINT: you can obtain the current time by calling:
-					//
-					//       - ros::Time::now()
-					//
-					// HINT: you can set a ros::Duration by calling:
-					//
-					//       - ros::Duration(DURATION_IN_SECONDS_FLOATING_POINT)
-					//
-					// HINT: you can generate a random number between 0 and 99 by calling:
-					//
-					//       - rand() % 100
-					//
-					//       see http://www.cplusplus.com/reference/clibrary/cstdlib/rand/ for more details
-
-					/////////////////////// ANSWER CODE BEGIN ///////////////////
-
-					// pseudo:
-					// if current range < PROXIMITY_RANGE_M
-					// update fsm such that robot rotates a random amount of time
-					// then it starts driving on again
-					if (closestRange < PROXIMITY_RANGE_M) {
-						// close to a wall, go into rotate state
-						fsm = FSM_ROTATE;
-						// start time of rotating is NOW
-						rotateStartTime = ros::Time::now();
-						// speed of turning is 1/2PI per sec. So, turn maximally for 2PI in 4 secs.
-						float turnDur = (rand() % 100 / 25);
-						// set the rotate duration
-						rotateDuration = ros::Duration(turnDur);
-					} else {
-						// do nothing and stay in the moving state, until the robot finds a range closer than the minimal range
-					}
-
-					/////////////////////// ANSWER CODE END ///////////////////
-				}
-			}
-			;
+			
 
 			// Main FSM loop for ensuring that ROS messages are
 			// processed in a timely manner, and also for sending
@@ -434,17 +381,7 @@ public:
 					//       depending on the FSM state; also change the FSM state when appropriate
 					/////////////////////// ANSWER CODE BEGIN ///////////////////
 
-					if (fsm == FSM_MOVE_FORWARD) {
-						// if current state is FSM_MOVE_FORWARD, then just move forward
-						move(FORWARD_SPEED_MPS, 0);
-					} else {
-						// if current state is FSM_ROTATE, then rotate for the number of seconds defined when the rotate state was set
-						move(0, ROTATE_SPEED_RADPS);
-						if (ros::Time::now()
-								> rotateStartTime + rotateDuration) {
-							fsm = FSM_MOVE_FORWARD;
-						}
-					}
+					
 					/////////////////////// ANSWER CODE END ///////////////////
 					ros::spinOnce(); // Need to call this function often to allow ROS to process incoming messages
 					rate.sleep(); // Sleep for the rest of the cycle, to enforce the FSM loop rate
@@ -471,7 +408,7 @@ public:
 			enum FSM fsm; // Finite state machine for the random walk algorithm
 			ros::Time rotateStartTime; // Start time of the rotation
 			ros::Duration rotateDuration; // Duration of the rotation
-			ros::Timer timer;
+			//ros::Timer timer;
 			ros::Subscriber occupSub; // OCCUPANCY GRID Subscriber
 			double robot_pos[3];
 
