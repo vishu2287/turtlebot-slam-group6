@@ -214,34 +214,20 @@ public:
             eraseEfromVector(map_open_list, p); //@TODO: ??
         } // end of queue_m (loop)
         ROS_INFO("WFD terminated");
-        for(int i = 0; i<frontiersList.size(); i++)
-        {
-            //ROS_INFO_STREAM("Frontier "<<i<<" X: "<<frontiersList[i][0]);
-            //ROS_INFO_STREAM("Frontier "<<i<<" Y: "<<frontiersList[i][1]);
-        }
         ROS_INFO_STREAM("Robot pose X: "<<robot_pos[0]); // x-coordinate robot
         ROS_INFO_STREAM("Robot pose Y: "<<robot_pos[1]); // y-coordinate robot
 
-        int num_points = 0;
-        for(int i = 0; i < frontiersList.size(); i++) {
-
-            for(int j = 0; j < frontiersList[i].size(); j++) {
-                num_points++;
-
-            }
-        }
-
+        int num_points = frontiersList.size()/2;
         frontier_cloud.points.resize(num_points);
         int pointI = 0;
-        for(int i = 0; i < frontiersList.size(); i++) {
+        for(int i = 0; i < num_points; i++) {
 
-                frontier_cloud.points[i].x = frontiersList[i][0];
-                frontier_cloud.points[i].y = frontiersList[i][1];
+                frontier_cloud.points[i].x = (frontiersList[i][0]-2000)*0.05;
+                frontier_cloud.points[i].y = (frontiersList[i][1]-2000)*0.05;
                 ROS_INFO_STREAM("Frontier "<<i<<" X: "<<frontiersList[i][0]);
                 ROS_INFO_STREAM("Frontier "<<i<<" Y: "<<frontiersList[i][1]);
                 frontier_cloud.points[i].z = 0;
                 pointI++;
-
         }
         frontier_publisher.publish(frontier_cloud);
         ROS_INFO("published cloud!");
@@ -311,16 +297,45 @@ return neighbors;
 void occupancyGridCallback(const nav_msgs::OccupancyGrid occupancyGrid) {
     grid = occupancyGrid;
     //run();
-    float resolution = occupancyGrid.info.resolution;
+   /* float resolution = occupancyGrid.info.resolution;
     float map_x = occupancyGrid.info.origin.position.x / resolution;
     float map_y = occupancyGrid.info.origin.position.y / resolution;
     float x = 0. - map_x;
-    float y = 0. - map_y;
+    float y = 0. - map_y;*/
+    tf::TransformListener listener(ros::Duration(10));
+    //transform object storing our robot's position
+    tf::StampedTransform transform;
+    try {
+        ros::Time now = ros::Time::now();
+        geometry_msgs::PointStamped base_point;
+        //listener.transformPoint("odom", laser_point, base_point);
+        listener.waitForTransform("map", "odom", now,
+                                  ros::Duration(0.5));
+        listener.lookupTransform("/map", "/odom", ros::Time(0),
+                                 transform);
+        // X and Y translation coordinate from the origin, where the robot started
+        listener.lookupTransform("/odom", "/base_link",
+                                 ros::Time(0), transform);
+        double x = transform.getOrigin().x();
+        double y = transform.getOrigin().y();
+        double turn = tf::getYaw(transform.getRotation());
+        //Print out current translated position of the robot
+        //                   ROS_INFO(
+        //                           "X Origin : %f Y Origin : %f current turnangle : %f",
+        //                           x, y, turn);
+        robot_pos[0] = (int)((x/0.05)+2000);
+        robot_pos[1] = (int)((y/0.05)+2000);
+        //robot_pos[2] = turn;
+    } catch (tf::TransformException& ex) {
+        ROS_ERROR(
+                    "Received an exception trying to transform a point from \"map\" to \"odom\": %s",
+                    ex.what());
+    }
     //               ROS_INFO(
     //                           "X Origin : %f Y Origin : %f",
     //                           x, y);
-    robot_pos[0] = x;
-    robot_pos[1] = y;
+    //robot_pos[0] = x;
+    //robot_pos[1] = y;
     frontierDetection();
     yeah = true;
 }
@@ -403,8 +418,8 @@ void timerCallback(const ros::TimerEvent& event) {
         //                   ROS_INFO(
         //                           "X Origin : %f Y Origin : %f current turnangle : %f",
         //                           x, y, turn);
-        robot_pos[0] = x;
-        robot_pos[1] = y;
+        robot_pos[0] = (int)((x/0.05)+2000);
+        robot_pos[1] = (int)((y/0.05)+2000);
         robot_pos[2] = turn;
     } catch (tf::TransformException& ex) {
         ROS_ERROR(
