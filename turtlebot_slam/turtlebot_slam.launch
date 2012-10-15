@@ -1,21 +1,19 @@
 <launch>
 	  <!-- Run the map server -->
-  <arg name="map_file" default="$(find turtlebot_slam)/world/swarmlab_map.yaml"/>
-  <node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)" />
+	<arg name="map_file" default="$(find turtlebot_slam)/world/swarmlab_map.yaml"/>
+	<node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)" /> 
 
-  <node pkg="stage" type="stageros" name="stageros" args="$(find turtlebot_slam)/world/swarmlab_single_turtle.world" respawn="false" 	output="screen" />
- <!-- <node name="turtlebot_slam" pkg="turtlebot_slam" type="turtlebot_slam" /> -->
- <node pkg="rviz" type="rviz" name="rviz" args="-d $(find turtlebot_slam)/view.vcg" /> 
-
-  <node pkg="gmapping" type="slam_gmapping" name="slam_gmapping" args="scan:=base_scan" />
-
-  <!--- Run AMCL -->
-  <include file="$(find turtlebot_navigation)/config/amcl_turtlebot.launch" />
-
-  <!--- Run Move Base -->
-  <include file="$(find turtlebot_navigation)/config/move_base_turtlebot.launch" />
+	<node pkg="stage" type="stageros" name="stageros" args="$(find turtlebot_slam)/world/swarmlab_single_turtle.world" respawn="false" 	output="screen" />
 
 
+ 	<node pkg="rviz" type="rviz" name="rviz" args="-d $(find turtlebot_slam)/view.vcg" /> 
+	<!-- <include file="$(find turtlebot_slam)/gmapping_turtlebot.launch" />  -->
+ 	<node pkg="gmapping" type="slam_gmapping" name="slam_gmapping" args="scan:=base_scan" /> 
+
+ 	<node name="turtlebot_slam" pkg="turtlebot_slam" type="turtlebot_slam" /> 
+
+
+ 	<include file="$(find turtlebot_slam)/move_base.launch" /> 
 
 
 
