@@ -1,0 +1,12 @@
+<launch>
+	<node pkg="gmapping" type="slam_gmapping" name="SLAM" args="scan:=base_scan">
+		<param name="maxRange" value="10.0" /> <!-- though 10 is too high, results are much better like this. -->
+		<param name="particles" value="60" /> <!-- (int, default: 30) Number of particles in the filter -->
+		<param name="linearUpdate" value="0.1" /><!-- Process a scan each time the robot translates this far, def 1.0 -->
+		<param name="angularUpdate" value="0.25" /><!-- Process a scan each time the robot rotates this far def 0.5 -->
+		<param name="temporalUpdate" value="10.0" /><!-- Process a scan if the last scan proccessed is older than the update time in seconds. A value less than zero will turn time based updates off. def -1.0 -->
+		<param name="transform_publish_period" value="0.05" /><!-- (float, default: 0.05) How long (in seconds) between transform publications. -->
+		<param name="map_update_interval" value="5.0" /><!-- (float, default: 5.0) How long (in seconds) between updates to the map. Lowering this number updates the occupancy grid more often, at the expense of greater computational load. -->
+		<param name="maxUrange" value="3.2" /><!--(float, default: 80.0) The maximum usable range of the laser. A beam is cropped to this value.  -->
+	</node>
+</launch>
