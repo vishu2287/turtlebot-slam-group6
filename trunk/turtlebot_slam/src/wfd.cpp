@@ -18,9 +18,9 @@ const int FRONTIER_close_list = 4;
 		std::vector<std::vector<int> > frontierList; 
 		std::vector<int> pose;
 		std::vector<std::vector<int> > marker;
-		for(int i = 0 ; i < 4000 ; i++) {
+		for(int i = 0 ; i < map.info.width ; i++) {
 			std::vector<int> row;
-			for(int j = 0 ; j < 4000 ; j++) {
+			for(int j = 0 ; j < map.info.height ; j++) {
 				row.push_back(-1);
 			}
 			marker.push_back(row);
@@ -29,13 +29,11 @@ const int FRONTIER_close_list = 4;
 		pose.push_back(y); // y-coordinate robot
 		//create neccessary lists
 		std::vector<std::vector<int> > queue_m;
-		//ROS_INFO("queue_m first push pose[0] = %i , pose[1] = %i", pose[0], pose[1]);
+		ROS_INFO("queue_m first push pose[0] = %i , pose[1] = %i", pose[0], pose[1]);
 		queue_m.push_back(pose);
 		int index1 = pose[0];
 		int index2 = pose[1];
 		marker[index1][index2] = MAP_open_list; 
-		
-		//ROS_INFO("start has marker %i", marker[index1][index2]);
 		while (!queue_m.empty()) {
 			//ROS_INFO("Loop starting");
 			// dequeue
@@ -158,7 +156,7 @@ const int FRONTIER_close_list = 4;
 		// if there are known and unknown neighbors
 		// the robot is at a frontiers
 		bool unknown = false;
-
+		bool obstacle = false;
 		bool known = false;
 		//ROS_INFO("for loop in isFrontier()");
 		for (int i = 0; i < neighbors.size(); i += 2) {
@@ -168,11 +166,14 @@ const int FRONTIER_close_list = 4;
 			if (getMapValue(grid, current[0], current[1]) < 0) {
 				// ROS_INFO("if loop in for isFrontier()");
 				unknown = true;
-			} else
+			} else if (getMapValue(grid, current[0], current[1]) == 100 ){
+				obstacle = true;
+			}
+			  else
 				known = true;
 		}
 		//ROS_INFO("return unknown && known");
-		return unknown && known;
+		return unknown && known && !obstacle;
 	}
 
 	// gets the Neighbors as a list of vecotrs
