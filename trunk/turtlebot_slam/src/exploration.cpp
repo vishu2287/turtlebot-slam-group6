@@ -43,143 +43,101 @@ public:
 		frontier_cloud.header.frame_id = "map";
 	}
 
-	void run() {
+//Tell the navigation stack where to run to
+void run(double x, double y, double turn){
+	//@TODO make a turn
 
-		MoveBaseClient ac("move_base", true);
+          //tell the action client that we want to spin a thread by default
+  MoveBaseClient ac("move_base", true);
 
-		move_base_msgs::MoveBaseGoal goal;
+  //wait for the action server to come up
+  while(!ac.waitForServer(ros::Duration(5.0))){
+  	  ROS_INFO("Waiting for the move_base action server to come up");
+  }
 
-		// we'll send a goal to the robot to move 1 meter forward
-		goal.target_pose.header.frame_id = "map";
-		goal.target_pose.header.stamp = ros::Time::now();
+  move_base_msgs::MoveBaseGoal goal;
 
-		goal.target_pose.pose.position.x = -20.0;
-		goal.target_pose.pose.position.y = 1.0;
-		goal.target_pose.pose.orientation.w = 1.0;
-		ROS_INFO("POINT (-20,1)");
-		ROS_INFO("Sending goal");
-		ac.sendGoal(goal);
+  //we'll send a goal to the robot to move 1 meter forward
+  goal.target_pose.header.frame_id = "base_link";
+  goal.target_pose.header.stamp = ros::Time::now();
 
-		ac.waitForResult();
+  goal.target_pose.pose.position.x = x;
+  goal.target_pose.pose.position.y = y;
+  goal.target_pose.pose.orientation.w = 2.0;
 
-		if (ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
-			ROS_INFO("Hooray, the base moved 1 meter forward");
-		else
-			ROS_INFO("The base failed to move forward 1 meter for some reason");
+  ROS_INFO_STREAM("Moving to position x:"<<goal.target_pose.pose.position.x<<" y:"<<goal.target_pose.pose.position.y);
+  ac.sendGoal(goal);
 
-		// return 0;
-	}
+  ac.waitForResult();
+
+  if(ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
+    ROS_INFO_STREAM("Robot moved to position x:"<< goal.target_pose.pose.position.x<<" y:"<<goal.target_pose.pose.position.y);
+  else
+    ROS_INFO("The base failed to move forward 1 meter for some reason");
+ }
 
 // get the grid from gmapping by listener
 	void occupancyGridCallback(const nav_msgs::OccupancyGrid occupancyGrid) {
-		grid = occupancyGrid;
-		//run();
+		grid = occupancyGrid;		
 		float resolution = occupancyGrid.info.resolution;
-		/*  float map_x = occupancyGrid.info.origin.position.x / resolution;
-		 float map_y = occupancyGrid.info.origin.position.y / resolution;
-		 float x = 0. - map_x;
-		 float y = 0. - map_y;*/
 		tf::TransformListener listener(ros::Duration(10));
 		//transform object storing our robot's position
 		tf::StampedTransform transform;
 		try {
 			ros::Time now = ros::Time::now();
 			geometry_msgs::PointStamped base_point;
-			//listener.transformPoint("odom", laser_point, base_point);
-			listener.waitForTransform("map", "odom", now, ros::Duration(0.5));
-			listener.lookupTransform("/map", "/odom", ros::Time(0), transform);
-			// X and Y translation coordinate from the origin, where the robot started
-			listener.lookupTransform("/odom", "/base_link", ros::Time(0), transform);
+			listener.waitForTransform("/map", "/base_link", now, ros::Duration(0.5));
+			listener.lookupTransform("/map", "/base_link", ros::Time(0), transform);
 			double x = transform.getOrigin().x();
 			double y = transform.getOrigin().y();
 			double turn = tf::getYaw(transform.getRotation());
-			//Print out current translated position of the robot
-			//                   ROS_INFO(
-			//                           "X Origin : %f Y Origin : %f current turnangle : %f",
-			//                           x, y, turn);
-			robot_pos[0] = (int) ((x / resolution) + 2000);
-			robot_pos[1] = (int) ((y / resolution) + 2000);
-
+			ROS_INFO_STREAM("STARTPOSITION X: " <<x<<" STARTPOSITION Y: " <<y);
+			robot_pos[0] = (int) ((x / resolution) + (int)(occupancyGrid.info.width/2));
+			robot_pos[1] = (int) ((y / resolution) + (int)(occupancyGrid.info.height/2));
 			ROS_INFO("X = %i , Y = %i", robot_pos[0], robot_pos[1]);
+			ROS_INFO("LETS GET THE FRONTIERS");
+			std::vector<std::vector<int> > frontiersList = frontierDetection(occupancyGrid, robot_pos[0], robot_pos[1]);
+			ROS_INFO("FRONIERS SERVED!");
 
-		
-		//               ROS_INFO(
-		//                           "X Origin : %f Y Origin : %f",
-		//                           x, y);
-		//robot_pos[0] = x;
-		//robot_pos[1] = y;
-		ROS_INFO("LETS GET THE FRONTIERS");
-
-		std::vector<std::vector<int> > frontiersList = frontierDetection(occupancyGrid, robot_pos[0], robot_pos[1]);
-		ROS_INFO("FRONIERS SERVED!");
-		//		ROS_INFO_STREAM("Robot pose X: " << robot_pos[0]); // x-coordinate robot
-//		ROS_INFO_STREAM("Robot pose Y: " << robot_pos[1]); // y-coordinate robot
 
 		//int num_points = frontiersList.size() / 2 //@TODO: change!
 		int num_frontier_cells = 0;
 
-		for(int i = 0 ; i < frontiersList.size() ; i++ ) {
-			for(int j = 0 ; j < frontiersList[i].size() ; j++) {
-				num_frontier_cells++;
+			for(int i = 0 ; i < frontiersList.size() ; i++ ) {
+				for(int j = 0 ; j < frontiersList[i].size() ; j++) {
+					num_frontier_cells++;
+				}
 			}
-		}
 
-		ROS_INFO("%i frontier cells found",num_frontier_cells);
-
-		frontier_cloud.points.resize(num_frontier_cells);
-		int frontierIndex = 0;
-		for(int i = 0 ; i < frontiersList.size() ; i++ ) {
-			for(int j = 0 ; j < frontiersList[i].size() ; j++) {	
-			frontier_cloud.points[frontierIndex].x = (frontiersList[i][j] - 2000) * 0.05;
-			frontier_cloud.points[frontierIndex].y = (frontiersList[i][j+1] - 2000) * 0.05;
-//                ROS_INFO_STREAM("Frontier "<<i<<" X: "<<frontiersList[i][0]);
-//                ROS_INFO_STREAM("Frontier "<<i<<" Y: "<<frontiersList[i][1]);
-			frontier_cloud.points[frontierIndex].z = 0;
-			frontierIndex++;
-			j++;
+			ROS_INFO("%i frontier cells found",num_frontier_cells);
+			double goalX = 0;
+			double goalY = 0;
+			frontier_cloud.points.resize(num_frontier_cells);
+			int frontierIndex = 0;
+			//arbitrary value which is always higher than any distance found
+			double minDist = 40000.0;
+			//fill frontier cloud for publishing and calculate frontier closest to robot base
+			for(int i = 0 ; i < frontiersList.size() ; i++ ) {
+				for(int j = 0 ; j < frontiersList[i].size() ; j++) {	
+				double fX = (frontiersList[i][j] - (int)(occupancyGrid.info.width/2)) * occupancyGrid.info.resolution;
+				frontier_cloud.points[frontierIndex].x = fX;
+				double fY = (frontiersList[i][j+1] - (int)(occupancyGrid.info.height/2)) * occupancyGrid.info.resolution;
+				frontier_cloud.points[frontierIndex].y = fY;
+				double distance = sqrt(fX*fX+fY*fY);
+				frontier_cloud.points[frontierIndex].z = 0;
+				frontierIndex++;
+				j++;
+				if(distance < minDist) {
+					minDist = distance;
+					goalX = fX;
+					goalY = fY;
+				}
+				}
 			}
-		}
-		frontier_publisher.publish(frontier_cloud);
-		ROS_INFO("published cloud!");
-		
-		//try to move to the closest frontier cell!
-		/*
-		int goalX = 0;
-		int goalY = 0;
-		double minDist = 40000.0;
-		for(int i = 0 ; i < num_frontier_cells ; i++) {
-			int fX = frontier_cloud.points[i].x;
-			int fY = frontier_cloud.points[i].y;
-			double distance = sqrt((fX-robot_pos[0])*(fX-robot_pos[0]) + (fY-robot_pos[1])*(fY-robot_pos[1]));
-			if(distance < minDist) {
-				minDist = distance;
-				goalX = fX;
-				goalY = fY;
-			}
-		}
+			frontier_publisher.publish(frontier_cloud);
+			ROS_INFO("published cloud!");
+			run(goalX,goalY,turn);
 
-		MoveBaseClient ac("move_base", true);
-
-		move_base_msgs::MoveBaseGoal goal;
-
-		// we'll send a goal to the robot to move 1 meter forward
-		goal.target_pose.header.frame_id = "map";
-		goal.target_pose.header.stamp = ros::Time::now();
-
-		goal.target_pose.pose.position.x = goalX;
-		goal.target_pose.pose.position.y = goalY;
-		goal.target_pose.pose.orientation.w = 1.0;
-
-		ROS_INFO("Sending goal");
-		ac.sendGoal(goal);
-
-		ac.waitForResult();
-
-		if (ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
-			ROS_INFO("Hooray, the base moved to (%f,%f)", goalX,goalY);
-		else
-			ROS_INFO("The base failed to move for some reason");
-//*/
 		} catch (tf::TransformException& ex) {
 			ROS_ERROR(
 					"Received an exception trying to transform a point from \"map\" to \"odom\": %s",
