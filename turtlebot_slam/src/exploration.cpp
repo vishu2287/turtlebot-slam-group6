@@ -102,8 +102,8 @@ void run(double x, double y, double turn){
 
 		int num_frontier_cells = 0;
 
-			for(int i = 0 ; i < frontiersList.size() ; i++ ) {
-				for(int j = 0 ; j < frontiersList[i].size() ; j++) {
+            for(unsigned int i = 0 ; i < frontiersList.size() ; i++ ) {
+                for(unsigned int j = 0 ; j < frontiersList[i].size() ; j++) {
 					num_frontier_cells++;
 				}
 			}
@@ -117,8 +117,8 @@ void run(double x, double y, double turn){
 			//arbitrary value which is always higher than any distance found
 			double minDist = 40000.0;
 			//fill frontier cloud for publishing and calculate frontier closest to robot base
-			for(int i = 0 ; i < frontiersList.size() ; i++ ) {
-				for(int j = 0 ; j < frontiersList[i].size() ; j++) {	
+            for(unsigned int i = 0 ; i < frontiersList.size() ; i++ ) {
+                for(unsigned int j = 0 ; j < frontiersList[i].size() ; j++) {
 				double fX = (frontiersList[i][j] - (int)(occupancyGrid.info.width/2)) * occupancyGrid.info.resolution;
 				frontier_cloud.points[frontierIndex].x = fX;
 				double fY = (frontiersList[i][j+1] - (int)(occupancyGrid.info.height/2)) * occupancyGrid.info.resolution;
@@ -169,7 +169,7 @@ void run(double x, double y, double turn){
 
 
 protected:
-	ros::Publisher commandPub; // Publisher to the simulated robot's velocity command topic
+    ros::Publisher commandPub; // Publisher to the simulated robot's velocity command topic
 	ros::Subscriber laserSub; // Subscriber to the simulated robot's laser scan topic
 	ros::Subscriber mapSub; // Subscriber to the map
 
