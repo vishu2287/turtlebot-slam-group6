@@ -44,7 +44,7 @@ public:
 	}
 
 //Tell the navigation stack where to run to
-void run(double x, double y, double turn){
+void run(double x, double y){
 	//@TODO make a turn
 
           //tell the action client that we want to spin a thread by default
@@ -89,7 +89,6 @@ void run(double x, double y, double turn){
 			listener.lookupTransform("/map", "/base_link", ros::Time(0), transform);
 			double x = transform.getOrigin().x();
 			double y = transform.getOrigin().y();
-			double turn = tf::getYaw(transform.getRotation());
 			ROS_INFO_STREAM("STARTPOSITION X: " <<x<<" STARTPOSITION Y: " <<y);
 			robot_pos[0] = (int) ((x / resolution) + (int)(occupancyGrid.info.width/2));
 			robot_pos[1] = (int) ((y / resolution) + (int)(occupancyGrid.info.height/2));
@@ -136,7 +135,7 @@ void run(double x, double y, double turn){
 			}
 			frontier_publisher.publish(frontier_cloud);
 			ROS_INFO("published cloud!");
-			run(goalX,goalY,turn);
+            run(goalX,goalY);
 
 		} catch (tf::TransformException& ex) {
 			ROS_ERROR(
