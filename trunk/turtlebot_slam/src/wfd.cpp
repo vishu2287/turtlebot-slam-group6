@@ -151,7 +151,8 @@ const int FRONTIER_close_list = 4;
 	// need to be handled carefully
 	bool isFrontier(const nav_msgs::OccupancyGrid& grid, int x, int y) {
 		std::vector<int> neighbors = getNeighbors(grid, x, y);
-
+        int numExplored = 0;
+        int numUnknown = 0;
 		// checking neighbors
 		// if there are known and unknown neighbors
 		// the robot is at a frontiers
@@ -164,16 +165,18 @@ const int FRONTIER_close_list = 4;
 			current.push_back(neighbors[i]);
 			current.push_back(neighbors[i + 1]);
 			if (getMapValue(grid, current[0], current[1]) < 0) {
-				// ROS_INFO("if loop in for isFrontier()");
+                numUnknown++;
 				unknown = true;
-			} else if (getMapValue(grid, current[0], current[1]) == 100 ){
+            } else if (getMapValue(grid, current[0], current[1]) > 50 ){
 				obstacle = true;
 			}
-			  else
-				known = true;
+              else {
+                known = true;
+                numExplored++;
+            }
 		}
-		//ROS_INFO("return unknown && known");
-		return unknown && known && !obstacle;
+        //return unknown && known && !obstacle;
+        return(numExplored >= (neighbors.size()/4) && numUnknown >= (neighbors.size()/4) && !obstacle);
 	}
 
 	// gets the Neighbors as a list of vecotrs

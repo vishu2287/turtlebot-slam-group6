@@ -57,13 +57,12 @@ void run(double x, double y, double turn){
 
   move_base_msgs::MoveBaseGoal goal;
 
-  //we'll send a goal to the robot to move 1 meter forward
   goal.target_pose.header.frame_id = "base_link";
   goal.target_pose.header.stamp = ros::Time::now();
 
   goal.target_pose.pose.position.x = x;
   goal.target_pose.pose.position.y = y;
-  goal.target_pose.pose.orientation.w = 2.0;
+  goal.target_pose.pose.orientation.w = 1;
 
   ROS_INFO_STREAM("Moving to position x:"<<goal.target_pose.pose.position.x<<" y:"<<goal.target_pose.pose.position.y);
   ac.sendGoal(goal);
@@ -73,7 +72,7 @@ void run(double x, double y, double turn){
   if(ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
     ROS_INFO_STREAM("Robot moved to position x:"<< goal.target_pose.pose.position.x<<" y:"<<goal.target_pose.pose.position.y);
   else
-    ROS_INFO("The base failed to move forward 1 meter for some reason");
+    ROS_INFO_STREAM("The base failed to move to position x:"<< goal.target_pose.pose.position.x<<" y:"<<goal.target_pose.pose.position.y);
  }
 
 // get the grid from gmapping by listener
@@ -100,7 +99,7 @@ void run(double x, double y, double turn){
 			ROS_INFO("FRONIERS SERVED!");
 
 
-		//int num_points = frontiersList.size() / 2 //@TODO: change!
+
 		int num_frontier_cells = 0;
 
 			for(int i = 0 ; i < frontiersList.size() ; i++ ) {
@@ -112,6 +111,7 @@ void run(double x, double y, double turn){
 			ROS_INFO("%i frontier cells found",num_frontier_cells);
 			double goalX = 0;
 			double goalY = 0;
+            frontier_cloud.points.resize(0);
 			frontier_cloud.points.resize(num_frontier_cells);
 			int frontierIndex = 0;
 			//arbitrary value which is always higher than any distance found
@@ -123,11 +123,11 @@ void run(double x, double y, double turn){
 				frontier_cloud.points[frontierIndex].x = fX;
 				double fY = (frontiersList[i][j+1] - (int)(occupancyGrid.info.height/2)) * occupancyGrid.info.resolution;
 				frontier_cloud.points[frontierIndex].y = fY;
-				double distance = sqrt(fX*fX+fY*fY);
+                double distance = sqrt((fX-x)*(fX-x)+(fY-y)*(fY-y));
 				frontier_cloud.points[frontierIndex].z = 0;
 				frontierIndex++;
 				j++;
-				if(distance < minDist) {
+                if(distance < minDist && distance > 1) {
 					minDist = distance;
 					goalX = fX;
 					goalY = fY;
@@ -145,34 +145,7 @@ void run(double x, double y, double turn){
 		}
 	}
 
-// deletes a specified element from a vector v
-// @ TODO: erase(int) gibt es angeblich nicht
-	void eraseEfromVector(std::vector<std::vector<int> > v,
-			std::vector<int> element) {
-		for (int i = 0; i < v.size(); i++) {
-			if (v[i] == element) {
-				v.erase(v.begin() + i);
-				return;
-			}
-		}
-	}
 
-// @ TODO: fertig machen
-	bool vec_contain(std::vector<std::vector<int> > test_vec,
-			std::vector<int> comp_vec) {
-		for (unsigned int i = 0; i < test_vec.size(); i++) {
-			for (unsigned int z = 0; z < comp_vec.size(); z++) {
-				if (comp_vec[z] != test_vec[i][z]) {
-					break;
-				}
-				if (z == comp_vec.size() - 1) {
-					return true;
-				}
-			}
-		}
-
-		return false;
-	}
 
 // Send a velocity command
 	void move(double linearVelMPS, double angularVelRadPS) {
@@ -184,7 +157,7 @@ void run(double x, double y, double turn){
 
 
 	void spin() {
-		ros::Rate rate(50); // Specify the FSM loop rate in Hz
+        ros::Rate rate(10); // Specify the FSM loop rate in Hz
 		while (ros::ok()) { // Keep spinning loop until user presses Ctrl+C
 			
 			ros::spinOnce(); // Need to call this function often to allow ROS to process incoming messages
