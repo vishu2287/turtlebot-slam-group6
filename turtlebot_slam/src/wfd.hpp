@@ -10,3 +10,4 @@ std::vector<std::vector<int> > frontierDetection(const nav_msgs::OccupancyGrid& 
 bool isFrontier(int x, int y);
 std::vector<int> getNeighbors(const nav_msgs::OccupancyGrid& grid, int x, int y);
 int getMapValue(const nav_msgs::OccupancyGrid& grid, int x, int y);
+std::vector<int> getSurrounding(const nav_msgs::OccupancyGrid& grid, int x, int y, int size);

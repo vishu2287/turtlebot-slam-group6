@@ -40,7 +40,7 @@ public:
 
 		frontier_publisher = nh.advertise < sensor_msgs::PointCloud> ("frontiers", 1);
 		next_frontier_publisher = nh.advertise < sensor_msgs::PointCloud> ("next_frontier", 1);
-
+        next_frontier.header.frame_id = "map";
 		frontier_cloud.header.frame_id = "map";
 	}
 
@@ -68,12 +68,12 @@ void run(double x, double y){
   ROS_INFO_STREAM("Moving to position x:"<<goal.target_pose.pose.position.x<<" y:"<<goal.target_pose.pose.position.y);
   ac.sendGoal(goal);
 
-  ac.waitForResult();
+ //ac.waitForResult();
 
   if(ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
     ROS_INFO_STREAM("Robot moved to position x:"<< goal.target_pose.pose.position.x<<" y:"<<goal.target_pose.pose.position.y);
-  else
-    ROS_INFO_STREAM("The base failed to move to position x:"<< goal.target_pose.pose.position.x<<" y:"<<goal.target_pose.pose.position.y);
+  //else
+   // ROS_INFO_STREAM("The base failed to move to position x:"<< goal.target_pose.pose.position.x<<" y:"<<goal.target_pose.pose.position.y);
  }
 
 // get the grid from gmapping by listener
@@ -116,28 +116,44 @@ void run(double x, double y){
 			int frontierIndex = 0;
 			//arbitrary value which is always higher than any distance found
 			double minDist = 40000.0;
+            //represents the closest frontier
+            std::vector <int> closestFrontier;
 			//fill frontier cloud for publishing and calculate frontier closest to robot base
             for(unsigned int i = 0 ; i < frontiersList.size() ; i++ ) {
                 for(unsigned int j = 0 ; j < frontiersList[i].size() ; j++) {
-				double fX = (frontiersList[i][j] - (int)(occupancyGrid.info.width/2)) * occupancyGrid.info.resolution;
-				frontier_cloud.points[frontierIndex].x = fX;
-				double fY = (frontiersList[i][j+1] - (int)(occupancyGrid.info.height/2)) * occupancyGrid.info.resolution;
-				frontier_cloud.points[frontierIndex].y = fY;
-                double distance = sqrt((fX-x)*(fX-x)+(fY-y)*(fY-y));
-				frontier_cloud.points[frontierIndex].z = 0;
-				frontierIndex++;
-				j++;
-                if(distance < minDist && distance > 1) {
-					minDist = distance;
-					goalX = fX;
-					goalY = fY;
+                    double fX = (frontiersList[i][j] - (int)(occupancyGrid.info.width/2)) * occupancyGrid.info.resolution;
+                    frontier_cloud.points[frontierIndex].x = fX;
+                    double fY = (frontiersList[i][j+1] - (int)(occupancyGrid.info.height/2)) * occupancyGrid.info.resolution;
+                    frontier_cloud.points[frontierIndex].y = fY;
+                    double distance = sqrt((fX-x)*(fX-x)+(fY-y)*(fY-y));
+                    frontier_cloud.points[frontierIndex].z = 0;
+                    frontierIndex++;
+                    j++;
+                    if(distance < minDist && distance > 2) {
+                        closestFrontier = frontiersList[i];
+                        minDist = distance;
+                        goalX = fX;
+                        goalY = fY;
+                    }
 				}
-				}
-			}
+            }
+            ROS_INFO("The closest frontier contains %i cells", closestFrontier.size()/2);
+          //  goalX = (frontiersList[0][0] - (int)(occupancyGrid.info.width/2)) * occupancyGrid.info.resolution;
+           // goalY = (frontiersList[0][1] - (int)(occupancyGrid.info.width/2)) * occupancyGrid.info.resolution;
 			//neccessary ot visualize the next frontier, the robot goes to
+
+         /*   int goalIndex = (int)closestFrontier.size()/2;
+            if(goalIndex % 2 != 0) {
+                goalIndex--;
+            }
+            goalX = (closestFrontier[goalIndex] - (int)(occupancyGrid.info.width/2)) * occupancyGrid.info.resolution;
+            goalY = (closestFrontier[goalIndex+1] - (int)(occupancyGrid.info.height/2)) * occupancyGrid.info.resolution;//*/
+
 			next_frontier.points.resize(1);
 			next_frontier.points[0].x = goalX;
 			next_frontier.points[0].y = goalY;
+            next_frontier.points[0].z = 0;
+
 			frontier_publisher.publish(frontier_cloud);
 			next_frontier_publisher.publish(next_frontier);
 			ROS_INFO("published cloud!");

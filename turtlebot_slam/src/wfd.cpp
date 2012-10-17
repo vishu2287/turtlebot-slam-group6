@@ -150,7 +150,7 @@ const int FRONTIER_close_list = 4;
 	// needs to take care of the actual positions, corners and borders
 	// need to be handled carefully
 	bool isFrontier(const nav_msgs::OccupancyGrid& grid, int x, int y) {
-		std::vector<int> neighbors = getNeighbors(grid, x, y);
+        std::vector<int> neighbors = getSurrounding(grid, x, y, 3);//*/getNeighbors(grid, x, y);
         int numExplored = 0;
         int numUnknown = 0;
 		// checking neighbors
@@ -179,6 +179,19 @@ const int FRONTIER_close_list = 4;
         return(numExplored >= (neighbors.size()/4) && numUnknown >= (neighbors.size()/4) && !obstacle);
 	}
 
+    std::vector<int> getSurrounding(const nav_msgs::OccupancyGrid& grid, int x, int y, int size) {
+        std::vector<int> neighbors;
+        for(int i = (x-size) ; i <= (x+size) ; i++) {
+            for(int j = (y-size) ; j <= (y+size) ;j++) {
+                if((i - 1 >= 0) && (j - 1 >= 0) && (j + 1 < grid.info.height) && (x + 1 < grid.info.width) && (i != x && j != y)) {
+                    //ROS_INFO("I = %i, J = %i", i, j);
+                    neighbors.push_back(i);
+                    neighbors.push_back(j);
+                }
+            }
+        }
+        return neighbors;
+    }
 	// gets the Neighbors as a list of vecotrs
 	std::vector<int> getNeighbors(const nav_msgs::OccupancyGrid& grid, int x, int y) {
 
