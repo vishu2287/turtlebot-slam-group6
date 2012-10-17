@@ -38,7 +38,8 @@ public:
 		mapSub = nh.subscribe("/map", 1, &Exploration::occupancyGridCallback,
 				this);
 
-		frontier_publisher = nh.advertise < sensor_msgs::PointCloud	> ("frontiers", 1);
+		frontier_publisher = nh.advertise < sensor_msgs::PointCloud> ("frontiers", 1);
+		next_frontier_publisher = nh.advertise < sensor_msgs::PointCloud> ("next_frontier", 1);
 
 		frontier_cloud.header.frame_id = "map";
 	}
@@ -110,7 +111,7 @@ void run(double x, double y){
 			ROS_INFO("%i frontier cells found",num_frontier_cells);
 			double goalX = 0;
 			double goalY = 0;
-            frontier_cloud.points.resize(0);
+           		frontier_cloud.points.resize(0);
 			frontier_cloud.points.resize(num_frontier_cells);
 			int frontierIndex = 0;
 			//arbitrary value which is always higher than any distance found
@@ -133,9 +134,14 @@ void run(double x, double y){
 				}
 				}
 			}
+			//neccessary ot visualize the next frontier, the robot goes to
+			next_frontier.points.resize(1);
+			next_frontier.points[0].x = goalX;
+			next_frontier.points[0].y = goalY;
 			frontier_publisher.publish(frontier_cloud);
+			next_frontier_publisher.publish(next_frontier);
 			ROS_INFO("published cloud!");
-            run(goalX,goalY);
+           	 run(goalX,goalY);
 
 		} catch (tf::TransformException& ex) {
 			ROS_ERROR(
@@ -174,7 +180,9 @@ protected:
 
 	int robot_pos[2];
 	sensor_msgs::PointCloud frontier_cloud;
+	sensor_msgs::PointCloud next_frontier;
 	ros::Publisher frontier_publisher;
+	ros::Publisher next_frontier_publisher;
 
 // ---global values
 // grid from gmapping
