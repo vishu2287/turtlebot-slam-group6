@@ -1,0 +1,4 @@
+<launch>
+ 	<node name="turtlebot_slam" pkg="turtlebot_graph_slam" type="turtlebot_slam" /> 
+
+</launch>
