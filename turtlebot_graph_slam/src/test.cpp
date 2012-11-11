@@ -5,11 +5,8 @@ using namespace Eigen;
 
 void callback(const ros::TimerEvent&)
 {
-  
-  
   MatrixXd u = MatrixXd::Random(2,2);
   graph_init(u);
-  
 }
 
 int main(int argc, char **argv)
