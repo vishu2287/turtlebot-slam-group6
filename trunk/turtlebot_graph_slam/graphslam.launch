@@ -1,4 +1,3 @@
 <launch>
- 	<node name="turtlebot_slam" pkg="turtlebot_graph_slam" type="turtlebot_slam" /> 
-
+ 	<node name="turtlebot_graph_slam" pkg="turtlebot_graph_slam" type="turtlebot_graph_slam" /> 
 </launch>
