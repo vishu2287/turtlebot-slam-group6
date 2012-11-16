@@ -1,21 +1,26 @@
 #include "ros/ros.h"
 #include <float.h>
 #include <math.h>
+#include <vector>
 #include <Eigen/Dense>
 using namespace Eigen;
 
 
 //Table 11.2 Page 347/348
 //@TODO: Implement
-MatrixXd linearize (MatrixXd u, std::Vector<MatrixXd> z, std::Vector<MatrixXd> c, MatrixXd mu, MatrixXd *Xi) {
+MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c, MatrixXd mu, MatrixXd Xi) {
 
     // @todo: Check deltaT
     int deltaT = 1;
 
+    int size = 0;
+    for (int i = 0; i < z.size(); i++) {
+        size += z[i].cols();
+    }
     // size of omega and Xi = number of measurements + number of map features
-    MatrixXd omega = MatrixXd::Zero(mu.cols() + z.cols(), mu.cols() + z.cols());
-    Xi = MatrixXd::Zero(mu.cols() + z.cols() , 1);
-    Matrix3d inf = Matrix3d::Identity() * FLOAT::DBL_MAX;
+    MatrixXd omega = MatrixXd::Zero(mu.cols() + size, mu.cols() + size);
+    Xi = MatrixXd::Zero(mu.cols() + size , 1);
+    Matrix3d inf = Matrix3d::Identity() * DBL_MAX;
     omega.topLeftCorner(3, 3) = inf;
     Vector3d xt;
 
@@ -52,14 +57,14 @@ MatrixXd linearize (MatrixXd u, std::Vector<MatrixXd> z, std::Vector<MatrixXd> c
         //@TODO: Add to Omega at x(t+1) and x(t)
 
         //line 8:
-        Vector4d add2 = gtTrans * RtInv * (xt - Gt * mu.col(t));
+        Vector4d add2 = GtTrans * RtInv * (xt - Gt * mu.col(t));
         //@TODO: Add to Xi at x(t+1) and x(t)
     } // end loop
 
     for(int t = 0 ; t < z.size() ; t++)
     {
         // line 11, calculate sigma and create Qt
-        Matrix3d Qt = Matrix3d.zero();
+        Matrix3d Qt = Matrix3d::Zero();
 
         //Variances
         double rSum = 0;
@@ -69,11 +74,11 @@ MatrixXd linearize (MatrixXd u, std::Vector<MatrixXd> z, std::Vector<MatrixXd> c
         {
             rSum += z[t](0, i);
             phiSum += z[t](1, i);
-            sSum += z[t](2, i)
+            sSum += z[t](2, i);
         }
         double muR = rSum / z[t].cols();
         double muPhi = phiSum / z[t].cols();
-        double muS = sSum / z[t].cosl();
+        double muS = sSum / z[t].cols();
         double sigSqR = 0;
         double sigSqPhi = 0;
         double sigSqS = 0;
@@ -104,18 +109,18 @@ MatrixXd linearize (MatrixXd u, std::Vector<MatrixXd> z, std::Vector<MatrixXd> c
             // @TODO check for correct indizes especially Sj
             Zit << sqrtQ, atan2(delta(1), delta(2)) - mu(t, 2), z[t](i, j);
             // line 17
-            MatrrixXd Hit(6, 3);
+            MatrixXd Hit(6, 3);
             Hit.row(0) << -sqrtQ * delta(0), -sqrtQ * delta(1), 0, sqrtQ * delta(0), sqrtQ * delta(1), 0;
             Hit.row(1) << delta(1), -delta(0), -q, -delta(1), delta(0), 0;
             Hit.row(2) << 0, 0, 0, 0, 0, q;
             Hit /= q;
             // Line 18 & 19
             Matrix3d add1 = Hit.transpose() * Qt.inverse() * Hit;
-            Vector6d muStar;
+            VectorXd muStar;
             // 6th element is mu(j, s) according to book, but might be a mistake
             // replaced with mu(j, theta)
             muStar << mu(t, 0), mu(t, 1), mu(t, 2), mu(j, 0), mu(j, 1), mu(j, 2);
-            Vector3d add2 = Hit.transpose() * Qt.inverse() * (z[t].cols(i) - Zit + Hit * muStar);
+            Vector3d add2 = Hit.transpose() * Qt.inverse() * (z[t].col(i) - Zit + Hit * muStar);
         }
     }
     return omega;
