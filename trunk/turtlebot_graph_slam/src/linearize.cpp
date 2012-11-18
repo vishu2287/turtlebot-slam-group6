@@ -40,11 +40,11 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
         Gt(0, 3) = - (+vt/wt*cos(mu(2,t)) + vt/wt*cos(mu(2,t) + wt*deltaT));
         Gt(1, 3) = (-vt/wt*sin(mu(2,t)) + vt/wt*sin(mu(2,t) + wt*deltaT));
 
-        // Prepare line 7 & 8, create G^T with aditional row, value 1
+        // Prepare line 7 & 8, create G^T with additional row, value 1
         MatrixXd GtTrans = MatrixXd::Constant(4, 3, 1);
         GtTrans.topLeftCorner(3, 3) = -Gt.transpose();
 
-        // prepare line 7 & 8, create -G with aditionnal column, value 1
+        // prepare line 7 & 8, create -G with additional column, value 1
         MatrixXd GtMinus = MatrixXd::Constant(3, 4, 1);
         GtMinus.topLeftCorner(3, 3) = Gt;
 
