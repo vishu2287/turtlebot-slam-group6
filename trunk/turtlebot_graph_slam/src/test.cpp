@@ -11,9 +11,9 @@ void callback(const ros::TimerEvent&)
 
   int d = 3;
   MatrixXd omega_tilde = MatrixXd::Random(d,d);
-  VectorXd xi_tilde = MatrixXd::Random(d,1);
+  MatrixXd xi_tilde = MatrixXd::Random(d,d);
   MatrixXd omega = MatrixXd::Random(d,d);
-  VectorXd xi = MatrixXd::Random(d,1);
+  MatrixXd xi = MatrixXd::Random(d,d);
   solve(omega_tilde, xi_tilde, omega, xi);
 }
 
