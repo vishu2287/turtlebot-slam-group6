@@ -17,9 +17,9 @@ std::vector<MatrixXd> reduce (MatrixXd omega,  VectorXd xi) {
 		//Fill Tau here - i because matrix length changes
 		for(int z = 0; z < ((t+1)*3-i) ; z+=3){		
 			//If any of these values is nonzero, a correspondence between pose and landmark has been found!	
-			if(omega_tilde(savei,z)!=0  ||  omega_tilde(savei,z+1)!=0  ||  omega_tilde(savei,z+2)!=0  
-			|| omega_tilde(savei+1,z)!=0||  omega_tilde(savei+1,z+1)!=0||  omega_tilde(savei+1,z+2)!=0
-			|| omega_tilde(savei+2,z)!=0||  omega_tilde(savei+2,z+1)!=0||  omega_tilde(savei+2,z+2)!=0)
+			if(omega(i,z)!=0  ||  omega(i,z+1)!=0  ||  omega(i,z+2)!=0  
+			|| omega(i+1,z)!=0||  omega(i+1,z+1)!=0||  omega(i+1,z+2)!=0
+			|| omega(i+2,z)!=0||  omega(i+2,z+1)!=0||  omega(i+2,z+2)!=0)
 				//Save the Pose in Tau
 				tau.push_back((z/3));
 		}
@@ -79,7 +79,7 @@ std::vector<MatrixXd> reduce (MatrixXd omega,  VectorXd xi) {
 		//Removal of mj from final_xi works.
 				
 		//Matrix Removal
-		std::cout << "xi_tilde after apllying solution" << std::endl <<  omega_tilde << std::endl;
+
 		MatrixXd final_omega = MatrixXd::Zero(omega_tilde.rows()-3,omega_tilde.cols()-3);
 		final_omega.block(0,0,savei,savei)+=omega_tilde.block(0,0,savei,savei);
 		if((i>=omega_tilde.cols()-3)){
@@ -97,15 +97,16 @@ std::vector<MatrixXd> reduce (MatrixXd omega,  VectorXd xi) {
 		else{
 		final_omega.block(savei,savei,omega_tilde.rows()-(savei+3),omega_tilde.cols()-(savei+3))=omega_tilde.block(savei+3,savei+3,omega_tilde.rows()-(savei+3),omega_tilde.cols()-(savei+3));
 		}
-		
-		
-		std::cout << "xi_tilde after apllying solution" << std::endl <<  final_omega << std::endl;
 		//Apply removals :
 
 		omega_tilde = final_omega;
 		xi_tilde = final_xi;
 	/**/
 	} //End of outer loop
+		
+	std::cout << "Final Omega" << std::endl <<  omega_tilde << std::endl;
+	solution.push_back(omega_tilde);
+	solution.push_back(xi_tilde);
 	return solution;
 }
 
