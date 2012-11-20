@@ -4,60 +4,108 @@ using namespace Eigen;
 
 
 //Table 11.3 Page 349
-//@TODO: Implement
+//@TODO: Test Properly
 std::vector<MatrixXd> reduce (MatrixXd omega,  VectorXd xi) {
 	std::vector<MatrixXd> solution;
-	int t = 1; // This should be set to the current position of m !
+	int t = 3; // This should be set to the current position of where features start TODO
 							
-	MatrixXd omega_tilde = omega;			//Deep copy ? //Clone supported in eigen ?
+	MatrixXd omega_tilde = omega;			//Deep copy ? //Clone supported in eigen ? TODO
   	VectorXd xi_tilde = xi;
-	std::cout << "Omega Matrix" << std::endl <<  omega << std::endl;
-  	for(int i = (t+1)*3; i < omega.rows(); i+=6){
+	const int savei = (t+1)*3;
+  	for(int i = (t+1)*3; i < omega.rows(); i+=3){
 		std::vector<int> tau;
-		//Fill Tau here
-		for(int z = 0; z < (t+1)*3 ; z+=3){		
+		//Fill Tau here - i because matrix length changes
+		for(int z = 0; z < ((t+1)*3-i) ; z+=3){		
 			//If any of these values is nonzero, a correspondence between pose and landmark has been found!	
-			if(omega(i,z)!=0  ||  omega(i,z+1)!=0  ||  omega(i,z+2)!=0  
-			|| omega(i+1,z)!=0||  omega(i+1,z+1)!=0||  omega(i+1,z+2)!=0
-			|| omega(i+2,z)!=0||  omega(i+2,z+1)!=0||  omega(i+2,z+2)!=0)
+			if(omega_tilde(savei,z)!=0  ||  omega_tilde(savei,z+1)!=0  ||  omega_tilde(savei,z+2)!=0  
+			|| omega_tilde(savei+1,z)!=0||  omega_tilde(savei+1,z+1)!=0||  omega_tilde(savei+1,z+2)!=0
+			|| omega_tilde(savei+2,z)!=0||  omega_tilde(savei+2,z+1)!=0||  omega_tilde(savei+2,z+2)!=0)
 				//Save the Pose in Tau
 				tau.push_back((z/3));
-				std::cout << "Omega Matrix" << std::endl <<  (z/3) << std::endl;
 		}
 	//subtract (OmegaTilde Tau(j),j) times (Omega j,j inverse) times XI(j) from Xi tilde at Pose Tau(j) and m(j)
 	//---------------------------------------------------------------------------------------------------------
-		//Do you agree to this structure ?
 		Matrix3d temp_omega_jj_inverse;
-		temp_omega_jj_inverse << omega_tilde(i,i), omega_tilde(i,i+1), omega_tilde(i,i+2),
-				    omega_tilde(i+1,i), omega_tilde(i+1,i+1), omega_tilde(i+1,i+2),
-			            omega_tilde(i+2,i), omega_tilde(i+2,i+1), omega_tilde(i+2,i+2);
-		//omega_tilde.block(i,i,3,3) 
+		//omega_tilde.block(i,i,3,3) would be the same here
+						
+		temp_omega_jj_inverse << omega_tilde(savei,savei), omega_tilde(savei,savei+1), omega_tilde(savei,savei+2),
+				    omega_tilde(savei+1,savei), omega_tilde(savei+1,savei+1), omega_tilde(savei+1,savei+2),
+			            omega_tilde(savei+2,savei), omega_tilde(savei+2,savei+1), omega_tilde(savei+2,savei+2);
 		Matrix3d omega_jj_inverse = temp_omega_jj_inverse.inverse();	
 		// construct a new Matrix with rows being the poses and columns being j
-		MatrixXd omega_tilde_part = MatrixXd::Zero(tau.size()*3,3);
-				std::cout << "Temp Omega JJ" << std::endl <<  omega_tilde_part << std::endl;
+		MatrixXd omega_tilde_part_left = MatrixXd::Zero(tau.size()*3,3);
+	
+		
 		for(int z = 0; z<tau.size()*3;z+=3){
-			omega_tilde_part.block(z,0,3,3) += omega_tilde.block(tau[z/3],tau[z/3],3,3);
+			omega_tilde_part_left.block(z,0,3,3) += omega_tilde.block(tau[z/3],tau[z/3],3,3);
 			//THIS should contain all poses in the end
 		}
-
-		std::cout << "xi_tilde before apllying solution" << std::endl <<  xi_tilde << std::endl;
 		// OmegaTilde Tau(j),j) times (Omega j,j inverse) times XI(j)
-		VectorXd solvingvector = omega_tilde_part * omega_jj_inverse * xi.block(i,0,3,1);
+		VectorXd solvingvector = omega_tilde_part_left * omega_jj_inverse * xi.block(i,0,3,1);
 		for(int z = 0; z<tau.size()*3;z+=3){
 			//Remove from XI TAU(J)
 			xi_tilde.block(tau[z/3],0,3,1) -= solvingvector.block(z,0,3,1);
 			//REMOVE FROM MJ AT XI TILDE
-			xi_tilde.block(i,0,3,1)   -= solvingvector.block(z,0,3,1);
+			xi_tilde.block(savei,0,3,1)   -= solvingvector.block(z,0,3,1);
 		}
 
-
-		std::cout << "xi_tilde after apllying solution" << std::endl <<  xi_tilde << std::endl;
-	
         //subtract (OmegaTilde Tau(j),j) times (Omega j,j inverse) times Omega(j,Tau(j)) from Omega tilde at Pose Tau(j) and m(j)
 	//---------------------------------------------------------------------------------------------------------	
+		MatrixXd omega_tilde_part_right = MatrixXd::Zero(3,tau.size()*3);
+				
+		for(int z = 0; z<tau.size()*3;z+=3){
+			omega_tilde_part_right.block(0,z,3,3) += omega_tilde.block(tau[z/3],tau[z/3],3,3);
 		
-	}
+		}
+		MatrixXd solvingmatrix = omega_tilde_part_left * omega_jj_inverse *omega_tilde_part_right ;
+		for(int z = 0; z<tau.size()*3;z+=3){
+			//Remove from XI TAU(J)
+			omega_tilde.block(tau[z/3],tau[z/3],3,3) -= solvingmatrix.block(z,z,3,3);
+			//REMOVE FROM MJ AT XI TILDE
+			omega_tilde.block(savei,savei,3,3)   -= solvingmatrix.block(z,z,3,3);
+		}
+
+	//Remove from Omega and XI All rows and columns corresponding to j !
+	//----------------------------------------------------------------------------------------------------------------
+		//Vector Removal
+		VectorXd final_xi = VectorXd::Zero(xi_tilde.rows()-3);		//Construct final Xi with no Reference to Mj
+		final_xi.block(0,0,savei,1)+=xi_tilde.block(0,0,savei,1);
+
+		if((i>=xi_tilde.rows()-3)){
+		}
+		else{
+			final_xi.block(savei,0,xi_tilde.rows()-(savei+3),1)+=xi_tilde.block(savei+3,0,xi_tilde.rows()-(savei+3),1);
+		}
+		//Removal of mj from final_xi works.
+				
+		//Matrix Removal
+		std::cout << "xi_tilde after apllying solution" << std::endl <<  omega_tilde << std::endl;
+		MatrixXd final_omega = MatrixXd::Zero(omega_tilde.rows()-3,omega_tilde.cols()-3);
+		final_omega.block(0,0,savei,savei)+=omega_tilde.block(0,0,savei,savei);
+		if((i>=omega_tilde.cols()-3)){
+		}
+		else{
+		final_omega.block(0,savei,savei,omega_tilde.cols()-(savei+3))+=omega_tilde.block(0,savei+3,savei,omega_tilde.cols()-(savei+3));
+		}
+		if((savei>=omega_tilde.rows()-3)){
+		}
+		else{
+			final_omega.block(savei,0,omega_tilde.rows()-(savei+3),savei)+=omega_tilde.block(savei+3,0,omega_tilde.rows()-(savei+3),savei);
+		}
+		if((savei>=omega_tilde.rows()-3) && (i>=omega_tilde.cols()-3)){
+		}
+		else{
+		final_omega.block(savei,savei,omega_tilde.rows()-(savei+3),omega_tilde.cols()-(savei+3))=omega_tilde.block(savei+3,savei+3,omega_tilde.rows()-(savei+3),omega_tilde.cols()-(savei+3));
+		}
+		
+		
+		std::cout << "xi_tilde after apllying solution" << std::endl <<  final_omega << std::endl;
+		//Apply removals :
+
+		omega_tilde = final_omega;
+		xi_tilde = final_xi;
+	/**/
+	} //End of outer loop
 	return solution;
 }
 
