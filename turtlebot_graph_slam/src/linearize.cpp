@@ -44,12 +44,13 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
        // Prepare line 7 & 8, create G^T with additional row, value 1
        MatrixXd GtTrans = MatrixXd::Constant(6, 3, 1);
        GtTrans.topLeftCorner(3, 3) = -Gt.transpose();
+       GtTrans.bottomLeftCorner(3, 3) = Matrix3d::Identity();
 
 
        // prepare line 7 & 8, create -G with additional column, value 1
        MatrixXd GtMinus = MatrixXd::Constant(3, 6, 1);
        GtMinus.topLeftCorner(3, 3) = Gt;
-
+       GtMinus.bottomLeftCorner(3, 3) = Matrix3d::Identity();
 
        // create R^-1, @TODO where to get Rt??
        Matrix3d Rt = Matrix3d::Identity();
