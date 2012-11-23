@@ -35,4 +35,5 @@ rosbuild_add_executable(turtlebot_graph_slam  src/linearize.cpp)
 rosbuild_add_executable(turtlebot_graph_slam  src/reduce.cpp)
 rosbuild_add_executable(turtlebot_graph_slam  src/solve.cpp)
 rosbuild_add_executable(turtlebot_graph_slam  src/graph_slam.cpp)
+rosbuild_add_executable(turtlebot_graph_slam  src/correspondence_test.cpp)
 
