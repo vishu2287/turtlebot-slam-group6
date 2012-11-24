@@ -6,7 +6,7 @@ using namespace Eigen;
 //@TODO: Implement
 MatrixXd solve(MatrixXd omega_tilde, VectorXd xi_tilde, MatrixXd omega,
 		VectorXd xi) {
-	ROS_INFO("CALL SOLVE METHOD");
+//	ROS_INFO("CALL SOLVE METHOD");
 
 	// Line 2
 	MatrixXd sigma = omega_tilde.inverse();
@@ -83,7 +83,7 @@ MatrixXd solve(MatrixXd omega_tilde, VectorXd xi_tilde, MatrixXd omega,
 		j++;
 	}
 
-	std::cout << "mu = " << std::endl << mu << std::endl;
+//	std::cout << "mu = " << std::endl << mu << std::endl;
 
 //	std::cout << "omega_tilde = \n" << omega_tilde << std::endl;
 //	std::cout << "sigma = \n" << sigma << std::endl;
