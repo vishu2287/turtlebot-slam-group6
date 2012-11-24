@@ -87,9 +87,6 @@ MatrixXd correspondence_test(MatrixXd omega, VectorXd xi, VectorXd mu,
 	}
 //	std::cout << "omega_jk_left = \n" << omega_jk_left << std::endl;
 
-//	std::cout << "Omega times Sigma times Omega?" << std::endl
-//			<< omega_jk_right * sigmapart * omega_jk_left << std::endl; //ends in a 6x6 Matrix!
-
 	MatrixXd omega_jk_jk = MatrixXd::Zero(6, 6);
 	omega_jk_jk.block(0, 0, 3, 3) += omega.block(j, j, 3, 3); //Omega jk_jk = Omegaj,j ; Omega j,k ; Omega k,j; Omega k,k ??
 	omega_jk_jk.block(0, 3, 3, 3) += omega.block(j, k, 3, 3);
@@ -133,11 +130,20 @@ MatrixXd correspondence_test(MatrixXd omega, VectorXd xi, VectorXd mu,
 	std::cout << "mu_j_k = \n" << mu_j_k << std::endl;
 
 	VectorXd xi_j_k = omega_j_k*mu_j_k;
+
 	/*
 	 * ----------------------------------------------------------
 	 * LINE 3 FINISHED
 	 * ----------------------------------------------------------
 	 */
+
+	/*
+	 * ----------------------------------------------------------
+	 * LINE 2 OF ALGORITHM PAGE 364
+	 * ----------------------------------------------------------
+	 */
+
+	// @TODO
 
 //	std::cout << "Test" << std::endl << mu_taujk << std::endl;
 	return omega;
