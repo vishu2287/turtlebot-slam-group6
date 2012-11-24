@@ -129,7 +129,7 @@ MatrixXd correspondence_test(MatrixXd omega, VectorXd xi, VectorXd mu,
 	MatrixXd mu_j_k = omega_jk_jk_inverse*(xi_j_k+omega_jk_right*mu_taujk);
 	std::cout << "mu_j_k = \n" << mu_j_k << std::endl;
 
-	VectorXd xi_j_k = omega_j_k*mu_j_k;
+	xi_j_k = omega_j_k*mu_j_k;
 
 	/*
 	 * ----------------------------------------------------------
@@ -139,10 +139,56 @@ MatrixXd correspondence_test(MatrixXd omega, VectorXd xi, VectorXd mu,
 
 	/*
 	 * ----------------------------------------------------------
-	 * LINE 2 OF ALGORITHM PAGE 364
+	 * LINE 4 OF ALGORITHM PAGE 364
 	 * ----------------------------------------------------------
 	 */
+	MatrixXd unity_one_mone = MatrixXd::Zero(6, 3);
+	 unity_one_mone << 1, 1, 1, 
+			   1, 1, 1,
+			   1, 1, 1,
+			   -1,-1,-1,
+			   -1,-1,-1,
+			   -1,-1,-1;
 
+	
+	std::cout << "Test" << std::endl << unity_one_mone.transpose() * omega_j_k * unity_one_mone << std::endl;
+	//Where to save that ?  
+	/*
+	 * ----------------------------------------------------------
+	 * LINE 4 FINISHED
+	 * ----------------------------------------------------------
+	 */	
+	/*
+	 * ----------------------------------------------------------
+	 * LINE 5 OF ALGORITHM PAGE 364
+	 * ----------------------------------------------------------
+	 */
+	std::cout << "Test" << std::endl << unity_one_mone.transpose()* xi_j_k << std::endl;
+	/*
+	 * ----------------------------------------------------------
+	 * LINE 5 FINISHED
+	 * ----------------------------------------------------------
+	 */
+	/*
+	 * ----------------------------------------------------------
+	 * LINE 6 OF ALGORITHM PAGE 364
+	 * ----------------------------------------------------------
+	 */
+	/*
+	 * ----------------------------------------------------------
+	 * LINE 6 FINISHED
+	 * ----------------------------------------------------------
+	 */
+	/*
+	 * ----------------------------------------------------------
+	 * LINE 7 OF ALGORITHM PAGE 364
+	 * ----------------------------------------------------------
+	 */
+	const double PI = 3.141592;
+	// double tmp = pow(5,2); potenz
+	// exp(1) = E hoch 1
+	std::cout << "Test" << std::endl << exp(1) << std::endl;
+	//((abs(2*PI*Inverse))^-0.5)*exp(-0.5*mujk*omegajk*mujk)
 	// @TODO
 
 //	std::cout << "Test" << std::endl << mu_taujk << std::endl;
