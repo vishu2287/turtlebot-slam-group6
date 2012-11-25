@@ -2,4 +2,4 @@
 #include <Eigen/Dense>
 using namespace Eigen;
 
-MatrixXd linearize (MatrixXd u, MatrixXd z, MatrixXd c, MatrixXd mu);
+MatrixXd linearize (MatrixXd u, MatrixXd z, MatrixXd c, MatrixXd mu, int deltaT);

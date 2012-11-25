@@ -5,10 +5,7 @@ using namespace Eigen;
 
 //Table 11.1 Page 347 (Probabalistic Robotics)
 //@TODO: Implement
-MatrixXd graph_init(MatrixXd u) {
-
-	// @todo: Check deltaT
-	int deltaT = 1;
+MatrixXd graph_init(MatrixXd u, int deltaT) {
 
 	MatrixXd mu(3, u.cols() + 1);
 
@@ -27,8 +24,5 @@ MatrixXd graph_init(MatrixXd u) {
 		mu(2, t + 1) = mu(2, t) + (wt * deltaT);
 
 	}
-	//std::cout << "Here is the matrix u:\n" << u << std::endl;
-	//std::cout << "Here is the matrix mu:\n" << mu << std::endl;
-	std::cout << "mu = \n" << mu << std::endl;
 	return mu;
 }

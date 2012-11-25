@@ -4,9 +4,12 @@
 #include <queue>
 #include <map>
 #include <Eigen/Dense>
+#include <vector>
+#include <float.h>
+#include <math.h>
 using namespace Eigen;
 
-MatrixXd graph_init (MatrixXd mu, int deltaT);
+MatrixXd graph_slam (MatrixXd u, std::vector<MatrixXd> z, int deltaT);
 
 
 	
