@@ -89,16 +89,6 @@ MatrixXd solve(MatrixXd omega_tilde, VectorXd xi_tilde, MatrixXd omega,
 //	std::cout << "sigma = \n" << sigma << std::endl;
 //	std::cout << "mu = \n" << mu << std::endl;
 
-//	Matrix4i a = Matrix4i::Random();
-//	Matrix2i b = Matrix2i::Random();
-//	std::cout << "a = " << std::endl << a << std::endl;
-//	std::cout << "Here is a.block(1, 1, 2, 2):" << std::endl
-//			<< a.block(1, 1, 2, 2) << std::endl;
-//	std::cout << "adding b :" << std::endl << b << std::endl;
-//	std::cout << "to the block" << std::endl;
-//	a.block(1, 1, 2, 2) += b;
-//	std::cout << "New a" << std::endl << a << std::endl;
-
 	return sigma;
 }
 

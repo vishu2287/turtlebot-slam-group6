@@ -20,7 +20,8 @@ void callback(const ros::TimerEvent&)
   MatrixXd temp = solve(omega_tilde, xi_tilde, omega, xi);
 	std::vector<MatrixXd> testo;
 	testo.push_back(temp);
-  correspondence_test ( omega, xi, xi,temp,0,1);
+  double correspondenceProbability = correspondence_test ( omega, xi, xi,temp,0,1);
+  std::cout << "correspondenceProbability = \n" << correspondenceProbability << std::endl;
 }
 
 int main(int argc, char **argv)
