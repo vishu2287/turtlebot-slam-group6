@@ -6,24 +6,7 @@ using namespace Eigen;
 //@TODO: Implement
 //TODO Make COV_SIGMA to a list of cov sigma according to time
 double correspondence_test(MatrixXd omega, VectorXd xi, VectorXd mu,
-		MatrixXd sigma, int j, int k) {
-
-	ROS_INFO("CORRESPONDENCE TEST CALLED");
-//	for(int i = 0; i<omega.rows(); i++)
-//	{
-//		for(int j = 0; j<omega.cols(); j++)
-//		{
-//			omega(i, j) = i*1000+j;
-//		}
-//	}
-	omega.block(3 * 3, 2 * 3, 3, 3) = MatrixXd::Zero(3, 3); // for testing purposes
-	omega.block(2 * 3, 3 * 3, 3, 3) = MatrixXd::Zero(3, 3); // for testing purposes
-	std::cout << "omega = \n" << omega << std::endl;
-	std::cout << "xi = \n" << xi << std::endl;
-	std::cout << "mu = \n" << mu << std::endl;
-	std::cout << "sigma = \n" << sigma << std::endl;
-
-	int t = 2; // time
+		MatrixXd sigma, int j, int k, int t) {
 
 	/*
 	 * Create tau for both features j and k

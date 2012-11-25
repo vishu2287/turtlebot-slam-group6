@@ -7,11 +7,8 @@ using namespace Eigen;
 
 
 //Table 11.2 Page 347/348
-//@TODO: Implement
-MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c, MatrixXd mu, MatrixXd Xi) {
+MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c, MatrixXd mu, MatrixXd Xi, int deltaT) {
 
-   // @todo: Check deltaT
-   int deltaT = 1;
    int numberLandmarks = 10;
 
    int size = 0;
