@@ -21,11 +21,14 @@ MatrixXd graph_slam (MatrixXd u, std::vector<MatrixXd> z, int deltaT) {
 
 	// Initialize correspondenses c with a unique value
 	std::vector < MatrixXd > c;
-
+	int uniqueValue = 0;
 	for (int i = 0; i < t; i++) {
 		MatrixXd newCorrespondence(1, z.at(i).cols());
 		for (int col = 0; col < newCorrespondence.cols(); col++)
-			newCorrespondence(0, col) = col;
+		{
+			newCorrespondence(0, col) = uniqueValue;
+			uniqueValue++;	// We assume that every observed feature belongs to a different landmark for now
+		}
 		c.push_back(newCorrespondence);
 	}
 	for (int i = 0; i < c.size(); i++)
@@ -35,16 +38,13 @@ MatrixXd graph_slam (MatrixXd u, std::vector<MatrixXd> z, int deltaT) {
 	MatrixXd muPath = graph_init(u, deltaT);
 	std::cout << "muPath = \n" << muPath << std::endl;
 
-    // Initialize the xi vector since the linearize needs an existing one
-    MatrixXd xi;
-
     // Call linearize method
-    MatrixXd omega = linearize(u,z,c,muPath,xi,deltaT);
-    std::cout << "omega = \n" << omega << std::endl;
-    std::cout << "xi = \n" << xi << std::endl;
+    MatrixXd omega = linearize(u, z, c, muPath, deltaT);
+//    std::cout << "omega = \n" << omega << std::endl;
+//    std::cout << "xi = \n" << xi << std::endl;
 
     // Call reduce method
-    std::vector<MatrixXd> reduceResult = reduce(omega,xi);
+//    std::vector<MatrixXd> reduceResult = reduce(omega,xi);
     //VectorXd xi_tilde = reduceResult.pop_back();
     //MatrixXd omega_tilde = reduceResult.pop_back();
 
