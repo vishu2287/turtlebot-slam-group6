@@ -28,7 +28,7 @@ void callback(const ros::TimerEvent&) { // Always call graph slam for new laser 
 	u = newU;
 
 	// Generate random measurement, will be replaced by actual measurements
-	MatrixXd newMeasurement = MatrixXd::Random(3, 10);
+	MatrixXd newMeasurement = MatrixXd::Random(3, 2); // We assume for every measurement two features are observed
 	z.push_back(newMeasurement);
 
 	// Call the graph slam algorithm with unknown correspondences
