@@ -35,6 +35,19 @@ MatrixXd graph_slam(MatrixXd u, std::vector<MatrixXd> z, int deltaT) {
 	MatrixXd muPath = graph_init(u, deltaT);
 	std::cout << "muPath = \n" << muPath << std::endl;
 
+    // Initialize the xi vector since the linearize needs an existing one
+    MatrixXd xi;
+
+    // Call linearize method
+    MatrixXd omega = linearize(u,z,c,muPath,deltaT);
+    std::cout << "omega = \n" << omega << std::endl;
+    std::cout << "xi = \n" << xi << std::endl;
+
+    // Call reduce method
+    std::vector<MatrixXd> reduceResult = reduce(omega,xi);
+    VectorXd xi_tilde = reduceResult.pop_back();
+    MatrixXd omega_tilde = reduceResult.pop_back();
+
 //	int d = 15;
 //	MatrixXd omega_tilde = MatrixXd::Random(d, d);
 //	VectorXd xi_tilde = MatrixXd::Random(d, 1);
