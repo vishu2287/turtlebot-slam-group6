@@ -9,7 +9,7 @@ using namespace Eigen;
 
 //Table 11.5 Page 350
 //@TODO: Implement
-MatrixXd graph_slam(MatrixXd u, std::vector<MatrixXd> z, int deltaT) {
+MatrixXd graph_slam (MatrixXd u, std::vector<MatrixXd> z, int deltaT) {
 
 	// Print of the inputs
 	std::cout << "u = \n" << u << std::endl;
@@ -39,14 +39,14 @@ MatrixXd graph_slam(MatrixXd u, std::vector<MatrixXd> z, int deltaT) {
     MatrixXd xi;
 
     // Call linearize method
-    MatrixXd omega = linearize(u,z,c,muPath,deltaT);
+    MatrixXd omega = linearize(u,z,c,muPath,xi,deltaT);
     std::cout << "omega = \n" << omega << std::endl;
     std::cout << "xi = \n" << xi << std::endl;
 
     // Call reduce method
     std::vector<MatrixXd> reduceResult = reduce(omega,xi);
-    VectorXd xi_tilde = reduceResult.pop_back();
-    MatrixXd omega_tilde = reduceResult.pop_back();
+    //VectorXd xi_tilde = reduceResult.pop_back();
+    //MatrixXd omega_tilde = reduceResult.pop_back();
 
 //	int d = 15;
 //	MatrixXd omega_tilde = MatrixXd::Random(d, d);

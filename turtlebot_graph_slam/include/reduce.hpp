@@ -2,7 +2,7 @@
 #include <Eigen/Dense>
 using namespace Eigen;
 
-MatrixXd reduce (MatrixXd omega, VectorXd xi);
+std::vector<MatrixXd> reduce (MatrixXd omega,  VectorXd xi);
 
 
 	
