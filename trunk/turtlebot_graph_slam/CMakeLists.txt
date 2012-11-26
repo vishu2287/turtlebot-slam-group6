@@ -29,6 +29,7 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #rosbuild_add_executable(example examples/example.cpp)
 #target_link_libraries(example ${PROJECT_NAME})
 
+rosbuild_add_executable(turtlebot_graph_slam  src/feature_extractor.cpp)
 rosbuild_add_executable(turtlebot_graph_slam  src/test.cpp)
 rosbuild_add_executable(turtlebot_graph_slam  src/graph_init.cpp)
 rosbuild_add_executable(turtlebot_graph_slam  src/linearize.cpp)
