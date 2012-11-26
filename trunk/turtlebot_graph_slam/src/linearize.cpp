@@ -35,8 +35,8 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
 
        // line 6, init Gt
        Matrix3d Gt = Matrix3d::Identity();
-       Gt(0, 3) = - (+vt/wt*cos(mu(2,t)) + vt/wt*cos(mu(2,t) + wt*deltaT));
-       Gt(1, 3) = (-vt/wt*sin(mu(2,t)) + vt/wt*sin(mu(2,t) + wt*deltaT));
+       Gt(0, 2) = - (+vt/wt*cos(mu(2,t)) + vt/wt*cos(mu(2,t) + wt*deltaT));
+       Gt(1, 2) = (-vt/wt*sin(mu(2,t)) + vt/wt*sin(mu(2,t) + wt*deltaT));
 
        // Prepare line 7 & 8, create G^T with additional row, value 1
        MatrixXd GtTrans = MatrixXd::Constant(6, 3, 1);
@@ -55,8 +55,8 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
 
        //line 7:
        // int xt = t*3;
-       int xt1 = (t-1)*3;
-       Matrix4d add1 = GtTrans * RtInv * GtMinus; // 6x6
+       int xt1 = t*3;
+       MatrixXd add1 = GtTrans * RtInv * GtMinus; // 6x6
        omega.block(xt1, xt1, 6, 6) += add1;
 
        //@TODO: Add to Omega at x(t+1) and x(t). just in case
@@ -71,7 +71,7 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
       // omega.block(xt1, xt1, 3, 3)+=xt1xt1;
 
        //line 8:
-       Vector4d add2 = GtTrans * RtInv * (xt - Gt * mu.col(t));
+       VectorXd add2 = GtTrans * RtInv * (xt - Gt * mu.col(t));
        //@TODO: Add to Xi at x(t+1) and x(t)
        Xi.block(xt1, 0, 6, 1) += add2;
 
@@ -123,13 +123,20 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
            // line 16
            Vector3d Zit;
            // @TODO check for correct indizes especially Sj
-           Zit << sqrtQ, atan2(delta(1), delta(2)) - mu(t, 2), z[t](i, j);
+           // @TODO here is a bug that need to be fixed, seems to be at least one of the indizes
+           std::cout << "start" << std::endl;
+           std::cout << "t=" << t << "; i=" << i << "; j=" << j << std::endl;
+           std::cout << "mu: " << mu.cols() << "; " << mu.rows() << std::endl;
+           std::cout << "z[t]: " << z[t].cols() << "; " << z[t].rows() << std::endl;
+           Zit << sqrtQ, atan2(delta(1), delta(0)) - mu(t, 2), z[t](i, j);
+           std::cout << "end" << std::endl;
            // line 17
            MatrixXd Hit(6, 3);
            Hit.row(0) << -sqrtQ * delta(0), -sqrtQ * delta(1), 0, sqrtQ * delta(0), sqrtQ * delta(1), 0;
            Hit.row(1) << delta(1), -delta(0), -q, -delta(1), delta(0), 0;
            Hit.row(2) << 0, 0, 0, 0, 0, q;
            Hit /= q;
+           std::cout << "Line 18 start" << std::endl;
            // Line 18 & 19
            MatrixXd add1 = Hit.transpose() * Qt.inverse() * Hit;
            VectorXd muStar;
