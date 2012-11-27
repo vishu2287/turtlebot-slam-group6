@@ -40,13 +40,22 @@ MatrixXd graph_slam (MatrixXd u, std::vector<MatrixXd> z, int deltaT) {
 
     // Call linearize method
     MatrixXd omega = linearize(u, z, c, muPath, deltaT);
+//    VectorXd xi;
 //    std::cout << "omega = \n" << omega << std::endl;
 //    std::cout << "xi = \n" << xi << std::endl;
 
     // Call reduce method
 //    std::vector<MatrixXd> reduceResult = reduce(omega,xi);
-    //VectorXd xi_tilde = reduceResult.pop_back();
-    //MatrixXd omega_tilde = reduceResult.pop_back();
+//    VectorXd xi_tilde = reduceResult.pop_back();
+//    MatrixXd omega_tilde = reduceResult.pop_back();
+//    std::cout << "omega_tilde = \n" << omega << std::endl;
+//    std::cout << "xi_tilde = \n" << xi << std::endl;
+
+    // Call solve method
+//    MatrixXd sigma = solve(omega_tilde, xi_tilde, omega, xi);
+//    VectorXd mu;
+//    std::cout << "sigma = \n" << omega << std::endl;
+//    std::cout << "mu = \n" << xi << std::endl;
 
 //	int d = 15;
 //	MatrixXd omega_tilde = MatrixXd::Random(d, d);
