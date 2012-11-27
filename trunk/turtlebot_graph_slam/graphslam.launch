@@ -1,4 +1,5 @@
 <launch>
+ <param name="/use_sim_time" value="true" />
  <node pkg="stage" type="stageros" name="stageros" args="$(find turtlebot_slam)/world/swarmlab_single_turtle.world" respawn="false" 	output="screen" />
  	<node name="turtlebot_graph_slam" pkg="turtlebot_graph_slam" type="turtlebot_graph_slam" output="screen" /> 
 </launch>
