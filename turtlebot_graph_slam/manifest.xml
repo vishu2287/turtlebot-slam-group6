@@ -18,6 +18,8 @@
   <depend package="actionlib"/>
   <depend package="move_base"/>
   <depend package="nav_msgs"/>
+  <depend package="laser_geometry"/>
+<depend package="tf"/>
 
 
 </package>
