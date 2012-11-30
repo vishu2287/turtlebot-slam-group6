@@ -14,8 +14,8 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
 	   numberLandmarks += z[i].cols();
    }
    // size of omega and Xi = number of measurements + number of map features
-   MatrixXd omega = MatrixXd::Zero(3*(mu.cols() + numberLandmarks), 3*(mu.cols() + numberLandmarks));
-   VectorXd xi = VectorXd::Zero(3*(mu.cols() + numberLandmarks), 1);
+   MatrixXd omega = MatrixXd::Zero(3*(u.cols() + 3*numberLandmarks), 3*(u.cols() + 3*numberLandmarks));
+   VectorXd xi = VectorXd::Zero(3*(u.cols() + 3*numberLandmarks), 1);
    Matrix3d inf = Matrix3d::Identity() * DBL_MAX;
    omega.topLeftCorner(3, 3) = inf;
    Vector3d xt;
@@ -25,8 +25,8 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
    for(int t = 0; t<u.cols(); t++)
    {
        // line 5, init xt
-       double vt = u(0,t);
-       double wt = u(1,t);
+       double vt = u(0, t);
+       double wt = u(1, t);
        xt(0) = mu(0, t) + (-vt/wt*sin(mu(2,t)) + vt/wt*sin(mu(2,t) + wt*deltaT));
        xt(1) = mu(1, t) + (+vt/wt*cos(mu(2,t)) - vt/wt*cos(mu(2,t) + wt*deltaT));
        xt(2) = mu(2, t) + (wt*deltaT);
@@ -110,7 +110,32 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
        {
            // line 13
            // each c[t] as one row, like a transposed vector
+           // mu has u.cols() + 1 columns of robot poses. 
            int j = c[t](0, i);
+
+           //Calculating x and y coordinate of the features and adding them to mu
+           if(mu.cols() < u.cols()+ 1 + j + 1) { 
+            std::cout << "Adding cols for z["<< t <<"]"<< std::endl;
+              MatrixXd newMu(3, mu.cols() + z[t].cols());
+              newMu.block(0, 0, 3, mu.cols()) = mu;
+              int index = mu.cols();
+              for (int k = 0; k < z[t].cols(); k++) {
+
+                Vector3d feature = z[t].col(k);
+                // x     =    r       * cos(phi        - theta      ) + x of pos
+                double x = feature(0) * cos(feature(1) - mu(2, t)) + mu(0, t);
+                // y     =    r       * sin(phi        - theta      ) + y of pos
+                double y = feature(0) * sin(feature(1) - mu(2, t)) + mu(1, t);
+                newMu(0, index) = x;
+                newMu(1, index) = y;
+                newMu(2, index) = 0;
+                //Only the first and the second element of the feature entries in mu are filled. The orientation is always 0.
+                index++;
+             }   
+             mu = newMu;  
+           }
+           std::cout << "THE mu = \n" << mu << std::endl;
+          
 
            /*
             * THIS IS A CRITICAL STEP:
@@ -120,53 +145,63 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
             * THE REST OF THE CODE, THATS WHY IT IS COMMENTED FOR NOW.
             */
 
-//           // line 14
-//           Vector2d delta;
-//           delta << mu(j, 0) - mu(t, 0), mu(j, 1) - mu(t, 1);
-//           // line 15
-//           int q = delta(0) * delta(0) + delta(1) * delta(1);
-//           double sqrtQ = sqrt(q);
-//           // line 16
-//           Vector3d Zit;
-//           // @TODO check for correct indizes especially Sj
-//           // @TODO here is a bug that need to be fixed, seems to be at least one of the indizes
+           // line 14
+           Vector2d delta;
+           delta << mu(0, u.cols() + 1 + j) - mu(0, t), mu(1, u.cols() + 1 + j) - mu(1, t);
+           // std::cout << "linearize line 14: delta = \n" << delta << std::endl;
+          
+           // line 15
+           double q = delta(0) * delta(0) + delta(1) * delta(1);
+           // std::cout << "q =  \n" << q << std::endl;
+           double sqrtQ = sqrt(q);
+           // line 16
+           Vector3d Zit;
+           // @TODO check for correct indizes especially Sj <--
+           // @TODO here is a bug that need to be fixed, seems to be at least one of the indizes
 //           std::cout << "start" << std::endl;
 //           std::cout << "t=" << t << "; i=" << i << "; j=" << j << std::endl;
 //           std::cout << "mu: " << mu.cols() << "; " << mu.rows() << std::endl;
 //           std::cout << "z[t]: " << z[t].cols() << "; " << z[t].rows() << std::endl;
-//           Zit << sqrtQ, atan2(delta(1), delta(0)) - mu(t, 2), z[t](i, j);
+           Zit << sqrtQ, atan2(delta(1), delta(0)) - mu(2, t), mu(2, u.cols() + 1+ j); //<-- Last element = Sj
+//           std::cout << "Zit =  \n" << Zit << std::endl;
 //           std::cout << "end" << std::endl;
-//           // line 17
-//           MatrixXd Hit(6, 3);
-//           Hit.row(0) << -sqrtQ * delta(0), -sqrtQ * delta(1), 0, sqrtQ * delta(0), sqrtQ * delta(1), 0;
-//           Hit.row(1) << delta(1), -delta(0), -q, -delta(1), delta(0), 0;
-//           Hit.row(2) << 0, 0, 0, 0, 0, q;
-//           Hit /= q;
+           // line 17
+           MatrixXd Hit(3, 6);
+           Hit.row(0) << -sqrtQ * delta(0), -sqrtQ * delta(1), 0, sqrtQ * delta(0), sqrtQ * delta(1), 0; // + signs in the book page 348 line 17
+           Hit.row(1) << delta(1), -delta(0), -q, -delta(1), delta(0), 0;
+           Hit.row(2) << 0, 0, 0, 0, 0, q;
+//           std::cout << "Hit =  \n" << Hit << std::endl;
+           Hit /= q;
+//           std::cout << "Hit =  \n" << Hit << std::endl;
 //           std::cout << "Line 18 start" << std::endl;
-//           // Line 18 & 19
-//           MatrixXd add1 = Hit.transpose() * Qt.inverse() * Hit;
-//           VectorXd muStar;
-//
-//
-//          int xt = t*3;
-//          int mj = mu.cols()*3+j*3;
-//          Matrix3d xtxt = add1.topLeftCorner(3, 3);
-//          Matrix3d xtmj = add1.topRightCorner(3, 3);
-//          Matrix3d mjxt = add1.bottomLeftCorner(3, 3);
-//          Matrix3d mjmj = add1.bottomRightCorner(3, 3);
-//
-//          omega.block(xt, xt, 3, 3)+=xtxt;
-//          omega.block(xt, mj, 3, 3)+=xtmj;
-//          omega.block(mj, xt, 3, 3)+=mjxt;
-//          omega.block(mj,mj, 3, 3)+=mjmj;
-//          // @Todo;6th element is mu(j, s) according to book, but might be a mistake
-//          // replaced with mu(j, theta)
-//          muStar << mu(t, 0), mu(t, 1), mu(t, 2), mu(j, 0), mu(j, 1), mu(j, 2);
-//          VectorXd add2 = Hit.transpose() * Qt.inverse() * (z[t].col(i) - Zit + Hit * muStar);
-//          Vector3d xtT = add2.segment(0,3);
-//          Vector3d xtB = add2.segment(3,3);
-//          xi.block(xt, 0, 3, 0)+=xtT;
-//          xi.block(mj, 0, 3, 0)+= xtB;
+           // Line 18 & 19  
+           MatrixXd add1 = Hit.transpose() * Qt.inverse() * Hit;
+           VectorXd muStar(6);
+
+           std::cout << "This will be added to omega =  \n" << add1 << std::endl;
+
+           int xt = t*3;
+           int mj = (u.cols()+1)*3+j*3;
+           Matrix3d xtxt = add1.topLeftCorner(3, 3);
+           Matrix3d xtmj = add1.topRightCorner(3, 3);
+           Matrix3d mjxt = add1.bottomLeftCorner(3, 3);
+           Matrix3d mjmj = add1.bottomRightCorner(3, 3);
+
+           omega.block(xt, xt, 3, 3)+=xtxt;
+           omega.block(xt, mj, 3, 3)+=xtmj;
+           omega.block(mj, xt, 3, 3)+=mjxt;
+           omega.block(mj,mj, 3, 3)+=mjmj;
+           // std::cout << "omega =  \n" << omega << std::endl; // not a good idea apparently...
+           // @Todo;6th element is mu(j, s) according to book, but might be a mistake
+           // replaced with mu(j, theta) which is always 0 right now!
+           muStar << mu(0, t), mu(1, t), mu(2, t), mu(0, u.cols() + 1 + j), mu(1, u.cols() + 1 + j), mu(2, u.cols() + 1 + j);
+           // std::cout << "the big mu vector  =  \n" << muStar << std::endl;
+           VectorXd add2 = Hit.transpose() * Qt.inverse() * (z[t].col(i) - Zit + Hit * muStar);
+           Vector3d xtT = add2.segment(0,3);
+           Vector3d xtB = add2.segment(3,3);
+           std::cout << "This will be added to xi =  \n" << add2 << std::endl;
+           xi.block(xt, 0, 3, 1)+=xtT;
+           xi.block(mj, 0, 3, 1)+= xtB;
 
        }
    }

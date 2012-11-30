@@ -33,7 +33,7 @@ void callback(const ros::TimerEvent&) { // Always call graph slam for new laser 
 
 	// Call the graph slam algorithm with unknown correspondences
 	MatrixXd mu = graph_slam(u, z, deltaT);
-	std::cout << "mu = \n" << mu << std::endl;
+	std::cout << "last mu = \n" << mu << std::endl;
 };
 
 int main(int argc, char **argv) {
