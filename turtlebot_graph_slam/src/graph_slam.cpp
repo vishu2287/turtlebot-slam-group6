@@ -39,7 +39,7 @@ MatrixXd graph_slam (MatrixXd u, std::vector<MatrixXd> z, int deltaT) {
 	std::cout << "muPath = \n" << muPath << std::endl;
 
     // Call linearize method
-    MatrixXd omega = linearize(u, z, c, muPath, deltaT);
+    //MatrixXd omega = linearize(u, z, c, muPath, deltaT);
 //    VectorXd xi;
 //    std::cout << "omega = \n" << omega << std::endl;
 //    std::cout << "xi = \n" << xi << std::endl;
