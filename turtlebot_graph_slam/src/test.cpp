@@ -11,7 +11,7 @@
 using namespace Eigen;
 	ros::Publisher point_cloud_publisher_;
 	ros::Publisher occupub;
-std::vector <Vector2d> odoms; //Odometry saver
+//std::vector <Vector2d> odoms; //Odometry saver
 int t = 0;
 int deltaT = 1;
 MatrixXd u = MatrixXd::Zero(2, 1);
@@ -39,7 +39,7 @@ void vel_callback(const geometry_msgs::Twist &msg) { // Always call graph slam f
 	Vector2d odometry = Vector2d::Zero(2, 1);
 	odometry[0] = speed;
 	odometry[1] = angular+=0.0000000001;
-	odoms.push_back(odometry);
+	//odoms.push_back(odometry);
    	 ROS_INFO_STREAM("Robot speed linear:"<< odometry[0]);
 	 ROS_INFO_STREAM("Robot speed angular:"<< odometry[1]);
 	// Increment time t
