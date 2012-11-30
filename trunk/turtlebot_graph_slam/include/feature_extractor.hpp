@@ -6,4 +6,5 @@
 #include <std_msgs/String.h>
 #include <sensor_msgs/LaserScan.h>
 #include <Eigen/Dense>
-double feature_extractor (const sensor_msgs::LaserScan::ConstPtr& msg,ros::Publisher publisher,ros::Publisher occupub);
+using namespace Eigen;
+MatrixXd  feature_extractor (const sensor_msgs::LaserScan::ConstPtr& msg,ros::Publisher publisher,ros::Publisher occupub);
