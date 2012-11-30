@@ -18,6 +18,7 @@
   const static double MAX_SCAN_ANGLE_RAD = +10.0/180*M_PI;
   const static float PROXIMITY_RANGE_M = 1; // Should be smaller than sensor_msgs::LaserScan::range_max
 double feature_extractor (const sensor_msgs::LaserScan::ConstPtr& msg,ros::Publisher publisher,ros::Publisher occupub){
+
 /*		Populate a Occupancy Grid
 --------------------------------------------------------------------------------------*/
   /*int SIZE = 2000; //Size of the occupancygrid
@@ -37,6 +38,7 @@ double feature_extractor (const sensor_msgs::LaserScan::ConstPtr& msg,ros::Publi
 -------------------------------------------------------------------------------------------*/
       unsigned int minIndex = ceil((MIN_SCAN_ANGLE_RAD - msg->angle_min) / msg->angle_increment);
       unsigned int maxIndex = ceil((MAX_SCAN_ANGLE_RAD - msg->angle_min) / msg->angle_increment);
+    //  MatrixXD z = MatrixXD::
       float closestRange = msg->ranges[minIndex];
       std::vector<int> laserpose;
       for (unsigned int currIndex = minIndex + 1; currIndex < maxIndex; currIndex++) {
@@ -45,6 +47,7 @@ double feature_extractor (const sensor_msgs::LaserScan::ConstPtr& msg,ros::Publi
        	
 	}
       }
+
 /*			START CREATING CLOUD 
 ----------------------------------------------------------------------*/
    /* tf::TransformListener tfListener_;
