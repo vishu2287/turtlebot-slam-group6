@@ -32,9 +32,9 @@ void rob_callback(const ros::TimerEvent&) { // Always call graph slam for new la
 robotpos(0,0,0,0,0);
 }
 void vel_callback(const geometry_msgs::Twist &msg) { // Always call graph slam for new laser readings
-speed = sqrt(msg.linear.x*msg.linear.x+msg.linear.y*msg.linear.y);
-angular = msg.angular.z;
-feature_extractor(savescan,point_cloud_publisher_,occupub);
+	speed = sqrt(msg.linear.x*msg.linear.x+msg.linear.y*msg.linear.y);
+	angular = msg.angular.z;
+	feature_extractor(savescan,point_cloud_publisher_,occupub);
 
 	Vector2d odometry = Vector2d::Zero(2, 1);
 	odometry[0] = speed;
@@ -61,14 +61,14 @@ feature_extractor(savescan,point_cloud_publisher_,occupub);
 	// Call the graph slam algorithm with unknown correspondences
 	MatrixXd mu = graph_slam(u, z, deltaT);
 	std::cout << "mu = \n" << mu << std::endl;
-flag = false; 
+	flag = false; 
 }
 int main(int argc, char **argv) {
 	 
 	ros::init(argc, argv, "test");
 	ros::NodeHandle n;
 	ros::Timer timer = n.createTimer(ros::Duration(1.0), rob_callback);
-	  ros::Subscriber laserSub = n.subscribe("base_scan", 100, callback);
+        ros::Subscriber laserSub = n.subscribe("base_scan", 100, callback);
 	ros::Subscriber velSub = n.subscribe("cmd_vel", 100, vel_callback);
 	point_cloud_publisher_ = n.advertise<sensor_msgs::PointCloud> ("/cloud", 100,false);
 	occupub = n.advertise<nav_msgs::OccupancyGrid> ("/world", 100,false);
