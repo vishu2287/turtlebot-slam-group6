@@ -9,15 +9,14 @@
 #include <tf/transform_listener.h>
 #include <laser_geometry/laser_geometry.h>
 #include "nav_msgs/OccupancyGrid.h"
+using namespace Eigen;
 //https://gt-ros-pkg.googlecode.com/svn-history/r2368/trunk/hrl/simple_occupancy_grid/src/occupancy_grid.cpp
 //http://cs225turtle.googlecode.com/svn/trunk/project2/local_obstacles/src/local_obstacles.cpp
   int laserscancount = 0;
-//laser_geometry::LaserProjection projector;
-//tf::TransformListener listener;
   const static double MIN_SCAN_ANGLE_RAD = -10.0/180*M_PI;
   const static double MAX_SCAN_ANGLE_RAD = +10.0/180*M_PI;
   const static float PROXIMITY_RANGE_M = 1; // Should be smaller than sensor_msgs::LaserScan::range_max
-double feature_extractor (const sensor_msgs::LaserScan::ConstPtr& msg,ros::Publisher publisher,ros::Publisher occupub){
+MatrixXd feature_extractor (const sensor_msgs::LaserScan::ConstPtr& msg,ros::Publisher publisher,ros::Publisher occupub){
 
 /*		Populate a Occupancy Grid
 --------------------------------------------------------------------------------------*/
@@ -38,14 +37,23 @@ double feature_extractor (const sensor_msgs::LaserScan::ConstPtr& msg,ros::Publi
 -------------------------------------------------------------------------------------------*/
       unsigned int minIndex = ceil((MIN_SCAN_ANGLE_RAD - msg->angle_min) / msg->angle_increment);
       unsigned int maxIndex = ceil((MAX_SCAN_ANGLE_RAD - msg->angle_min) / msg->angle_increment);
-    //  MatrixXD z = MatrixXD::
       float closestRange = msg->ranges[minIndex];
       std::vector<int> laserpose;
+      int lasercount =maxIndex-minIndex;
+
+      MatrixXd Z = MatrixXd::Zero(3,lasercount);
+      double rad = MIN_SCAN_ANGLE_RAD;		
       for (unsigned int currIndex = minIndex + 1; currIndex < maxIndex; currIndex++) {
+	
+	Z(0,currIndex-minIndex) = msg->ranges[currIndex];
+	Z(1,currIndex-minIndex) = rad;
+	Z(2,currIndex-minIndex) = 0;
         if (msg->ranges[currIndex] < msg->range_max) {
           laserpose.push_back(currIndex);		//Get obstacle positions
-       	
+       	  
 	}
+	rad +=msg->angle_increment;
+	      std::cout << "Z = \n" << rad<< std::endl;
       }
 
 /*			START CREATING CLOUD 
@@ -85,5 +93,5 @@ double feature_extractor (const sensor_msgs::LaserScan::ConstPtr& msg,ros::Publi
 			}
  publisher.publish(cloud);
  occupub.publish(og);*/
-return 0;
+return Z;
 }
