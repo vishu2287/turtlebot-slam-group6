@@ -105,6 +105,7 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
        Qt(1,1) = sigSqPhi;
        Qt(2,2) = sigSqS;
 
+
        // line 12, inner loop over each matrix, extracting the features
        for (int i = 0; i < z[t].cols(); i++)
        {
@@ -114,7 +115,7 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
            int j = c[t](0, i);
 
            //Calculating x and y coordinate of the features and adding them to mu
-           if(mu.cols() < u.cols()+ 1 + j + 1) { 
+           if(mu.cols() < u.cols()+ 1 + z[t].cols()) { 
             std::cout << "Adding cols for z["<< t <<"]"<< std::endl;
               MatrixXd newMu(3, mu.cols() + z[t].cols());
               newMu.block(0, 0, 3, mu.cols()) = mu;
@@ -128,7 +129,7 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
                 double y = feature(0) * sin(feature(1) - mu(2, t)) + mu(1, t);
                 newMu(0, index) = x;
                 newMu(1, index) = y;
-                newMu(2, index) = 0;
+                newMu(2, index) = 1;
                 //Only the first and the second element of the feature entries in mu are filled. The orientation is always 0.
                 index++;
              }   
@@ -163,16 +164,17 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
 //           std::cout << "mu: " << mu.cols() << "; " << mu.rows() << std::endl;
 //           std::cout << "z[t]: " << z[t].cols() << "; " << z[t].rows() << std::endl;
            Zit << sqrtQ, atan2(delta(1), delta(0)) - mu(2, t), mu(2, u.cols() + 1+ j); //<-- Last element = Sj
-//           std::cout << "Zit =  \n" << Zit << std::endl;
+          // std::cout << "Zit =  \n" << Zit << std::endl;
 //           std::cout << "end" << std::endl;
            // line 17
            MatrixXd Hit(3, 6);
            Hit.row(0) << -sqrtQ * delta(0), -sqrtQ * delta(1), 0, sqrtQ * delta(0), sqrtQ * delta(1), 0; // + signs in the book page 348 line 17
            Hit.row(1) << delta(1), -delta(0), -q, -delta(1), delta(0), 0;
            Hit.row(2) << 0, 0, 0, 0, 0, q;
-//           std::cout << "Hit =  \n" << Hit << std::endl;
+          // std::cout << "Hit =  \n" << Hit << std::endl;
            Hit /= q;
-//           std::cout << "Hit =  \n" << Hit << std::endl;
+          // std::cout << "Hit =  \n" << Hit << std::endl;
+          // std::cout << "Qt inv =  \n" << Qt.inverse() << std::endl;
 //           std::cout << "Line 18 start" << std::endl;
            // Line 18 & 19  
            MatrixXd add1 = Hit.transpose() * Qt.inverse() * Hit;
@@ -199,7 +201,7 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
            VectorXd add2 = Hit.transpose() * Qt.inverse() * (z[t].col(i) - Zit + Hit * muStar);
            Vector3d xtT = add2.segment(0,3);
            Vector3d xtB = add2.segment(3,3);
-           std::cout << "This will be added to xi =  \n" << add2 << std::endl;
+           // std::cout << "This will be added to xi =  \n" << add2 << std::endl;
            xi.block(xt, 0, 3, 1)+=xtT;
            xi.block(mj, 0, 3, 1)+= xtB;
 
