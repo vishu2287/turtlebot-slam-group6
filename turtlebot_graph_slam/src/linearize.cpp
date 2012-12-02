@@ -23,56 +23,61 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
    // line 4, start first loop
    // t is shifted by one, so t = t-1 according to the algorithm
    for(int t = 0; t<u.cols(); t++)
-   {
-       // line 5, init xt
-       double vt = u(0, t);
-       double wt = u(1, t);
-       xt(0) = mu(0, t) + (-vt/wt*sin(mu(2,t)) + vt/wt*sin(mu(2,t) + wt*deltaT));
-       xt(1) = mu(1, t) + (+vt/wt*cos(mu(2,t)) - vt/wt*cos(mu(2,t) + wt*deltaT));
-       xt(2) = mu(2, t) + (wt*deltaT);
+    {
+        // line 5, init xt
+        double vt = u(0, t);
+        double wt = u(1, t);
+        xt(0) = mu(0, t) + (-vt/wt*sin(mu(2,t)) + vt/wt*sin(mu(2,t) + wt*deltaT));
+        xt(1) = mu(1, t) + (+vt/wt*cos(mu(2,t)) - vt/wt*cos(mu(2,t) + wt*deltaT));
+        xt(2) = mu(2, t) + (wt*deltaT);
 
-       // line 6, init Gt
-       Matrix3d Gt = Matrix3d::Identity();
-       Gt(0, 2) = - (+vt/wt*cos(mu(2,t)) + vt/wt*cos(mu(2,t) + wt*deltaT));
-       Gt(1, 2) = (-vt/wt*sin(mu(2,t)) + vt/wt*sin(mu(2,t) + wt*deltaT));
+        // line 6, init Gt
+        Matrix3d Gt = Matrix3d::Identity();
+        Gt(0, 2) = - (+vt/wt*cos(mu(2,t)) + vt/wt*cos(mu(2,t) + wt*deltaT));
+        Gt(1, 2) = (-vt/wt*sin(mu(2,t)) + vt/wt*sin(mu(2,t) + wt*deltaT));
+        std::cout << "Gt = \n" << Gt << std::endl;
 
-       // Prepare line 7 & 8, create G^T with additional row, value 1
-       MatrixXd GtTrans = MatrixXd::Constant(6, 3, 1);
-       GtTrans.topLeftCorner(3, 3) = -Gt.transpose();
-       GtTrans.bottomLeftCorner(3, 3) = Matrix3d::Identity();
+        // Prepare line 7 & 8, create G^T with additional row, value 1
+        MatrixXd GtTrans(6, 3);
+        GtTrans.topLeftCorner(3, 3) = -Gt.transpose();
+        GtTrans.bottomLeftCorner(3, 3) = Matrix3d::Identity();
+        std::cout << "GtTrans = \n" << GtTrans << std::endl;
 
-       // prepare line 7 & 8, create -G with additional column, value 1
-       MatrixXd GtMinus = MatrixXd::Constant(3, 6, 1);
-       GtMinus.topLeftCorner(3, 3) = Gt;
-       GtMinus.bottomLeftCorner(3, 3) = Matrix3d::Identity();
+        // prepare line 7 & 8, create -G with additional column, value 1
+        MatrixXd GtMinus(3, 6);
+        GtMinus.topLeftCorner(3, 3) = -Gt;
+        GtMinus.topRightCorner(3, 3) = Matrix3d::Identity();
+        std::cout << "GtMinus = \n" << GtMinus << std::endl;
 
-       // create R^-1, @TODO where to get Rt??
-       Matrix3d Rt = Matrix3d::Identity();
-       Matrix3d RtInv = Rt.inverse();
+        // create R^-1, @TODO where to get Rt??
+        Matrix3d Rt = Matrix3d::Identity();
+        Matrix3d RtInv = Rt.inverse();
+        std::cout << "Rt = \n" << Rt << std::endl;
 
-       //line 7:
-       // int xt = t*3;
-       int xt1 = t*3;
-       MatrixXd add1 = GtTrans * RtInv * GtMinus; // 6x6
-       omega.block(xt1, xt1, 6, 6) += add1;
+        //line 7:
+        // int xt = t*3;
+        int xt1 = t*3;
+        MatrixXd add1 = GtTrans * RtInv * GtMinus; // 6x6
+        std::cout << "omegaAdd = \n" << add1 << std::endl;
+        omega.block(xt1, xt1, 6, 6) += add1;
 
-       //@TODO: Add to Omega at x(t+1) and x(t). just in case
-       // Matrix3d xtxt = add1.bottomRightCorner(3, 3);
-       // Matrix3d xt1xt = add1..topRightCorner(3, 3);
-       // Matrix3d xtxt1 = add1..bottomLeftCorner(3, 3);
-       // Matrix3d xt1xt1 = add1..topLeftCorner(3, 3);
+        //@TODO: Add to Omega at x(t+1) and x(t). just in case
+ //        Matrix3d xtxt = add1.bottomRightCorner(3, 3);
+ //        Matrix3d xt1xt = add1..topRightCorner(3, 3);
+ //        Matrix3d xtxt1 = add1..bottomLeftCorner(3, 3);
+ //        Matrix3d xt1xt1 = add1..topLeftCorner(3, 3);
 
-      // omega.block(xt, xt, 3, 3)+=xtxt;
-      // omega.block(xt, xt1, 3, 3)+=xtxt1;
-      // omega.block(xt1, xt, 3, 3)+=xt1xt;
-      // omega.block(xt1, xt1, 3, 3)+=xt1xt1;
+       // omega.block(xt, xt, 3, 3)+=xtxt;
+       // omega.block(xt, xt1, 3, 3)+=xtxt1;
+       // omega.block(xt1, xt, 3, 3)+=xt1xt;
+       // omega.block(xt1, xt1, 3, 3)+=xt1xt1;
 
-       //line 8:
-       VectorXd add2 = GtTrans * RtInv * (xt - Gt * mu.col(t));
-       //@TODO: Add to Xi at x(t+1) and x(t)
-       xi.block(xt1, 0, 6, 1) += add2;
+        //line 8:
+        VectorXd add2 = GtTrans * RtInv * (xt - Gt * mu.col(t));
+        //@TODO: Add to Xi at x(t+1) and x(t)
+        xi.block(xt1, 0, 6, 1) += add2;
 
-   } // end loop
+    } // end loop
 
    for(int t = 0 ; t < z.size() ; t++)
    {

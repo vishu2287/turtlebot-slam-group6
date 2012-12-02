@@ -13,8 +13,8 @@ MatrixXd graph_slam (MatrixXd u, std::vector<MatrixXd> z, int deltaT) {
 
 	// Print of the inputs
 	std::cout << "u = \n" << u << std::endl;
-	for (int i = 0; i < z.size(); i++)
-		std::cout << "z[" << i << "] = \n" << z.at(i) << std::endl;
+//	for (int i = 0; i < z.size(); i++)
+//		std::cout << "z[" << i << "] = \n" << z.at(i) << std::endl;
 
 	// Time t is equal to the number of columns in u
 	int t = u.cols();
@@ -31,15 +31,15 @@ MatrixXd graph_slam (MatrixXd u, std::vector<MatrixXd> z, int deltaT) {
 		}
 		c.push_back(newCorrespondence);
 	}
-	for (int i = 0; i < c.size(); i++)
-		std::cout << "c[" << i << "] = " << c.at(i) << std::endl;
+//	for (int i = 0; i < c.size(); i++)
+//		std::cout << "c[" << i << "] = " << c.at(i) << std::endl;
 
 	// Call initialize method
 	MatrixXd muPath = graph_init(u, deltaT);
 	std::cout << "muPath = \n" << muPath << std::endl;
 
     // Call linearize method
-    //MatrixXd omega = linearize(u, z, c, muPath, deltaT);
+    MatrixXd omega = linearize(u, z, c, muPath, deltaT);
 //    VectorXd xi;
 //    std::cout << "omega = \n" << omega << std::endl;
 //    std::cout << "xi = \n" << xi << std::endl;
