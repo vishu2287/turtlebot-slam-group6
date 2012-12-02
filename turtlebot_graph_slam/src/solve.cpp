@@ -4,23 +4,21 @@ using namespace Eigen;
 
 //Table 11.4 Page 349
 //@TODO: Implement
-MatrixXd solve(MatrixXd omega_tilde, VectorXd xi_tilde, MatrixXd omega,
-		VectorXd xi) {
+std::vector < MatrixXd > solve(MatrixXd omega_tilde, VectorXd xi_tilde, MatrixXd omega,
+		VectorXd xi, int t) {
 //	ROS_INFO("CALL SOLVE METHOD");
+	std::vector < MatrixXd > solution;
 
 	// Line 2
 	MatrixXd sigma = omega_tilde.inverse();
 
 	// Line 3
-	VectorXd mu = MatrixXd::Zero(omega.rows(), 1);
+	MatrixXd mu = MatrixXd::Zero(omega.rows(), 1);
 	mu.block(0, 0, sigma.rows(), 1) = sigma * xi_tilde;
-	std::cout << "mu = " << std::endl << mu << std::endl;
 
 //	std::cout << "omega = " << std::endl << omega << std::endl;
 //	std::cout << "omega rows = " << std::endl << omega << std::endl;
 
-// @todo: Determine t
-	int t = 2;
 	int j = 0;
 	for (int row = (t + 1) * 3; row < omega.rows(); row += 3) {
 
@@ -89,6 +87,8 @@ MatrixXd solve(MatrixXd omega_tilde, VectorXd xi_tilde, MatrixXd omega,
 //	std::cout << "sigma = \n" << sigma << std::endl;
 //	std::cout << "mu = \n" << mu << std::endl;
 
-	return sigma;
+	solution.push_back(mu);
+	solution.push_back(sigma);
+	return solution;
 }
 
