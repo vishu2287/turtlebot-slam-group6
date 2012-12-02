@@ -23,7 +23,7 @@ MatrixXd feature_extractor (const sensor_msgs::LaserScan::ConstPtr& msg,ros::Pub
   int SIZE = 2000; //Size of the occupancygrid
 
   nav_msgs::OccupancyGrid og;
-  og.info.resolution = 1;
+  og.info.resolution = 0.5;
   og.header.frame_id = "/world";
   og.info.origin.position.x = -SIZE/2;
   og.info.origin.position.y = -SIZE/2;
@@ -64,7 +64,7 @@ MatrixXd feature_extractor (const sensor_msgs::LaserScan::ConstPtr& msg,ros::Pub
      laser_geometry::LaserProjection projector_;
     try
     {
-            projector_.transformLaserScanToPointCloud("/base_link", *msg, cloud, tfListener_);	//Transform laser cloud to world frame
+            projector_.transformLaserScanToPointCloud("/world", *msg, cloud, tfListener_);	//Transform laser cloud to world frame
 
     }
     catch (tf::TransformException& e)
@@ -79,16 +79,16 @@ MatrixXd feature_extractor (const sensor_msgs::LaserScan::ConstPtr& msg,ros::Pub
 /*			UPDATE OCCUPANCY GRID
 ----------------------------------------------------------------------*/
     //PUBLISH OCCUPANCY GRID AND POINT CLOUD
-	//for(int i = 0; i<og.data.size();i++){
-	//	og.data[i] = -1;
-	//}
+    //for(int i = 0; i<og.data.size();i++){
+    //	og.data[i] = -1;
+    //}
 std::cout << "muStar =  \n" << std::endl;
 		   for(int i = 0; i < cloud.points.size();i++){
 			/// og.info.resolution
-			int grid_x = (unsigned int)((cloud.points[i].x - og.info.origin.position.x)/og.info.resolution);
-			int grid_y = (unsigned int)((cloud.points[i].y - og.info.origin.position.y)/og.info.resolution);
+            int grid_x = (unsigned int)((cloud.points[i].x - og.info.origin.position.x) * og.info.resolution);
+            int grid_y = (unsigned int)((cloud.points[i].y - og.info.origin.position.y) * og.info.resolution);
 			   // ROS_INFO_STREAM("Robot moved to position x:"<< (grid_x*2000)+grid_y);
-			og.data[(grid_x*2000)+grid_y] = 100;		//TODO somehow turn it
+            og.data[((grid_y*2000)+grid_x) * og.info.resolution] = 100;		//TODO somehow turn it
 				//ROS_INFO_STREAM("Robot moved to position x:"<< grid_y);
 			
 			}
