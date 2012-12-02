@@ -14,8 +14,8 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
 	   numberLandmarks += z[i].cols();
    }
    // size of omega and Xi = number of measurements + number of map features
-   MatrixXd omega = MatrixXd::Zero(3*(u.cols() + 3*numberLandmarks), 3*(u.cols() + 3*numberLandmarks));
-   VectorXd xi = VectorXd::Zero(3*(u.cols() + 3*numberLandmarks), 1);
+   MatrixXd omega = MatrixXd::Zero(3*(u.cols() + 1 + numberLandmarks), 3*(u.cols() + 1 + numberLandmarks));
+   VectorXd xi = VectorXd::Zero(3*(u.cols() + 1 + numberLandmarks), 1);
    Matrix3d inf = Matrix3d::Identity() * DBL_MAX;
    omega.topLeftCorner(3, 3) = inf;
    Vector3d xt;
@@ -35,30 +35,25 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
         Matrix3d Gt = Matrix3d::Identity();
         Gt(0, 2) = - (+vt/wt*cos(mu(2,t)) + vt/wt*cos(mu(2,t) + wt*deltaT));
         Gt(1, 2) = (-vt/wt*sin(mu(2,t)) + vt/wt*sin(mu(2,t) + wt*deltaT));
-        std::cout << "Gt = \n" << Gt << std::endl;
 
         // Prepare line 7 & 8, create G^T with additional row, value 1
         MatrixXd GtTrans(6, 3);
         GtTrans.topLeftCorner(3, 3) = -Gt.transpose();
         GtTrans.bottomLeftCorner(3, 3) = Matrix3d::Identity();
-        std::cout << "GtTrans = \n" << GtTrans << std::endl;
 
         // prepare line 7 & 8, create -G with additional column, value 1
         MatrixXd GtMinus(3, 6);
         GtMinus.topLeftCorner(3, 3) = -Gt;
         GtMinus.topRightCorner(3, 3) = Matrix3d::Identity();
-        std::cout << "GtMinus = \n" << GtMinus << std::endl;
 
         // create R^-1, @TODO where to get Rt??
         Matrix3d Rt = Matrix3d::Identity();
         Matrix3d RtInv = Rt.inverse();
-        std::cout << "Rt = \n" << Rt << std::endl;
 
         //line 7:
         // int xt = t*3;
         int xt1 = t*3;
         MatrixXd add1 = GtTrans * RtInv * GtMinus; // 6x6
-        std::cout << "omegaAdd = \n" << add1 << std::endl;
         omega.block(xt1, xt1, 6, 6) += add1;
 
         //line 8:
@@ -98,7 +93,7 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
        Qt(1,1) = sigSqPhi;
        Qt(2,2) = sigSqS;
 
-
+//       std::cout << "z = \n" << z.at(t) << std::endl;
        // line 12, inner loop over each matrix, extracting the features
        for (int i = 0; i < z[t].cols(); i++)
        {
@@ -109,7 +104,7 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
 
            //Calculating x and y coordinate of the features and adding them to mu
            if(mu.cols() < u.cols()+ 1 + j+1) { 
-            std::cout << "Adding cols for z["<< t <<"]"<< std::endl;
+//            std::cout << "Adding cols for z["<< t <<"]"<< std::endl;
               MatrixXd newMu(3, mu.cols() + z[t].cols());
               newMu.block(0, 0, 3, mu.cols()) = mu;
               int index = mu.cols();
@@ -128,8 +123,7 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
              }   
              mu = newMu;  
            }
-           std::cout << "THE mu = \n" << mu << std::endl;
-          
+//           std::cout << "THE mu = \n" << mu << std::endl;
 
            /*
             * THIS IS A CRITICAL STEP:
@@ -142,11 +136,13 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
            // line 14
            Vector2d delta;
            delta << mu(0, u.cols() + 1 + j) - mu(0, t), mu(1, u.cols() + 1 + j) - mu(1, t);
-           // std::cout << "linearize line 14: delta = \n" << delta << std::endl;
+//            std::cout << "delta = \n" << delta << std::endl;
           
            // line 15
            double q = delta(0) * delta(0) + delta(1) * delta(1);
-           // std::cout << "q =  \n" << q << std::endl;
+           if(q == 0)
+        	   q = 0.000000001;
+//            std::cout << "q =  \n" << q << std::endl;
            double sqrtQ = sqrt(q);
            // line 16
            Vector3d Zit;
@@ -164,7 +160,6 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
            Hit.row(0) << -sqrtQ * delta(0), -sqrtQ * delta(1), 0, sqrtQ * delta(0), sqrtQ * delta(1), 0; // + signs in the book page 348 line 17
            Hit.row(1) << delta(1), -delta(0), -q, -delta(1), delta(0), 0;
            Hit.row(2) << 0, 0, 0, 0, 0, q;
-          // std::cout << "Hit =  \n" << Hit << std::endl;
            Hit /= q;
           // std::cout << "Hit =  \n" << Hit << std::endl;
           // std::cout << "Qt inv =  \n" << Qt.inverse() << std::endl;
@@ -173,7 +168,7 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
            MatrixXd add1 = Hit.transpose() * Qt.inverse() * Hit;
            VectorXd muStar(6);
 
-           std::cout << "This will be added to omega =  \n" << add1 << std::endl;
+//           std::cout << "This will be added to omega =  \n" << add1 << std::endl;
 
            int xt = t*3;
            int mj = (u.cols()+1)*3+j*3;
@@ -190,16 +185,25 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
            // @Todo;6th element is mu(j, s) according to book, but might be a mistake
            // replaced with mu(j, theta) which is always 0 right now!
            muStar << mu(0, t), mu(1, t), mu(2, t), mu(0, u.cols() + 1 + j), mu(1, u.cols() + 1 + j), mu(2, u.cols() + 1 + j);
-           // std::cout << "the big mu vector  =  \n" << muStar << std::endl;
+//            std::cout << "the big mu vector  =  \n" << muStar << std::endl;
+//           std::cout << "Hit.transpose() =  \n" << Hit.transpose() << std::endl;
+//           std::cout << "Qt.inverse() =  \n" << Qt.inverse() << std::endl;
+//           std::cout << "z[t].col(i) =  \n" << z[t].col(i) << std::endl;
+//           std::cout << "Zit =  \n" << Zit << std::endl;
+//           std::cout << "Hit =  \n" << Hit << std::endl;
+//           std::cout << "muStar =  \n" << muStar << std::endl;
            VectorXd add2 = Hit.transpose() * Qt.inverse() * (z[t].col(i) - Zit + Hit * muStar);
+//            std::cout << "This will be added to xi at "<< xt << " - " << mj << " =  \n" << add2 << std::endl;
+
            Vector3d xtT = add2.segment(0,3);
            Vector3d xtB = add2.segment(3,3);
-           // std::cout << "This will be added to xi =  \n" << add2 << std::endl;
+
            xi.block(xt, 0, 3, 1)+=xtT;
            xi.block(mj, 0, 3, 1)+= xtB;
 
        }
    }
+//   std::cout << "xi =  \n" << xi << std::endl;
    return omega;
 }
 
