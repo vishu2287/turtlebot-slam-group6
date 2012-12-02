@@ -61,20 +61,8 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
         std::cout << "omegaAdd = \n" << add1 << std::endl;
         omega.block(xt1, xt1, 6, 6) += add1;
 
-        //@TODO: Add to Omega at x(t+1) and x(t). just in case
- //        Matrix3d xtxt = add1.bottomRightCorner(3, 3);
- //        Matrix3d xt1xt = add1..topRightCorner(3, 3);
- //        Matrix3d xtxt1 = add1..bottomLeftCorner(3, 3);
- //        Matrix3d xt1xt1 = add1..topLeftCorner(3, 3);
-
-       // omega.block(xt, xt, 3, 3)+=xtxt;
-       // omega.block(xt, xt1, 3, 3)+=xtxt1;
-       // omega.block(xt1, xt, 3, 3)+=xt1xt;
-       // omega.block(xt1, xt1, 3, 3)+=xt1xt1;
-
         //line 8:
         VectorXd add2 = GtTrans * RtInv * (xt - Gt * mu.col(t));
-        //@TODO: Add to Xi at x(t+1) and x(t)
         xi.block(xt1, 0, 6, 1) += add2;
 
     } // end loop
