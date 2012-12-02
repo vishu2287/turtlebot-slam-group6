@@ -8,8 +8,17 @@ using namespace Eigen;
 std::vector<MatrixXd> reduce (MatrixXd omega,  VectorXd xi, int t) {
 	std::vector<MatrixXd> solution;
 
-	MatrixXd omega_tilde = omega;			//Deep copy ? //Clone supported in eigen ? TODO
-  	MatrixXd xi_tilde = xi;
+	MatrixXd omega_tilde(omega.rows(), omega.cols());
+	MatrixXd xi_tilde(xi.rows(), xi.cols());
+	for(int row = 0; row<omega.rows(); row++)
+	{
+		for(int col = 0; col<omega.cols(); col++)
+		{
+			omega_tilde(row, col) = omega(row, col);
+		}
+		xi_tilde(row,0) = xi(row, 0);
+	}
+
 	const int savei = (t+1)*3;
   	for(int i = (t+1)*3; i < omega.rows(); i+=3){
 		std::vector<int> tau;
