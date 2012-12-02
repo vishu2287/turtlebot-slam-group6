@@ -20,17 +20,17 @@ MatrixXd feature_extractor (const sensor_msgs::LaserScan::ConstPtr& msg,ros::Pub
 
 /*		Populate a Occupancy Grid
 --------------------------------------------------------------------------------------*/
-  /*int SIZE = 2000; //Size of the occupancygrid
+  int SIZE = 2000; //Size of the occupancygrid
 
   nav_msgs::OccupancyGrid og;
-  og.info.resolution = 0.5;
+  og.info.resolution = 1;
   og.header.frame_id = "/world";
   og.info.origin.position.x = -SIZE/2;
   og.info.origin.position.y = -SIZE/2;
   og.header.stamp = ros::Time::now();
   og.info.width = SIZE;
   og.info.height = SIZE;
-  og.data.resize(SIZE * SIZE);*/
+  og.data.resize(SIZE * SIZE);
 
 
 /*		LASER SCANS
@@ -58,7 +58,7 @@ MatrixXd feature_extractor (const sensor_msgs::LaserScan::ConstPtr& msg,ros::Pub
 
 /*			START CREATING CLOUD 
 ----------------------------------------------------------------------*/
-   /* tf::TransformListener tfListener_;
+    tf::TransformListener tfListener_;
     tfListener_.setExtrapolationLimit(ros::Duration(0.1));
     sensor_msgs::PointCloud cloud;
      laser_geometry::LaserProjection projector_;
@@ -70,7 +70,7 @@ MatrixXd feature_extractor (const sensor_msgs::LaserScan::ConstPtr& msg,ros::Pub
     catch (tf::TransformException& e)
     {
         //std::cout << e.what();			//TODO Fix errors, they still occur decomment to see whats happening
-    }*/
+    }
    	 
 //grid_x = (unsigned int)((cloud.points[i].x - og.info.origin.position.x) / og.info.resolution);
 //grid_y = (unsigned int)((cloud.points[i].y - map.info.origin.position.y) / map.info.resolution);
@@ -82,7 +82,8 @@ MatrixXd feature_extractor (const sensor_msgs::LaserScan::ConstPtr& msg,ros::Pub
 	//for(int i = 0; i<og.data.size();i++){
 	//	og.data[i] = -1;
 	//}
-		  /* for(int i = 0; i < cloud.points.size();i++){
+std::cout << "muStar =  \n" << std::endl;
+		   for(int i = 0; i < cloud.points.size();i++){
 			/// og.info.resolution
 			int grid_x = (unsigned int)((cloud.points[i].x - og.info.origin.position.x)/og.info.resolution);
 			int grid_y = (unsigned int)((cloud.points[i].y - og.info.origin.position.y)/og.info.resolution);
@@ -92,6 +93,6 @@ MatrixXd feature_extractor (const sensor_msgs::LaserScan::ConstPtr& msg,ros::Pub
 			
 			}
  publisher.publish(cloud);
- occupub.publish(og);*/
+ occupub.publish(og);
 return Z;
 }
