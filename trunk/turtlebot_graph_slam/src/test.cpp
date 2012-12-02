@@ -51,7 +51,7 @@ void vel_callback(const nav_msgs::Odometry& msg) {
 		// Add new measurement matrix to z, n columns row 0 = range ; row 1 = angle in rad
 		Zs.push_back(feature_extractor(savescan,point_cloud_publisher_,occupub));	
 		//Declare Odometry here
-		speed = speed = sqrt((newX-prevX)*(newX-prevX) + (newY-prevY)*(newY*prevY));
+		speed = sqrt((newX-prevX)*(newX-prevX) + (newY-prevY)*(newY-prevY));
 		angular = newZ - prevZ;
 		//speed = sqrt(msg.linear.x*msg.linear.x+msg.linear.y*msg.linear.y);
 		// angular = msg.angular.z;
