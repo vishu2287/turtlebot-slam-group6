@@ -5,10 +5,9 @@ using namespace Eigen;
 
 //Table 11.3 Page 349
 //@TODO: Test Properly
-std::vector<MatrixXd> reduce (MatrixXd omega,  VectorXd xi) {
+std::vector<MatrixXd> reduce (MatrixXd omega,  VectorXd xi, int t) {
 	std::vector<MatrixXd> solution;
-	int t = 3; // This should be set to the current position of where features start TODO
-							
+
 	MatrixXd omega_tilde = omega;			//Deep copy ? //Clone supported in eigen ? TODO
   	MatrixXd xi_tilde = xi;
 	const int savei = (t+1)*3;
