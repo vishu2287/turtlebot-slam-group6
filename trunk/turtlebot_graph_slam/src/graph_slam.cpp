@@ -39,10 +39,11 @@ MatrixXd graph_slam (MatrixXd u, std::vector<MatrixXd> z, int deltaT) {
 	std::cout << "muPath = \n" << muPath << std::endl;
 
     // Call linearize method
-    MatrixXd omega = linearize(u, z, c, muPath, deltaT);
-//    VectorXd xi;
-//    std::cout << "omega = \n" << omega << std::endl;
-//    std::cout << "xi = \n" << xi << std::endl;
+    MatrixXd omegaAndXi = linearize(u, z, c, muPath, deltaT);
+    MatrixXd omega = omegaAndXi.topLeftCorner(omegaAndXi.rows(), omegaAndXi.rows());
+    VectorXd xi = omegaAndXi.topRightCorner(omegaAndXi.rows(),1);
+//    std::cout << "omega =  \n" << omega << std::endl;
+//    std::cout << "xi =  \n" << xi << std::endl;
 
     // Call reduce method
 //    std::vector<MatrixXd> reduceResult = reduce(omega,xi);

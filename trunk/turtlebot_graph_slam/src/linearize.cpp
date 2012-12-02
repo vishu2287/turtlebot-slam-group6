@@ -14,10 +14,14 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
 	   numberLandmarks += z[i].cols();
    }
    // size of omega and Xi = number of measurements + number of map features
-   MatrixXd omega = MatrixXd::Zero(3*(u.cols() + 1 + numberLandmarks), 3*(u.cols() + 1 + numberLandmarks));
+
+   /**
+    * NUMBER OF COLUMNS OF OMEGA IS EXTENDED BY 1 TO MAKE SPACE FOR XI, WHICH IS ADDED AT THE END
+    */
+   MatrixXd omegaAndXi = MatrixXd::Zero(3*(u.cols() + 1 + numberLandmarks), 3*(u.cols() + 1 + numberLandmarks)+1);
    VectorXd xi = VectorXd::Zero(3*(u.cols() + 1 + numberLandmarks), 1);
    Matrix3d inf = Matrix3d::Identity() * DBL_MAX;
-   omega.topLeftCorner(3, 3) = inf;
+   omegaAndXi.topLeftCorner(3, 3) = inf;
    Vector3d xt;
 
    // line 4, start first loop
@@ -54,7 +58,7 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
         // int xt = t*3;
         int xt1 = t*3;
         MatrixXd add1 = GtTrans * RtInv * GtMinus; // 6x6
-        omega.block(xt1, xt1, 6, 6) += add1;
+        omegaAndXi.block(xt1, xt1, 6, 6) += add1;
 
         //line 8:
         VectorXd add2 = GtTrans * RtInv * (xt - Gt * mu.col(t));
@@ -177,10 +181,10 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
            Matrix3d mjxt = add1.bottomLeftCorner(3, 3);
            Matrix3d mjmj = add1.bottomRightCorner(3, 3);
 
-           omega.block(xt, xt, 3, 3)+=xtxt;
-           omega.block(xt, mj, 3, 3)+=xtmj;
-           omega.block(mj, xt, 3, 3)+=mjxt;
-           omega.block(mj,mj, 3, 3)+=mjmj;
+           omegaAndXi.block(xt, xt, 3, 3)+=xtxt;
+           omegaAndXi.block(xt, mj, 3, 3)+=xtmj;
+           omegaAndXi.block(mj, xt, 3, 3)+=mjxt;
+           omegaAndXi.block(mj,mj, 3, 3)+=mjmj;
            // std::cout << "omega =  \n" << omega << std::endl; // not a good idea apparently...
            // @Todo;6th element is mu(j, s) according to book, but might be a mistake
            // replaced with mu(j, theta) which is always 0 right now!
@@ -203,7 +207,8 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
 
        }
    }
-//   std::cout << "xi =  \n" << xi << std::endl;
-   return omega;
+   // Add xi to omegaAndXi
+   omegaAndXi.topRightCorner(xi.rows(),1) = xi;
+   return omegaAndXi;
 }
 
