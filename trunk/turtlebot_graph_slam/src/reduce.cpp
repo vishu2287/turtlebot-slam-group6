@@ -10,14 +10,14 @@ std::vector<MatrixXd> reduce (MatrixXd omega,  VectorXd xi) {
 	int t = 3; // This should be set to the current position of where features start TODO
 							
 	MatrixXd omega_tilde = omega;			//Deep copy ? //Clone supported in eigen ? TODO
-  	VectorXd xi_tilde = xi;
+  	MatrixXd xi_tilde = xi;
 	const int savei = (t+1)*3;
   	for(int i = (t+1)*3; i < omega.rows(); i+=3){
 		std::vector<int> tau;
 		//Fill Tau here - i because matrix length changes
-		for(int z = 0; z < ((t+1)*3-i) ; z+=3){		
-			//If any of these values is nonzero, a correspondence between pose and landmark has been found!	
-			if(omega(i,z)!=0  ||  omega(i,z+1)!=0  ||  omega(i,z+2)!=0  
+		for(int z = 0; z < ((t+1)*3-i) ; z+=3){
+			//If any of these values is nonzero, a correspondence between pose and landmark has been found!
+			if(omega(i,z)!=0  ||  omega(i,z+1)!=0  ||  omega(i,z+2)!=0
 			|| omega(i+1,z)!=0||  omega(i+1,z+1)!=0||  omega(i+1,z+2)!=0
 			|| omega(i+2,z)!=0||  omega(i+2,z+1)!=0||  omega(i+2,z+2)!=0)
 				//Save the Pose in Tau
@@ -27,15 +27,15 @@ std::vector<MatrixXd> reduce (MatrixXd omega,  VectorXd xi) {
 	//---------------------------------------------------------------------------------------------------------
 		Matrix3d temp_omega_jj_inverse;
 		//omega_tilde.block(i,i,3,3) would be the same here
-						
+
 		temp_omega_jj_inverse << omega_tilde(savei,savei), omega_tilde(savei,savei+1), omega_tilde(savei,savei+2),
 				    omega_tilde(savei+1,savei), omega_tilde(savei+1,savei+1), omega_tilde(savei+1,savei+2),
 			            omega_tilde(savei+2,savei), omega_tilde(savei+2,savei+1), omega_tilde(savei+2,savei+2);
-		Matrix3d omega_jj_inverse = temp_omega_jj_inverse.inverse();	
+		Matrix3d omega_jj_inverse = temp_omega_jj_inverse.inverse();
 		// construct a new Matrix with rows being the poses and columns being j
 		MatrixXd omega_tilde_part_left = MatrixXd::Zero(tau.size()*3,3);
-	
-		
+
+
 		for(int z = 0; z<tau.size()*3;z+=3){
 			omega_tilde_part_left.block(z,0,3,3) += omega_tilde.block(tau[z/3],tau[z/3],3,3);
 			//THIS should contain all poses in the end
@@ -50,12 +50,12 @@ std::vector<MatrixXd> reduce (MatrixXd omega,  VectorXd xi) {
 		}
 
         //subtract (OmegaTilde Tau(j),j) times (Omega j,j inverse) times Omega(j,Tau(j)) from Omega tilde at Pose Tau(j) and m(j)
-	//---------------------------------------------------------------------------------------------------------	
+	//---------------------------------------------------------------------------------------------------------
 		MatrixXd omega_tilde_part_right = MatrixXd::Zero(3,tau.size()*3);
-				
+
 		for(int z = 0; z<tau.size()*3;z+=3){
 			omega_tilde_part_right.block(0,z,3,3) += omega_tilde.block(tau[z/3],tau[z/3],3,3);
-		
+
 		}
 		MatrixXd solvingmatrix = omega_tilde_part_left * omega_jj_inverse *omega_tilde_part_right ;
 		for(int z = 0; z<tau.size()*3;z+=3){
@@ -77,7 +77,7 @@ std::vector<MatrixXd> reduce (MatrixXd omega,  VectorXd xi) {
 			final_xi.block(savei,0,xi_tilde.rows()-(savei+3),1)+=xi_tilde.block(savei+3,0,xi_tilde.rows()-(savei+3),1);
 		}
 		//Removal of mj from final_xi works.
-				
+
 		//Matrix Removal
 
 		MatrixXd final_omega = MatrixXd::Zero(omega_tilde.rows()-3,omega_tilde.cols()-3);
@@ -104,7 +104,6 @@ std::vector<MatrixXd> reduce (MatrixXd omega,  VectorXd xi) {
 	/**/
 	} //End of outer loop
 		
-	std::cout << "Final Omega" << std::endl <<  omega_tilde << std::endl;
 	solution.push_back(omega_tilde);
 	solution.push_back(xi_tilde);
 	return solution;
