@@ -10,7 +10,6 @@
 #include "message_filters/subscriber.h"
 #include "laser_geometry/laser_geometry.h"
 #include "nav_msgs/OccupancyGrid.h"
-#include <OccupancyGrid.hpp>
 using namespace Eigen;
 	ros::Publisher point_cloud_publisher_;
 	ros::Publisher occupub;
@@ -34,7 +33,6 @@ void callback(const sensor_msgs::LaserScan::ConstPtr& msg) { // Always call grap
 	savescan = msg;
 	flag=true;
 	}
-feature_extractor(msg,point_cloud_publisher_,occupub);
 }
 /*	Robot Position function, values from Graphslam should be incorporated here
 --------------------------------------------------------------------------------------*/
@@ -51,9 +49,9 @@ void vel_callback(const nav_msgs::Odometry& msg) {
 	double newZ = tf::getYaw(odom_quat);
 	if(newX != prevX || newY != prevY || newZ != prevZ) {
 		// Add new measurement matrix to z, n columns row 0 = range ; row 1 = angle in rad
-		//Zs.push_back(feature_extractor(savescan,point_cloud_publisher_,occupub));	
+		Zs.push_back(feature_extractor(savescan,point_cloud_publisher_,occupub));	
 		//Declare Odometry here
-		/*speed = sqrt((newX-prevX)*(newX-prevX) + (newY-prevY)*(newY-prevY));
+		speed = sqrt((newX-prevX)*(newX-prevX) + (newY-prevY)*(newY-prevY));
 		angular = newZ - prevZ;
 		//speed = sqrt(msg.linear.x*msg.linear.x+msg.linear.y*msg.linear.y);
 		// angular = msg.angular.z;
@@ -72,12 +70,10 @@ void vel_callback(const nav_msgs::Odometry& msg) {
 		// Call the graph slam algorithm with unknown correspondences with odometry and measurement matrix + time deltaT
 		MatrixXd mu = graph_slam(u, Zs, deltaT);
 		std::cout << "mu = \n" << mu << std::endl;
-        //nav_msgs::OccupancyGrid og = initializeOccupancyGridDefault();
-        //updateOccupancyGrid(og, mu, 0, 0);
 		flag = false; 
 		prevX = newX;
 		prevY = newY;
-		prevZ = newZ;*/
+		prevZ = newZ;
 	}
 	
 }
