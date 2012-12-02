@@ -69,7 +69,7 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
    for(int t = 0 ; t < z.size() ; t++)
    {
        // line 11, calculate sigma and create Qt
-       Matrix3d Qt = Matrix3d::Zero();
+       Matrix3d Qt = Matrix3d::Identity();
 
        //Variances
        double rSum = 0;
@@ -86,7 +86,7 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
        double muS = sSum / z[t].cols();
        double sigSqR = 0;
        double sigSqPhi = 0;
-       double sigSqS = 0;
+       double sigSqS = 0.0000001;	// Because outherwise we would have 0 uncertainty, because s is always the same value, but then Qt is not inversible
        for (int i = 0; i < z[t].cols(); i++)
        {
            sigSqR+= pow(z[t](0, i), 2) - pow(muR, 2);
@@ -97,17 +97,18 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
        Qt(1,1) = sigSqPhi;
        Qt(2,2) = sigSqS;
 
-//       std::cout << "z = \n" << z.at(t) << std::endl;
+       std::cout << "Qt =  \n" << Qt << std::endl;
+
        // line 12, inner loop over each matrix, extracting the features
        for (int i = 0; i < z[t].cols(); i++)
        {
            // line 13
            // each c[t] as one row, like a transposed vector
-           // mu has u.cols() + 1 columns of robot poses. 
+           // mu has u.cols() + 1 columns of robot poses.
            int j = c[t](0, i);
 
            //Calculating x and y coordinate of the features and adding them to mu
-           if(mu.cols() < u.cols()+ 1 + j+1) { 
+           if(mu.cols() < u.cols()+ 1 + j+1) {
 //            std::cout << "Adding cols for z["<< t <<"]"<< std::endl;
               MatrixXd newMu(3, mu.cols() + z[t].cols());
               newMu.block(0, 0, 3, mu.cols()) = mu;
@@ -124,8 +125,8 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
                 newMu(2, index) = 1;
                 //Only the first and the second element of the feature entries in mu are filled. The orientation is always 0.
                 index++;
-             }   
-             mu = newMu;  
+             }
+             mu = newMu;
            }
 //           std::cout << "THE mu = \n" << mu << std::endl;
 
@@ -140,12 +141,12 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
            // line 14
            Vector2d delta;
            delta << mu(0, u.cols() + 1 + j) - mu(0, t), mu(1, u.cols() + 1 + j) - mu(1, t);
-//            std::cout << "delta = \n" << delta << std::endl;
-          
+//           std::cout << "delta = \n" << delta << std::endl;
+
            // line 15
            double q = delta(0) * delta(0) + delta(1) * delta(1);
-           if(q == 0)
-        	   q = 0.000000001;
+//           if(q == 0)
+//        	   q = 0.000000001;
 //            std::cout << "q =  \n" << q << std::endl;
            double sqrtQ = sqrt(q);
            // line 16
@@ -165,10 +166,10 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
            Hit.row(1) << delta(1), -delta(0), -q, -delta(1), delta(0), 0;
            Hit.row(2) << 0, 0, 0, 0, 0, q;
            Hit /= q;
-          // std::cout << "Hit =  \n" << Hit << std::endl;
-          // std::cout << "Qt inv =  \n" << Qt.inverse() << std::endl;
+//           std::cout << "Hit =  \n" << Hit << std::endl;
+//           std::cout << "Qt inv =  \n" << Qt.inverse() << std::endl;
 //           std::cout << "Line 18 start" << std::endl;
-           // Line 18 & 19  
+           // Line 18 & 19
            MatrixXd add1 = Hit.transpose() * Qt.inverse() * Hit;
            VectorXd muStar(6);
 
