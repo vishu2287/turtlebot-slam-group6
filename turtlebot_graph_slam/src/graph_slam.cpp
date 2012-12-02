@@ -46,11 +46,11 @@ MatrixXd graph_slam (MatrixXd u, std::vector<MatrixXd> z, int deltaT) {
 //    std::cout << "xi =  \n" << xi << std::endl;
 
     // Call reduce method
-//    std::vector<MatrixXd> reduceResult = reduce(omega,xi);
-//    VectorXd xi_tilde = reduceResult.pop_back();
-//    MatrixXd omega_tilde = reduceResult.pop_back();
-//    std::cout << "omega_tilde = \n" << omega << std::endl;
-//    std::cout << "xi_tilde = \n" << xi << std::endl;
+    std::vector<MatrixXd> reduceResult = reduce(omega,xi);
+    MatrixXd omega_tilde = reduceResult.back();
+    MatrixXd xi_tilde = reduceResult.front();
+    std::cout << "omega_tilde = \n" << omega_tilde << std::endl;
+    std::cout << "xi_tilde = \n" << xi_tilde << std::endl;
 
     // Call solve method
 //    MatrixXd sigma = solve(omega_tilde, xi_tilde, omega, xi);
