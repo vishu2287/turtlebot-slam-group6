@@ -108,7 +108,7 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
            int j = c[t](0, i);
 
            //Calculating x and y coordinate of the features and adding them to mu
-           if(mu.cols() < u.cols()+ 1 + z[t].cols()) { 
+           if(mu.cols() < u.cols()+ 1 + j+1) { 
             std::cout << "Adding cols for z["<< t <<"]"<< std::endl;
               MatrixXd newMu(3, mu.cols() + z[t].cols());
               newMu.block(0, 0, 3, mu.cols()) = mu;
