@@ -73,7 +73,7 @@ void vel_callback(const nav_msgs::Odometry& msg) {
 		u = newU;
 		// Call the graph slam algorithm with unknown correspondences with odometry and measurement matrix + time deltaT
 		MatrixXd mu = graph_slam(u, Zs, deltaT);
-		std::cout << "mu = \n" << mu << std::endl;
+		std::cout << "MU = \n" << mu << std::endl;
 		//Update the occupancy grid, according to Mu here
 		world = updateOccupancyGrid(world,mu,t);
 		flag = false; 

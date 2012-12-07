@@ -16,10 +16,11 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
    // size of omega and Xi = number of measurements + number of map features
 
    /**
-    * NUMBER OF COLUMNS OF OMEGA IS EXTENDED BY 1 TO MAKE SPACE FOR XI, WHICH IS ADDED AT THE END
+    * NUMBER OF COLUMNS OF OMEGA IS EXTENDED BY 2 TO MAKE SPACE FOR XI AND MU, WHICH ARE ADDED AT THE END
     */
-   MatrixXd omegaAndXi = MatrixXd::Zero(3*(u.cols() + 1 + numberLandmarks), 3*(u.cols() + 1 + numberLandmarks)+1);
+   MatrixXd omegaAndXi = MatrixXd::Zero(3*(u.cols() + 1 + numberLandmarks), 3*(u.cols() + 1 + numberLandmarks)+2);
    VectorXd xi = VectorXd::Zero(3*(u.cols() + 1 + numberLandmarks), 1);
+   // VectorXd finalMu = VectorXd::Zero(3*(u.cols() + 1 + numberLandmarks), 1);
    Matrix3d inf = Matrix3d::Identity() * DBL_MAX;
    omegaAndXi.topLeftCorner(3, 3) = inf;
    Vector3d xt;
@@ -120,6 +121,8 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
                 double x = feature(0) * cos(feature(1) - mu(2, t)) + mu(0, t);
                 // y     =    r       * sin(phi        - theta      ) + y of pos
                 double y = feature(0) * sin(feature(1) - mu(2, t)) + mu(1, t);
+                std::cout << "X = " << x << "\n"<<std::endl;
+                std::cout << "Y = " << y << "\n"<<std::endl;
                 newMu(0, index) = x;
                 newMu(1, index) = y;
                 newMu(2, index) = 1;
@@ -127,8 +130,9 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
                 index++;
              }
              mu = newMu;
+             // finalMu = newMu;
            }
-//           std::cout << "THE mu = \n" << mu << std::endl;
+          // std::cout << "THE mu columns = \n" << mu.cols() << std::endl;
 
            /*
             * THIS IS A CRITICAL STEP:
@@ -209,7 +213,19 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
        }
    }
    // Add xi to omegaAndXi
-   omegaAndXi.topRightCorner(xi.rows(),1) = xi;
+   VectorXd outMu = VectorXd::Zero(3*(u.cols() + 1 + numberLandmarks), 1);
+   for(int i = 0; i < outMu.rows(); i++) {
+        int index = (int)(i/3);
+        outMu(i) = mu(0,index);
+        outMu(i+1) = mu(1, index);
+        outMu(i+2) = mu(2, index);
+        i+=2;
+   }
+   std::cout << "outMu =  \n" << outMu << std::endl;
+   // omegaAndXi.block(1, omegaAndXi.rows()-2, xi.rows(), 1) = xi;
+   omegaAndXi.topRightCorner(outMu.rows(), 1) = outMu;
+   // std::cout << "outMu rows =  \n" << outMu.rows() << std::endl;
+   // std::cout << "xi rows =  \n" << xi.rows() << std::endl;
    return omegaAndXi;
 }
 

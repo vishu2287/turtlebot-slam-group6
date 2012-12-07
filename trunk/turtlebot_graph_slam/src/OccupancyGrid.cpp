@@ -50,7 +50,7 @@ nav_msgs::OccupancyGrid updateOccupancyGrid(nav_msgs::OccupancyGrid og, VectorXd
         double z = mu(pose+2);
         int grid_x = (unsigned int)((x/RESOLUTION + SIZE/2));
         int grid_y = (unsigned int)((y/RESOLUTION + SIZE/2));
-        ROS_INFO_STREAM("Grid X = "<< grid_x << ", Grid Y =" << grid_y);
+        //ROS_INFO_STREAM("Grid X = "<< grid_x << ", Grid Y =" << grid_y);
         og.data[((grid_y*og.info.width)+grid_x)] = 100;
     }
     return og;
