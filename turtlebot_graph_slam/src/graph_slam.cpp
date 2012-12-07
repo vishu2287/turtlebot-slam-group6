@@ -12,9 +12,9 @@ using namespace Eigen;
 MatrixXd graph_slam (MatrixXd u, std::vector<MatrixXd> z, int deltaT) {
 
 	// Print of the inputs
-	std::cout << "u = \n" << u << std::endl;
-	for (int i = 0; i < z.size(); i++)
-		std::cout << "z[" << i << "] = \n" << z.at(i) << std::endl;
+	// std::cout << "u = \n" << u << std::endl;
+	// for (int i = 0; i < z.size(); i++)
+	// 	std::cout << "z[" << i << "] = \n" << z.at(i) << std::endl;
 
 	// Time t is equal to the number of columns in u
 	int t = u.cols();
@@ -36,28 +36,28 @@ MatrixXd graph_slam (MatrixXd u, std::vector<MatrixXd> z, int deltaT) {
 
 	// Call initialize method
 	MatrixXd muPath = graph_init(u, deltaT);
-	std::cout << "muPath = \n" << muPath << std::endl;
+	// std::cout << "muPath = \n" << muPath << std::endl;
 
     // Call linearize method
     MatrixXd omegaAndXi = linearize(u, z, c, muPath, deltaT);
     MatrixXd omega = omegaAndXi.topLeftCorner(omegaAndXi.rows(), omegaAndXi.rows());
     VectorXd xi = omegaAndXi.topRightCorner(omegaAndXi.rows(),1);
-    std::cout << "omega =  \n" << omega << std::endl;
-    std::cout << "xi =  \n" << xi << std::endl;
+    // std::cout << "omega =  \n" << omega << std::endl;
+    // std::cout << "xi =  \n" << xi << std::endl;
 
     // Call reduce method
     std::vector<MatrixXd> reduceResult = reduce(omega,xi,t);
     MatrixXd omega_tilde = reduceResult.front();
     MatrixXd xi_tilde = reduceResult.back();
-    std::cout << "omega_tilde = \n" << omega_tilde << std::endl;
-    std::cout << "xi_tilde = \n" << xi_tilde << std::endl;
+    // std::cout << "omega_tilde = \n" << omega_tilde << std::endl;
+    // std::cout << "xi_tilde = \n" << xi_tilde << std::endl;
 
     // Call solve method
     std::vector < MatrixXd > muAndSigma = solve(omega_tilde, xi_tilde, omega, xi, t);
     MatrixXd mu = muAndSigma.front();
     MatrixXd sigma = muAndSigma.back();
-    std::cout << "mu = \n" << mu << std::endl;
-    std::cout << "sigma = \n" << sigma << std::endl;
+    // std::cout << "mu = \n" << mu << std::endl;
+    // std::cout << "sigma = \n" << sigma << std::endl;
 
 //	int d = 15;
 //	MatrixXd omega_tilde = MatrixXd::Random(d, d);

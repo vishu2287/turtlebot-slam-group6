@@ -34,25 +34,25 @@ void publishOccupancyGrid(nav_msgs::OccupancyGrid og,ros::Publisher occupub){
     /*		Populate a Occupancy GridFF
     --------------------------------------------------------------------------------------*/
 nav_msgs::OccupancyGrid updateOccupancyGrid(nav_msgs::OccupancyGrid og, VectorXd mu, int t) {
-
-        for(int i = 0; i < og.data.size();i++){
+    // ROS_INFO_STREAM("Occupancy Grid has height: "<<og.info.height<<" and width: "<<og.info.width);
+    for(int i = 0; i < og.data.size();i++){
 		og.data[i] = -1;
 	}
-   for (int pose = t*3; pose < mu.size(); pose += 3) {
-	double x = mu(pose);
-	if(x < -10 || x > 10){ //There are sometimes values of 30000000 and - 30000000 ... for testing
-		x = 0;
-	}
-	double y = mu(pose+1);
-	if(y < -10 || y > 10){ //There are sometimes values of 30000000 and - 30000000 ... Otherwise the occupancy grid WONT work
-		y = 0;
-	}
-	double z = mu(pose+2);
-	int grid_x = (unsigned int)((x/og.info.resolution - og.info.origin.position.x));
-	int grid_y = (unsigned int)((y/og.info.resolution - og.info.origin.position.y));
-	//ROS_INFO_STREAM("Robot speed angular:"<< grid_x << "YY" << grid_y);
-	og.data[((grid_y*SIZE)+grid_x)] = 100;
-
+    for(int pose = t*3; pose < mu.size(); pose += 3) {
+        double x = mu(pose);
+        if(x < -10 || x > 10){ //There are sometimes values of 30000000 and - 30000000 ... for testing
+            x = 0;
+        }
+        double y = mu(pose+1);
+        if(y < -10 || y > 10){ //There are sometimes values of 30000000 and - 30000000 ... Otherwise the occupancy grid WONT work
+            y = 0;
+        }
+        double z = mu(pose+2);
+        double myRes = 0.05;
+        int grid_x = (unsigned int)((x/myRes - og.info.origin.position.x));
+        int grid_y = (unsigned int)((y/myRes - og.info.origin.position.y));
+        ROS_INFO_STREAM("Grid X = "<< grid_x << ", Grid Y =" << grid_y);
+        og.data[((grid_y*og.info.width)+grid_x)] = 100;
     }
     return og;
 }

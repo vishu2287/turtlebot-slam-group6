@@ -97,7 +97,7 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
        Qt(1,1) = sigSqPhi;
        Qt(2,2) = sigSqS;
 
-       std::cout << "Qt =  \n" << Qt << std::endl;
+       // std::cout << "Qt =  \n" << Qt << std::endl;
 
        // line 12, inner loop over each matrix, extracting the features
        for (int i = 0; i < z[t].cols(); i++)
