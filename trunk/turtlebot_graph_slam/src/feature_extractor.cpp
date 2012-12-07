@@ -13,8 +13,9 @@ using namespace Eigen;
 //https://gt-ros-pkg.googlecode.com/svn-history/r2368/trunk/hrl/simple_occupancy_grid/src/occupancy_grid.cpp
 //http://cs225turtle.googlecode.com/svn/trunk/project2/local_obstacles/src/local_obstacles.cpp
 int laserscancount = 0;
-const static double MIN_SCAN_ANGLE_RAD = -1.0 / 180 * M_PI; //@TODO: Set the range
-const static double MAX_SCAN_ANGLE_RAD = +1.0 / 180 * M_PI; //@TODO: Set the range
+double PI = 3.14;
+const static double MIN_SCAN_ANGLE_RAD = -15.0 / 180 * M_PI; //@TODO: Set the range
+const static double MAX_SCAN_ANGLE_RAD = +15.0 / 180 * M_PI; //@TODO: Set the range
 const static float PROXIMITY_RANGE_M = 1; // Should be smaller than sensor_msgs::LaserScan::range_max
 MatrixXd feature_extractor(const sensor_msgs::LaserScan::ConstPtr& msg,
 		ros::Publisher publisher, ros::Publisher occupub) {
@@ -45,18 +46,23 @@ MatrixXd feature_extractor(const sensor_msgs::LaserScan::ConstPtr& msg,
 
 	MatrixXd Z = MatrixXd::Zero(3, lasercount);
 	double rad = MIN_SCAN_ANGLE_RAD;
+
 	for (unsigned int currIndex = minIndex; currIndex < maxIndex;
 			currIndex++) {
-
+		double help = rad;
+		if(rad < 0){
+			rad = 2*PI - rad;
+		}
 		Z(0, currIndex - minIndex) = msg->ranges[currIndex];
 		Z(1, currIndex - minIndex) = rad;
 		Z(2, currIndex - minIndex) = 1;
 		if (msg->ranges[currIndex] < msg->range_max) {
 			laserpose.push_back(currIndex); //Get obstacle positions
-
 		}
+		
+	        std::cout << "Z = \n" << rad<< std::endl;
+		rad = help;
 		rad += msg->angle_increment;
-//	      std::cout << "Z = \n" << rad<< std::endl;
 	}
 
 	/*			START CREATING CLOUD

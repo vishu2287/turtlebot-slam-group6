@@ -17,8 +17,8 @@ nav_msgs::OccupancyGrid initializeOccupancyGrid(int length, double resolution) {
     nav_msgs::OccupancyGrid og;
     og.info.resolution = resolution;
     og.header.frame_id = "/world";
-    og.info.origin.position.x = -SIZE/2;
-    og.info.origin.position.y = -SIZE/2;
+    og.info.origin.position.x = -SIZE/2*resolution;
+    og.info.origin.position.y = -SIZE/2*resolution;
     og.header.stamp = ros::Time::now();
     og.info.width = SIZE;
     og.info.height = SIZE;
@@ -48,9 +48,8 @@ nav_msgs::OccupancyGrid updateOccupancyGrid(nav_msgs::OccupancyGrid og, VectorXd
             y = 0;
         }
         double z = mu(pose+2);
-        double myRes = 0.05;
-        int grid_x = (unsigned int)((x/myRes - og.info.origin.position.x));
-        int grid_y = (unsigned int)((y/myRes - og.info.origin.position.y));
+        int grid_x = (unsigned int)((x/RESOLUTION + SIZE/2));
+        int grid_y = (unsigned int)((y/RESOLUTION + SIZE/2));
         ROS_INFO_STREAM("Grid X = "<< grid_x << ", Grid Y =" << grid_y);
         og.data[((grid_y*og.info.width)+grid_x)] = 100;
     }
