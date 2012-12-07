@@ -41,21 +41,21 @@ MatrixXd graph_slam (MatrixXd u, std::vector<MatrixXd> z, int deltaT) {
     // Call linearize method
     MatrixXd omegaAndXi = linearize(u, z, c, muPath, deltaT);
     MatrixXd omega = omegaAndXi.topLeftCorner(omegaAndXi.rows(), omegaAndXi.rows());
-    VectorXd xi = omegaAndXi.topRightCorner(omegaAndXi.rows(),1);
+    MatrixXd xi = omegaAndXi.topRightCorner(omegaAndXi.rows(),1);
     // std::cout << "omega =  \n" << omega << std::endl;
     // std::cout << "xi =  \n" << xi << std::endl;
 
-    // Call reduce method
-    std::vector<MatrixXd> reduceResult = reduce(omega,xi,t);
-    MatrixXd omega_tilde = reduceResult.front();
-    MatrixXd xi_tilde = reduceResult.back();
-    // std::cout << "omega_tilde = \n" << omega_tilde << std::endl;
-    // std::cout << "xi_tilde = \n" << xi_tilde << std::endl;
+    // // Call reduce method
+    // std::vector<MatrixXd> reduceResult = reduce(omega,xi,t);
+    // MatrixXd omega_tilde = reduceResult.front();
+    // MatrixXd xi_tilde = reduceResult.back();
+    // // std::cout << "omega_tilde = \n" << omega_tilde << std::endl;
+    // // std::cout << "xi_tilde = \n" << xi_tilde << std::endl;
 
-    // Call solve method
-    std::vector < MatrixXd > muAndSigma = solve(omega_tilde, xi_tilde, omega, xi, t);
-    MatrixXd mu = muAndSigma.front();
-    MatrixXd sigma = muAndSigma.back();
+    // // Call solve method
+    // std::vector < MatrixXd > muAndSigma = solve(omega_tilde, xi_tilde, omega, xi, t);
+    // MatrixXd mu = muAndSigma.front();
+    // MatrixXd sigma = muAndSigma.back();
     // std::cout << "mu = \n" << mu << std::endl;
     // std::cout << "sigma = \n" << sigma << std::endl;
 
@@ -73,6 +73,6 @@ MatrixXd graph_slam (MatrixXd u, std::vector<MatrixXd> z, int deltaT) {
 //	std::cout << "correspondenceProbability = \n" << correspondenceProbability
 //			<< std::endl;
 
-	return mu; // should return full mu
+	return xi; // should return full mu
 }
 
