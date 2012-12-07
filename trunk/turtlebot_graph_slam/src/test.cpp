@@ -22,7 +22,7 @@ double prevX = 0;
 double prevY = 0;
 double prevZ = 0;
 nav_msgs::OccupancyGrid world;
-
+MatrixXd mut = MatrixXd::Zero(3, 1);
 MatrixXd u = MatrixXd::Zero(2, 1);
 bool flag = false;
 double speed;
@@ -37,11 +37,21 @@ void callback(const sensor_msgs::LaserScan::ConstPtr& msg) { // Always call grap
 	}
 	//publish occupancy grid
 	publishOccupancyGrid(world,occupub);
+
 }
 /*	Robot Position function, values from Graphslam should be incorporated here
 --------------------------------------------------------------------------------------*/
-void rob_callback(const ros::TimerEvent&) { 
-robotpos(0,0,0,0,0);	//current robot position in world is always 0,0
+void rob_callback(const ros::TimerEvent&) {
+if(t==0){
+robotpos(0,0,0,0,0);
+}else{
+std::cout << "MU = \n" << mut((t*3)-3) << std::endl;
+std::cout << "MU = \n" << mut((t*3)-2) << std::endl;
+robotpos(mut((t*3)-3),mut((t*3)-2),0,0,mut((t*3)-1));
+}
+
+
+	//current robot position in world is always 0,0
 }
 /*		Velocity callback function, called when robot moves
 --------------------------------------------------------------------------------------*/
@@ -73,6 +83,7 @@ void vel_callback(const nav_msgs::Odometry& msg) {
 		u = newU;
 		// Call the graph slam algorithm with unknown correspondences with odometry and measurement matrix + time deltaT
 		MatrixXd mu = graph_slam(u, Zs, deltaT);
+		mut = mu;
 //		std::cout << "MU = \n" << mu << std::endl;
 		//Update the occupancy grid, according to Mu here
 		world = updateOccupancyGrid(world,mu,t);
@@ -88,7 +99,7 @@ int main(int argc, char **argv) {
 	ros::init(argc, argv, "test");
 	ros::NodeHandle n;
 	world = initializeOccupancyGrid(2000, 0.05);
-	ros::Timer timer = n.createTimer(ros::Duration(1.0), rob_callback);
+	ros::Timer timer = n.createTimer(ros::Duration(0.1), rob_callback);
         ros::Subscriber laserSub = n.subscribe("base_scan", 100, callback);
 	ros::Subscriber velSub = n.subscribe("odom", 100, vel_callback);
 	point_cloud_publisher_ = n.advertise<sensor_msgs::PointCloud> ("/cloud", 100,false);
