@@ -14,7 +14,7 @@ tf_map_to_baselink_.child_frame_id_ = std::string("base_link");
 ros::Rate loop_rate(publish_rate_);
 //grid_x = (unsigned int)((map_x - map.info.origin.position.x) / map.info.resolution)
 //grid_y = (unsigned int)((map_y - map.info.origin.position.y) / map.info.resolution)
-
+std::cout << "TTTTTTT = \n";
 // main loop
 while (ros::ok())
 {
@@ -24,10 +24,11 @@ while (ros::ok())
   // specify actual transformation vectors from odometry
   // NOTE: zeros have to be substituted with actual variable data
   tf_map_to_baselink_.setOrigin(tf::Vector3(x, y, 0.0f));
-  tf_map_to_baselink_.setRotation(tf::createQuaternionFromYaw( yaw));
+  tf_map_to_baselink_.setRotation(tf::createQuaternionFromYaw(-yaw));
 
   // broadcast transform
   tf_br_.sendTransform(tf_map_to_baselink_);
+std::cout << "YYYYYY = \n";
 
   ros::spinOnce();
   loop_rate.sleep();
