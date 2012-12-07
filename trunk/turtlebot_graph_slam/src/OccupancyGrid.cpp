@@ -5,9 +5,15 @@
 #include <map>
 #include <Eigen/Dense>
 #include "nav_msgs/OccupancyGrid.h"
+#include <tf/transform_listener.h>
+#include <laser_geometry/laser_geometry.h>
+#include <sensor_msgs/LaserScan.h>
 using namespace Eigen;
-
-nav_msgs::OccupancyGrid initializeOccupancyGrid(int SIZE, double resolution) {
+double RESOLUTION;
+int SIZE;
+nav_msgs::OccupancyGrid initializeOccupancyGrid(int length, double resolution) {
+    RESOLUTION = resolution;
+    SIZE  = length;
     nav_msgs::OccupancyGrid og;
     og.info.resolution = resolution;
     og.header.frame_id = "/world";
@@ -20,55 +26,33 @@ nav_msgs::OccupancyGrid initializeOccupancyGrid(int SIZE, double resolution) {
 
     return og;
 }
-
-nav_msgs::OccupancyGrid initializeOccupancyGridDefault() {
-    return initializeOccupancyGrid(4000, 0.5);
+//publish Occupacy grid
+void publishOccupancyGrid(nav_msgs::OccupancyGrid og,ros::Publisher occupub){
+	occupub.publish(og);
 }
-
-/* not working, max does not apply for double
-// make sure to take resolution into account if using this
-int calculateFakeSize(VectorXd mu) {
-    int xPlus = 0, xMinus = 0;
-    int yPlus = 0, yMinus = 0;
-    for (int position = 0; position < mu.rows(); position+=3) {
-        xPlus = std::max(xPlus, mu(0, position));
-        yPlus = std::max(yPlus, mu(0, position + 1));
-
-        xMinus = std::min(xMinus, mu(position));
-        yMinus = std::min(yMinus, mu(position));
-    }
-
-    int SIZE = std::max(xPlus - xMinus, yPlus - yMinus) + 100; // make it quadratic and + 100 just to be save
-    return SIZE;
-}
-*/
-
-nav_msgs::OccupancyGrid updateOccupancyGrid(nav_msgs::OccupancyGrid og, VectorXd mu, int numberOfPoses, int erase) {
 
     /*		Populate a Occupancy GridFF
     --------------------------------------------------------------------------------------*/
-    // Collecting maximal and minimal known x and y for size of the occupancy grid
+nav_msgs::OccupancyGrid updateOccupancyGrid(nav_msgs::OccupancyGrid og, VectorXd mu, int t) {
 
-    if(erase == 1) {
-        // TODO erase, but how?
-        //og.data.erase(0, og.info.width * og.info.height);
-    }
+        for(int i = 0; i < og.data.size();i++){
+		og.data[i] = -1;
+	}
+   for (int pose = t*3; pose < mu.size(); pose += 3) {
+	double x = mu(pose);
+	if(x < -10 || x > 10){ //There are sometimes values of 30000000 and - 30000000 ... for testing
+		x = 0;
+	}
+	double y = mu(pose+1);
+	if(y < -10 || y > 10){ //There are sometimes values of 30000000 and - 30000000 ... Otherwise the occupancy grid WONT work
+		y = 0;
+	}
+	double z = mu(pose+2);
+	int grid_x = (unsigned int)((x/og.info.resolution - og.info.origin.position.x));
+	int grid_y = (unsigned int)((y/og.info.resolution - og.info.origin.position.y));
+	//ROS_INFO_STREAM("Robot speed angular:"<< grid_x << "YY" << grid_y);
+	og.data[((grid_y*SIZE)+grid_x)] = 100;
 
-    // robot path does not matter
-    // landmarks theta is not of any use either
-
-    // @TODO FIX!!
-    // seems to be a problem in the loop head, mayme the mu.rows()
-    for (int pose = numberOfPoses * 3; pose < mu.rows(); pose += 3) {
-        std::cout << "calc x" <<std::endl;
-        int xx = (int)(mu(pose) * og.info.resolution);
-        std::cout << xx <<std::endl;
-
-        std::cout << "calc y" <<std::endl;
-        int yy = (int)(mu(pose + 1) * og.info.resolution * og.info.width);
-        std::cout << yy << std::endl;
-
-        og.data[xx + yy] = 99; // between 1 and 100
     }
     return og;
 }
