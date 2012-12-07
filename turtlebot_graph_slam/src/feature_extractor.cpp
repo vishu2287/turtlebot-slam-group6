@@ -14,8 +14,8 @@ using namespace Eigen;
 //http://cs225turtle.googlecode.com/svn/trunk/project2/local_obstacles/src/local_obstacles.cpp
 int laserscancount = 0;
 double PI = 3.14;
-const static double MIN_SCAN_ANGLE_RAD = -2.0 / 180 * M_PI; //@TODO: Set the range
-const static double MAX_SCAN_ANGLE_RAD = +2.0 / 180 * M_PI; //@TODO: Set the range
+const static double MIN_SCAN_ANGLE_RAD = -20.0 / 180 * M_PI; //@TODO: Set the range
+const static double MAX_SCAN_ANGLE_RAD = +20.0 / 180 * M_PI; //@TODO: Set the range
 const static float PROXIMITY_RANGE_M = 1; // Should be smaller than sensor_msgs::LaserScan::range_max
 MatrixXd feature_extractor(const sensor_msgs::LaserScan::ConstPtr& msg,
 		ros::Publisher publisher, ros::Publisher occupub) {
@@ -53,14 +53,15 @@ MatrixXd feature_extractor(const sensor_msgs::LaserScan::ConstPtr& msg,
 		if(rad < 0){
 			rad = 2*PI - rad;
 		}
-		Z(0, currIndex - minIndex) = msg->ranges[currIndex];
-		Z(1, currIndex - minIndex) = rad;
-		Z(2, currIndex - minIndex) = 1;
-		if (msg->ranges[currIndex] < msg->range_max) {
+
+		if (msg->ranges[currIndex] < msg->range_max-0.5) {
 			laserpose.push_back(currIndex); //Get obstacle positions
+					Z(0, currIndex - minIndex) = msg->ranges[currIndex];
+					Z(1, currIndex - minIndex) = rad;
+					Z(2, currIndex - minIndex) = 1;
 		}
 		
-	        std::cout << "Z = \n" << rad<< std::endl;
+	   //     std::cout << "Z = \n" << rad<< std::endl;
 		rad = help;
 		rad += msg->angle_increment;
 	}
