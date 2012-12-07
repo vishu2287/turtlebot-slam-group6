@@ -54,7 +54,7 @@ MatrixXd feature_extractor(const sensor_msgs::LaserScan::ConstPtr& msg,
 			rad = 2*PI - rad;
 		}
 
-		if (msg->ranges[currIndex] < msg->range_max-0.5) {
+		if (msg->ranges[currIndex] < msg->range_max-0.1) {
 			laserpose.push_back(currIndex); //Get obstacle positions
 					Z(0, currIndex - minIndex) = msg->ranges[currIndex];
 					Z(1, currIndex - minIndex) = rad;

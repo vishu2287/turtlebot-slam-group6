@@ -37,20 +37,16 @@ void callback(const sensor_msgs::LaserScan::ConstPtr& msg) { // Always call grap
 	}
 	//publish occupancy grid
 	publishOccupancyGrid(world,occupub);
+if(t==0){
+robotpos(0,0,0,0,0);
+}else{
 
+robotpos(mut((t*3)-3),mut((t*3)-2),0,0,mut((t*3)-1));
+}
 }
 /*	Robot Position function, values from Graphslam should be incorporated here
 --------------------------------------------------------------------------------------*/
 void rob_callback(const ros::TimerEvent&) {
-if(t==0){
-robotpos(0,0,0,0,0);
-}else{
-std::cout << "MU = \n" << mut((t*3)-3) << std::endl;
-std::cout << "MU = \n" << mut((t*3)-2) << std::endl;
-robotpos(mut((t*3)-3),mut((t*3)-2),0,0,mut((t*3)-1));
-}
-
-
 	//current robot position in world is always 0,0
 }
 /*		Velocity callback function, called when robot moves
