@@ -87,7 +87,7 @@ int main(int argc, char **argv) {
 	 
 	ros::init(argc, argv, "test");
 	ros::NodeHandle n;
-	world = initializeOccupancyGrid(2000, 5);
+	world = initializeOccupancyGrid(2000, 0.05);
 	ros::Timer timer = n.createTimer(ros::Duration(1.0), rob_callback);
         ros::Subscriber laserSub = n.subscribe("base_scan", 100, callback);
 	ros::Subscriber velSub = n.subscribe("odom", 100, vel_callback);
