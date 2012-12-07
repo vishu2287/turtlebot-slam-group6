@@ -62,8 +62,8 @@ void vel_callback(const nav_msgs::Odometry& msg) {
 		Vector2d odometry = Vector2d::Zero(2, 1);
 		odometry[0] = speed;
 		odometry[1] = angular+=0.0000000001;	//small value to get results TODO find better solution
-  	 	ROS_INFO_STREAM("Robot speed linear:"<< odometry[0]);
-		ROS_INFO_STREAM("Robot speed angular:"<< odometry[1]);
+//  	 	ROS_INFO_STREAM("Robot speed linear:"<< odometry[0]);
+//		ROS_INFO_STREAM("Robot speed angular:"<< odometry[1]);
 		// Increment time t
 		t += deltaT;
 		// Expand old u and add new odometry
@@ -73,7 +73,7 @@ void vel_callback(const nav_msgs::Odometry& msg) {
 		u = newU;
 		// Call the graph slam algorithm with unknown correspondences with odometry and measurement matrix + time deltaT
 		MatrixXd mu = graph_slam(u, Zs, deltaT);
-		std::cout << "MU = \n" << mu << std::endl;
+//		std::cout << "MU = \n" << mu << std::endl;
 		//Update the occupancy grid, according to Mu here
 		world = updateOccupancyGrid(world,mu,t);
 		flag = false; 

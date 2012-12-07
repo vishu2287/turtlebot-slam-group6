@@ -121,8 +121,8 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
                 double x = feature(0) * cos(feature(1) - mu(2, t)) + mu(0, t);
                 // y     =    r       * sin(phi        - theta      ) + y of pos
                 double y = feature(0) * sin(feature(1) - mu(2, t)) + mu(1, t);
-                std::cout << "X = " << x << "\n"<<std::endl;
-                std::cout << "Y = " << y << "\n"<<std::endl;
+//                std::cout << "X = " << x << "\n"<<std::endl;
+//                std::cout << "Y = " << y << "\n"<<std::endl;
                 newMu(0, index) = x;
                 newMu(1, index) = y;
                 newMu(2, index) = 1;
@@ -221,7 +221,7 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
         outMu(i+2) = mu(2, index);
         i+=2;
    }
-   std::cout << "outMu =  \n" << outMu << std::endl;
+//   std::cout << "outMu =  \n" << outMu << std::endl;
    // omegaAndXi.block(1, omegaAndXi.rows()-2, xi.rows(), 1) = xi;
    omegaAndXi.topRightCorner(outMu.rows(), 1) = outMu;
    // std::cout << "outMu rows =  \n" << outMu.rows() << std::endl;
