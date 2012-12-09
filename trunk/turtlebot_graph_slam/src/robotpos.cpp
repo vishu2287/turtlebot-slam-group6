@@ -15,6 +15,7 @@ ros::Rate loop_rate(publish_rate_);
 //grid_x = (unsigned int)((map_x - map.info.origin.position.x) / map.info.resolution)
 //grid_y = (unsigned int)((map_y - map.info.origin.position.y) / map.info.resolution)
 // main loop
+
 while (ros::ok())
 {
   // time stamp
@@ -26,7 +27,7 @@ while (ros::ok())
   if(yaw < 0) {
     yaw = 2*M_PI + yaw;
   }
-  tf_map_to_baselink_.setRotation(tf::createQuaternionFromYaw(-yaw));
+  tf_map_to_baselink_.setRotation(tf::createQuaternionFromYaw(yaw));
 
   // broadcast transform
   tf_br_.sendTransform(tf_map_to_baselink_);

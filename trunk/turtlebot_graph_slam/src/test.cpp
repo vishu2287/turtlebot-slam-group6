@@ -46,6 +46,7 @@ void callback(const sensor_msgs::LaserScan::ConstPtr& msg) { // Always call grap
 		robotpos(0,0,0,0,0);
 	}else{
 		robotpos(mut((t*3)-3),mut((t*3)-2),0,0,mut((t*3)-1));
+		// std::cout << "X = \n" << mut((t*3)-3) << std::endl;
 	}
 }
 /*	Robot Position function, values from Graphslam should be incorporated here
@@ -66,12 +67,14 @@ void vel_callback(const nav_msgs::Odometry& msg) {
 		Zs.push_back(feature_extractor(savescan,point_cloud_publisher_,occupub));	
 		//Declare Odometry here
 		speed = sqrt((newX-prevX)*(newX-prevX) + (newY-prevY)*(newY-prevY));
-		angular = -(newZ - prevZ);
+
+
+		angular = (newZ - prevZ);
 		// std::cout << "New Z = \n" << newZ << std::endl;
 		//speed = sqrt(msg.linear.x*msg.linear.x+msg.linear.y*msg.linear.y);
 		// angular = msg.angular.z;
 		Vector2d odometry = Vector2d::Zero(2, 1);
-		odometry[0] = -speed;
+		odometry[0] = speed;
 		odometry[1] = angular+=0.0000000001;	//small value to get results TODO find better solution
 //  	 	ROS_INFO_STREAM("Robot speed linear:"<< odometry[0]);
 //		ROS_INFO_STREAM("Robot speed angular:"<< odometry[1]);
