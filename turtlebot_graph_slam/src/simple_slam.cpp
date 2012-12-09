@@ -30,24 +30,26 @@ MatrixXd simple_slam (MatrixXd u, std::vector<MatrixXd> z, int deltaT) {
     {
       int j = c[t](0, i);
       // Calculating x and y coordinate of the features and adding them to mu
-      if(muPath.cols() < u.cols()+ 1 + j+1) 
-      {
-        MatrixXd newMu(3, muPath.cols() + z[t].cols());
-        newMu.block(0, 0, 3, muPath.cols()) = muPath;
-        int index = muPath.cols();
-        for (int k = 0; k < z[t].cols(); k++) 
-        { 
-          Vector3d feature = z[t].col(k);
-          // x     =    r       * cos(phi        + theta) + x of pos
-          double x = feature(0) * cos(feature(1) + muPath(2, t))  + muPath(0, t);
-          // y     =    r       * sin(phi        + theta ) + y of pos
-          double y = feature(0) * sin(feature(1) + muPath(2, t)) + muPath(1, t);
-          newMu(0, index) = x;
-          newMu(1, index) = y;
-          newMu(2, index) = 1;
-          //Only the first and the second element of the feature entries in mu are filled. The orientation is always 1
-          index++;
-        }
+      if(muPath.cols()/3 < u.cols()+ 1 + j+1) {
+//            std::cout << "Adding cols for z["<< t <<"]"<< std::endl;
+              MatrixXd newMu(muPath.cols()+z[t].cols()*3, 0);
+              newMu.block(0, 0, 1, muPath.cols()) = muPath;
+              int index = muPath.cols();
+              for (int k = 0; k < z[t].cols(); k++) {
+
+                Vector3d feature = z[t].col(k);
+                // x     =    r       * cos(phi        - theta              ) + x of pos
+                double x = feature(0) * cos(feature(1) + muPath(3*t+2, 0)) + muPath(3*t, 0);
+                // y     =    r       * sin(phi        - theta              ) + y of pos
+                double y = feature(0) * sin(feature(1) + muPath(3*t+2, 0)) + muPath(3*t+1, 0);
+//                std::cout << "X = " << x << "\n"<<std::endl;
+//                std::cout << "Y = " << y << "\n"<<std::endl;
+                newMu(index*3, 0) = x;
+                newMu(index*3+1, 0) = y;
+                newMu(index*3+2, 0) = 1;
+                //Only the first and the second element of the feature entries in mu are filled. The orientation is always 0.
+                index++;
+             }
       muPath = newMu;
       }
     }
