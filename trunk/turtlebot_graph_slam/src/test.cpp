@@ -4,6 +4,7 @@
 #include <graph_slam.hpp>
 #include <OccupancyGrid.hpp>
 #include <robotpos.hpp>
+#include <simple_slam.hpp>
 #include <std_msgs/String.h>
 #include <sensor_msgs/LaserScan.h>
 #include "geometry_msgs/Pose.h"
@@ -86,7 +87,7 @@ void vel_callback(const nav_msgs::Odometry& msg) {
 		newU.block(0, t - 1, 2, 1) = odometry;
 		u = newU;
 		// Call the graph slam algorithm with unknown correspondences with odometry and measurement matrix + time deltaT
-		MatrixXd mu = graph_slam(u, Zs, deltaT);
+		MatrixXd mu = simple_slam(u, Zs, deltaT);
 		mut = mu;
 //		std::cout << "MU = \n" << mu << std::endl;
 		//Update the occupancy grid, according to Mu here
