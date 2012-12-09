@@ -23,6 +23,9 @@ while (ros::ok())
   // specify actual transformation vectors from odometry
   // NOTE: zeros have to be substituted with actual variable data
   tf_map_to_baselink_.setOrigin(tf::Vector3(x, y, 0.0f));
+  if(yaw < 0) {
+    yaw = 2*3.14 + yaw;
+  }
   tf_map_to_baselink_.setRotation(tf::createQuaternionFromYaw(-yaw));
 
   // broadcast transform

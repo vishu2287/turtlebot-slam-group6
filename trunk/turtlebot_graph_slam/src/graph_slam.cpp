@@ -62,10 +62,10 @@ for(int t = 0; t<u.cols(); t++)
               for (int k = 0; k < z[t].cols(); k++) {
 
                 Vector3d feature = z[t].col(k);
-                // x     =    r       * cos(phi        - theta      ) + x of pos
-                double x = feature(0) * cos(feature(1) - muPath(2, t)) + muPath(0, t);
-                // y     =    r       * sin(phi        - theta      ) + y of pos
-                double y = feature(0) * sin(feature(1) - muPath(2, t)) + muPath(1, t);
+                // x     =    r       * cos(phi        - theta                  ) + x of pos
+                double x = feature(0) * cos(feature(1) - muPath(2, t) - 2*M_PI/2) + muPath(0, t);
+                // y     =    r       * sin(phi        - theta                  ) + y of pos
+                double y = feature(0) * sin(feature(1) - muPath(2, t) - 2*M_PI/2) + muPath(1, t);
 //                std::cout << "X = " << x << "\n"<<std::endl;
 //                std::cout << "Y = " << y << "\n"<<std::endl;
                 newMu(0, index) = x;
