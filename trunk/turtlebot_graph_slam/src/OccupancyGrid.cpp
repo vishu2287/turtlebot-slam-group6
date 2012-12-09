@@ -38,7 +38,7 @@ nav_msgs::OccupancyGrid updateOccupancyGrid(nav_msgs::OccupancyGrid og, VectorXd
     for(int i = 0; i < og.data.size();i++){
 		og.data[i] = -1;
 	}
-    for(int pose = t*3; pose < mu.size(); pose += 3) {
+    for(int pose = (t+1)*3; pose < mu.size(); pose += 3) {
         double x = mu(pose);
         if(x < -10 || x > 10){ //There are sometimes values of 30000000 and - 30000000 ... for testing
             x = 0;
