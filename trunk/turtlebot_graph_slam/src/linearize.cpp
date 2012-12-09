@@ -17,7 +17,7 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
    /**
     * NUMBER OF COLUMNS OF OMEGA IS EXTENDED BY 2 TO MAKE SPACE FOR XI AND MU, WHICH ARE ADDED AT THE END
     */
-   MatrixXd omegaAndXi = MatrixXd::Zero(3*(u.cols() + 1 + numberLandmarks), 3*(u.cols() + 1 + numberLandmarks)+2);
+   MatrixXd omegaAndXi = MatrixXd::Zero(3*(u.cols() + 1 + numberLandmarks), 3*(u.cols() + 1 + numberLandmarks)+1);
    VectorXd xi = VectorXd::Zero(3*(u.cols() + 1 + numberLandmarks), 1);
    // VectorXd finalMu = VectorXd::Zero(3*(u.cols() + 1 + numberLandmarks), 1);
    Matrix3d inf = Matrix3d::Identity() * DBL_MAX;
@@ -31,14 +31,17 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
         // line 5, init xt
         double vt = u(0, t);
         double wt = u(1, t);
-        xt(0) = mu(0, t) + (-vt/wt*sin(mu(2,t)) + vt/wt*sin(mu(2,t) + wt*deltaT));
-        xt(1) = mu(1, t) + (+vt/wt*cos(mu(2,t)) - vt/wt*cos(mu(2,t) + wt*deltaT));
-        xt(2) = mu(2, t) + (wt*deltaT);
+        xt(0) = mu(3*t, 0) + (-vt/wt*sin(mu(3*t+2, 0)) + vt/wt*sin(mu(3*t+2, 0) + wt*deltaT));
+        xt(1) = mu(3*t+1, 0) + (+vt/wt*cos(mu(3*t+2, 0)) - vt/wt*cos(mu(3*t+2, 0) + wt*deltaT));
+        xt(2) = mu(3*t+2, 0) + (wt*deltaT);
 
+
+        // std::cout << "xt =  \n" << xt << std::endl;
         // line 6, init Gt
         Matrix3d Gt = Matrix3d::Identity();
-        Gt(0, 2) = - (+vt/wt*cos(mu(2,t)) + vt/wt*cos(mu(2,t) + wt*deltaT));
-        Gt(1, 2) = (-vt/wt*sin(mu(2,t)) + vt/wt*sin(mu(2,t) + wt*deltaT));
+        Gt(0, 2) = - (+vt/wt*cos(mu(3*t+2, 0)) + vt/wt*cos(mu(3*t+2,0) + wt*deltaT));
+        Gt(1, 2) = (-vt/wt*sin(mu(3*t+2, 0)) + vt/wt*sin(mu(3*t+2,0) + wt*deltaT));
+        // std::cout << "Gt =  \n" << Gt << std::endl;
 
         // Prepare line 7 & 8, create G^T with additional row, value 1
         MatrixXd GtTrans(6, 3);
@@ -59,15 +62,16 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
         int xt1 = t*3;
         MatrixXd add1 = GtTrans * RtInv * GtMinus; // 6x6
         omegaAndXi.block(xt1, xt1, 6, 6) += add1;
-
+        // std::cout << "add1 =  \n" << add1 << std::endl;
         //line 8:
-        VectorXd add2 = GtTrans * RtInv * (xt - Gt * mu.col(t));
+        VectorXd add2 = GtTrans * RtInv * (xt - Gt * mu.block(3*t, 0, 3, 1)); //mu.col(t);
         xi.block(xt1, 0, 6, 1) += add2;
+        // std::cout << "add2 =  \n" << add2 << std::endl;
 
     } // end loop
-
+ 
    for(int t = 0 ; t < z.size() ; t++)
-   {
+   { 
        // line 11, calculate sigma and create Qt
        Matrix3d Qt = Matrix3d::Identity();
 
@@ -98,7 +102,6 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
        Qt(2,2) = sigSqS;
 
        // std::cout << "Qt =  \n" << Qt << std::endl;
-
        // line 12, inner loop over each matrix, extracting the features
        for (int i = 0; i < z[t].cols(); i++)
        {
@@ -108,30 +111,27 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
            int j = c[t](0, i);
 
            //Calculating x and y coordinate of the features and adding them to mu
-           if(mu.cols() < u.cols()+ 1 + j+1) {
-//            std::cout << "Adding cols for z["<< t <<"]"<< std::endl;
-              MatrixXd newMu(3, mu.cols() + z[t].cols());
-              newMu.block(0, 0, 3, mu.cols()) = mu;
-              int index = mu.cols();
+           if(mu.rows() / 3 < u.cols() + 1 + j + 1) {
+              MatrixXd newMu(mu.rows() + z[t].cols() * 3, 1);
+              newMu.block(0, 0, mu.rows(), 1) = mu;
+              int index = mu.rows();
               for (int k = 0; k < z[t].cols(); k++) {
 
                 Vector3d feature = z[t].col(k);
                 // x     =    r       * cos(phi        - theta              ) + x of pos
-                double x = feature(0) * cos(feature(1) + mu(2, t)) + mu(0, t);
+                double x = feature(0) * cos(feature(1) + mu(3*t+2, 0)) + mu(3*t, 0);
                 // y     =    r       * sin(phi        - theta              ) + y of pos
-                double y = feature(0) * sin(feature(1) + mu(2, t)) + mu(1, t);
-//                std::cout << "X = " << x << "\n"<<std::endl;
-//                std::cout << "Y = " << y << "\n"<<std::endl;
-                newMu(0, index) = x;
-                newMu(1, index) = y;
-                newMu(2, index) = 1;
+                double y = feature(0) * sin(feature(1) + mu(3*t+2, 0)) + mu(3*t+1, 0);
+                newMu(index, 0) = x;
+                newMu(index+1, 0) = y;
+                newMu(index+2, 0) = 1;
                 //Only the first and the second element of the feature entries in mu are filled. The orientation is always 0.
-                index++;
+                index+=3;
              }
              mu = newMu;
              // finalMu = newMu;
            }
-          // std::cout << "THE mu columns = \n" << mu.cols() << std::endl;
+          // std::cout << "mu rows = \n" << mu.rows() << std::endl;
 
            /*
             * THIS IS A CRITICAL STEP:
@@ -140,10 +140,9 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
             * AT (t+1+j) WITH THE X AND Y POSITION OF THE LANDMARK. ONLY THEN CAN WE MOVE ON WITH
             * THE REST OF THE CODE, THATS WHY IT IS COMMENTED FOR NOW.
             */
-
            // line 14
            Vector2d delta;
-           delta << mu(0, u.cols() + 1 + j) - mu(0, t), mu(1, u.cols() + 1 + j) - mu(1, t);
+           delta << mu((u.cols() + 1 + j)*3, 0) - mu(3*t, 0), mu((u.cols() + 1 + j)*3+1, 0) - mu(3*t+1, 0);
 //           std::cout << "delta = \n" << delta << std::endl;
 
            // line 15
@@ -160,7 +159,7 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
 //           std::cout << "t=" << t << "; i=" << i << "; j=" << j << std::endl;
 //           std::cout << "mu: " << mu.cols() << "; " << mu.rows() << std::endl;
 //           std::cout << "z[t]: " << z[t].cols() << "; " << z[t].rows() << std::endl;
-           Zit << sqrtQ, atan2(delta(1), delta(0)) - mu(2, t), mu(2, u.cols() + 1+ j); //<-- Last element = Sj
+           Zit << sqrtQ, atan2(delta(1), delta(0)) - mu(3*t+2, 0), mu(3*(u.cols() + 1+ j)+2, 0); //<-- Last element = Sj
           // std::cout << "Zit =  \n" << Zit << std::endl;
 //           std::cout << "end" << std::endl;
            // line 17
@@ -192,7 +191,7 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
            // std::cout << "omega =  \n" << omega << std::endl; // not a good idea apparently...
            // @Todo;6th element is mu(j, s) according to book, but might be a mistake
            // replaced with mu(j, theta) which is always 0 right now!
-           muStar << mu(0, t), mu(1, t), mu(2, t), mu(0, u.cols() + 1 + j), mu(1, u.cols() + 1 + j), mu(2, u.cols() + 1 + j);
+           muStar << mu(3*t, 0), mu(3*t+1, 0), mu(3*t+2, 0), mu(3*(u.cols() + 1 + j), 0), mu(3*(u.cols() + 1 + j)+1, 0), mu(3*(u.cols() + 1 + j)+2, 0);
 //            std::cout << "the big mu vector  =  \n" << muStar << std::endl;
 //           std::cout << "Hit.transpose() =  \n" << Hit.transpose() << std::endl;
 //           std::cout << "Qt.inverse() =  \n" << Qt.inverse() << std::endl;
@@ -212,17 +211,17 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
        }
    }
    // Add xi to omegaAndXi
-   VectorXd outMu = VectorXd::Zero(3*(u.cols() + 1 + numberLandmarks), 1);
-   for(int i = 0; i < outMu.rows(); i++) {
-        int index = (int)(i/3);
-        outMu(i) = mu(0,index);
-        outMu(i+1) = mu(1, index);
-        outMu(i+2) = mu(2, index);
-        i+=2;
-   }
+   // VectorXd outMu = VectorXd::Zero(3*(u.cols() + 1 + numberLandmarks), 1);
+   // for(int i = 0; i < outMu.rows(); i++) {
+   //      int index = (int)(i/3);
+   //      outMu(i) = mu(0,index);
+   //      outMu(i+1) = mu(1, index);
+   //      outMu(i+2) = mu(2, index);
+   //      i+=2;
+   // }
 //   std::cout << "outMu =  \n" << outMu << std::endl;
    // omegaAndXi.block(1, omegaAndXi.rows()-2, xi.rows(), 1) = xi;
-   omegaAndXi.topRightCorner(outMu.rows(), 1) = outMu;
+   omegaAndXi.topRightCorner(xi.rows(), 1) = xi;
    // std::cout << "outMu rows =  \n" << outMu.rows() << std::endl;
    // std::cout << "xi rows =  \n" << xi.rows() << std::endl;
    return omegaAndXi;
