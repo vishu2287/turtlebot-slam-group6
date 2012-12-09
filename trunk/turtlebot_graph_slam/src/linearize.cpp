@@ -5,7 +5,6 @@
 #include <Eigen/Dense>
 using namespace Eigen;
 
-
 //Table 11.2 Page 347/348
 MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c, MatrixXd mu, int deltaT) {
 
