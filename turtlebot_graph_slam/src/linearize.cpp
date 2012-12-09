@@ -117,10 +117,10 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
               for (int k = 0; k < z[t].cols(); k++) {
 
                 Vector3d feature = z[t].col(k);
-                // x     =    r       * cos(phi        - theta      ) + x of pos
-                double x = feature(0) * cos(feature(1) - mu(2, t)) + mu(0, t);
-                // y     =    r       * sin(phi        - theta      ) + y of pos
-                double y = feature(0) * sin(feature(1) - mu(2, t)) + mu(1, t);
+                // x     =    r       * cos(phi        - theta              ) + x of pos
+                double x = feature(0) * cos(feature(1) - mu(2, t) - 2*M_PI/2) + mu(0, t);
+                // y     =    r       * sin(phi        - theta              ) + y of pos
+                double y = feature(0) * sin(feature(1) - mu(2, t) - 2*M_PI/2) + mu(1, t);
 //                std::cout << "X = " << x << "\n"<<std::endl;
 //                std::cout << "Y = " << y << "\n"<<std::endl;
                 newMu(0, index) = x;

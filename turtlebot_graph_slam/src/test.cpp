@@ -11,9 +11,11 @@
 #include "message_filters/subscriber.h"
 #include "laser_geometry/laser_geometry.h"
 #include "nav_msgs/OccupancyGrid.h"
+#include "nav_msgs/Path.h"
 using namespace Eigen;
 	ros::Publisher point_cloud_publisher_;
 	ros::Publisher occupub;
+	ros::Publisher robotPathPublisher;
 //std::vector <Vector2d> odoms; //Odometry saver TODO somehow did not work on 1 system
 std::vector <MatrixXd> Zs; //Z saver TODO Test if this works!
 int t = 0;
@@ -22,6 +24,9 @@ double prevX = 0;
 double prevY = 0;
 double prevZ = 0;
 nav_msgs::OccupancyGrid world;
+nav_msgs::Path robotPath;
+// robotPath.header.stamp = ros::Time::now();
+// robotPath.header.frame_id = "/odom";
 MatrixXd mut = MatrixXd::Zero(3, 1);
 MatrixXd u = MatrixXd::Zero(2, 1);
 bool flag = false;
@@ -32,17 +37,16 @@ sensor_msgs::LaserScan::ConstPtr savescan;
 --------------------------------------------------------------------------------------*/
 void callback(const sensor_msgs::LaserScan::ConstPtr& msg) { // Always call graph slam for new laser readings
 	if(!flag){
-	savescan = msg;
-	flag=true;
+		savescan = msg;
+		flag=true;
 	}
 	//publish occupancy grid
 	publishOccupancyGrid(world,occupub);
-if(t==0){
-robotpos(0,0,0,0,0);
-}else{
-
-robotpos(mut((t*3)-3),mut((t*3)-2),0,0,mut((t*3)-1));
-}
+	if(t==0){
+		robotpos(0,0,0,0,0);
+	}else{
+		robotpos(mut((t*3)-3),mut((t*3)-2),0,0,mut((t*3)-1));
+	}
 }
 /*	Robot Position function, values from Graphslam should be incorporated here
 --------------------------------------------------------------------------------------*/
@@ -62,11 +66,12 @@ void vel_callback(const nav_msgs::Odometry& msg) {
 		Zs.push_back(feature_extractor(savescan,point_cloud_publisher_,occupub));	
 		//Declare Odometry here
 		speed = sqrt((newX-prevX)*(newX-prevX) + (newY-prevY)*(newY-prevY));
-		angular = newZ - prevZ;
+		angular = -(newZ - prevZ);
+		// std::cout << "New Z = \n" << newZ << std::endl;
 		//speed = sqrt(msg.linear.x*msg.linear.x+msg.linear.y*msg.linear.y);
 		// angular = msg.angular.z;
 		Vector2d odometry = Vector2d::Zero(2, 1);
-		odometry[0] = speed;
+		odometry[0] = -speed;
 		odometry[1] = angular+=0.0000000001;	//small value to get results TODO find better solution
 //  	 	ROS_INFO_STREAM("Robot speed linear:"<< odometry[0]);
 //		ROS_INFO_STREAM("Robot speed angular:"<< odometry[1]);
@@ -87,6 +92,21 @@ void vel_callback(const nav_msgs::Odometry& msg) {
 		prevX = newX;
 		prevY = newY;
 		prevZ = newZ;
+
+		//-- Test: compute and publish the path
+		
+		// geometry_msgs::PoseStamped robotPose;
+		// robotPose.pose.position.x = newX;
+		// robotPose.pose.position.y = newY;
+		// robotPose.pose.orientation = tf::createQuaternionMsgFromYaw(newZ);
+		// robotPose.header.stamp = ros::Time::now();
+		// robotPose.header.frame_id = "/path";
+		// robotPath.header.stamp = ros::Time::now();;
+		// robotPath.header.frame_id = "/path";
+		// robotPath.poses.push_back(robotPose);
+		// robotPathPublisher.publish(robotPath);
+
+		// -- End of test
 	}
 	
 }
@@ -96,8 +116,9 @@ int main(int argc, char **argv) {
 	ros::NodeHandle n;
 	world = initializeOccupancyGrid(2000, 0.05);
 	ros::Timer timer = n.createTimer(ros::Duration(0.1), rob_callback);
-        ros::Subscriber laserSub = n.subscribe("base_scan", 100, callback);
+    ros::Subscriber laserSub = n.subscribe("base_scan", 100, callback);
 	ros::Subscriber velSub = n.subscribe("odom", 100, vel_callback);
+	robotPathPublisher = n.advertise<nav_msgs::Path> ("/path", 100, false);
 	point_cloud_publisher_ = n.advertise<sensor_msgs::PointCloud> ("/cloud", 100,false);
 	occupub = n.advertise<nav_msgs::OccupancyGrid> ("/world", 100,false);
 	ros::spin();

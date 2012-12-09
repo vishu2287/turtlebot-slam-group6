@@ -51,7 +51,7 @@ MatrixXd feature_extractor(const sensor_msgs::LaserScan::ConstPtr& msg,
 			currIndex++) {
 		double help = rad;
 		if(rad < 0){
-			rad = 2*PI - rad;
+			rad = 2*M_PI + rad;
 		}
 
 		if (msg->ranges[currIndex] < msg->range_max-0.1) {
