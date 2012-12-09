@@ -14,8 +14,8 @@ using namespace Eigen;
 //http://cs225turtle.googlecode.com/svn/trunk/project2/local_obstacles/src/local_obstacles.cpp
 int laserscancount = 0;
 double PI = 3.14;
-const static double MIN_SCAN_ANGLE_RAD = -20.0 / 180 * M_PI; //@TODO: Set the range
-const static double MAX_SCAN_ANGLE_RAD = +20.0 / 180 * M_PI; //@TODO: Set the range
+const static double MIN_SCAN_ANGLE_RAD = -2.0 / 180 * M_PI; //@TODO: Set the range
+const static double MAX_SCAN_ANGLE_RAD = +2.0 / 180 * M_PI; //@TODO: Set the range
 const static float PROXIMITY_RANGE_M = 1; // Should be smaller than sensor_msgs::LaserScan::range_max
 MatrixXd feature_extractor(const sensor_msgs::LaserScan::ConstPtr& msg,
 		ros::Publisher publisher, ros::Publisher occupub) {
