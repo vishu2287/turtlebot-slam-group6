@@ -36,7 +36,7 @@ MatrixXd graph_slam (MatrixXd u, std::vector<MatrixXd> z, int deltaT) {
 
 	// Call initialize method
 	MatrixXd mu = graph_init(u, deltaT);
-	// std::cout << "muPath = \n" << muPath << std::endl;
+//	 std::cout << "muPath = \n" << mu << std::endl;
 	
 
     // Call linearize method

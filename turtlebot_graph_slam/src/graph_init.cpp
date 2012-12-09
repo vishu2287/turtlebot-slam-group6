@@ -7,7 +7,7 @@ using namespace Eigen;
 //@TODO: Implement
 MatrixXd graph_init(MatrixXd u, int deltaT) {
 
-	MatrixXd mu(3, u.cols() + 1);
+	MatrixXd mu((u.cols()+1)*3, 1);
 
 	// first row, then column
 	mu(0, 0) = 0;
@@ -19,9 +19,9 @@ MatrixXd graph_init(MatrixXd u, int deltaT) {
 		double vt = u(0, t);
 		double wt = u(1, t);
 
-		mu(0, t + 1) = mu(0, t) + (-vt / wt * sin(mu(2, t)) + vt / wt * sin(mu(2, t) + wt * deltaT));
-		mu(1, t + 1) = mu(1, t) + (+vt / wt * cos(mu(2, t)) - vt / wt * cos(mu(2, t) + wt * deltaT));
-		mu(2, t + 1) = mu(2, t) + (wt * deltaT);
+		mu(3*(t+1),   0) = mu(3*t,   0) + (-vt / wt * sin(mu(3*t+2, 0)) + vt / wt * sin(mu(3*t+2, 0) + wt * deltaT));
+		mu(3*(t+1)+1, 0) = mu(3*t+1, 0) + (+vt / wt * cos(mu(3*t+2, 0)) - vt / wt * cos(mu(3*t+2, 0) + wt * deltaT));
+		mu(3*(t+1)+2, 0) = mu(3*t+2, 0) + (wt * deltaT);
 
 	}
 	return mu;
