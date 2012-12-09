@@ -3,7 +3,6 @@
 using namespace Eigen;
 
 //Table 11.4 Page 349
-//@TODO: Implement
 //TODO Make COV_SIGMA to a list of cov sigma according to time
 double correspondence_test(MatrixXd omega, VectorXd xi, VectorXd mu,
 		MatrixXd sigma, int j, int k, int t) {
