@@ -51,12 +51,13 @@ MatrixXd feature_extractor(const sensor_msgs::LaserScan::ConstPtr& msg,
 			currIndex++) {
 		double help = rad;
 
-		if (msg->ranges[currIndex] < msg->range_max-0.1) {
+		// if (msg->ranges[currIndex] < msg->range_max-0.1) {
 			laserpose.push_back(currIndex); //Get obstacle positions
 					Z(0, currIndex - minIndex) = msg->ranges[currIndex];
 					Z(1, currIndex - minIndex) = rad;
 					Z(2, currIndex - minIndex) = 1;
-		}
+					// std::cout << "(R, Phi, S) = (" << Z(0, currIndex - minIndex) << ", " << rad << ", " << Z(2, currIndex - minIndex) << ")"<< std::endl;
+		// }
 		
 	   //     std::cout << "Z = \n" << rad<< std::endl;
 		rad = help;

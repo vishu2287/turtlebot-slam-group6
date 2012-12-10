@@ -7,7 +7,7 @@ using namespace Eigen;
 
 //Table 11.2 Page 347/348
 MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c, MatrixXd mu, int deltaT) {
-
+   double epsilon = 0.0000000001; // a really small number;
    int numberLandmarks = 0;
    for (int i = 0; i < z.size(); i++) {
 	   numberLandmarks += z[i].cols();
@@ -70,8 +70,12 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
 
     } // end loop
  
+// std::cout<< "z.size() = " << z.size() << std::endl;
+
    for(int t = 0 ; t < z.size() ; t++)
    { 
+    // std::cout<< "z[t].cols() = " << z[t].cols() << std::endl;
+    // std::cout<< "z[t] = \n" << z[t] << std::endl;
        // line 11, calculate sigma and create Qt
        Matrix3d Qt = Matrix3d::Identity();
 
@@ -97,9 +101,22 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
            sigSqPhi  += pow(z[t](1, i), 2) - pow(muPhi, 2);
            sigSqS += pow(z[t](2, i), 2) - pow(muS, 2);
        }
-       Qt(0,0) = sigSqR;
-       Qt(1,1) = sigSqPhi;
-       Qt(2,2) = sigSqS;
+       if(sigSqR != 0) {
+          Qt(0,0) = sigSqR;
+       } else {
+           Qt(0,0) = epsilon;
+       }
+       if(sigSqPhi != 0) {
+           Qt(1,1) = sigSqPhi;
+       } else {
+           Qt(1,1) = epsilon;
+       }
+       if(sigSqS != 0) {
+           Qt(2,2) = sigSqS;
+       } else {
+           Qt(2,2) = epsilon;
+       }
+       
 
        // std::cout << "Qt =  \n" << Qt << std::endl;
        // line 12, inner loop over each matrix, extracting the features
@@ -168,8 +185,8 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
            Hit.row(1) << delta(1), -delta(0), -q, -delta(1), delta(0), 0;
            Hit.row(2) << 0, 0, 0, 0, 0, q;
            Hit /= q;
-//           std::cout << "Hit =  \n" << Hit << std::endl;
-//           std::cout << "Qt inv =  \n" << Qt.inverse() << std::endl;
+          // std::cout << "Hit =  \n" << Hit << std::endl;
+          // std::cout << "Qt inv =  \n" << Qt.inverse() << std::endl;
 //           std::cout << "Line 18 start" << std::endl;
            // Line 18 & 19
            MatrixXd add1 = Hit.transpose() * Qt.inverse() * Hit;
@@ -188,19 +205,19 @@ MatrixXd linearize (MatrixXd u, std::vector<MatrixXd> z, std::vector<MatrixXd> c
            omegaAndXi.block(xt, mj, 3, 3)+=xtmj;
            omegaAndXi.block(mj, xt, 3, 3)+=mjxt;
            omegaAndXi.block(mj,mj, 3, 3)+=mjmj;
-           // std::cout << "omega =  \n" << omega << std::endl; // not a good idea apparently...
+           // std::cout << "omega =  \n" << omegaAndXi << std::endl; // not a good idea apparently...
            // @Todo;6th element is mu(j, s) according to book, but might be a mistake
            // replaced with mu(j, theta) which is always 0 right now!
            muStar << mu(3*t, 0), mu(3*t+1, 0), mu(3*t+2, 0), mu(3*(u.cols() + 1 + j), 0), mu(3*(u.cols() + 1 + j)+1, 0), mu(3*(u.cols() + 1 + j)+2, 0);
-//            std::cout << "the big mu vector  =  \n" << muStar << std::endl;
-//           std::cout << "Hit.transpose() =  \n" << Hit.transpose() << std::endl;
-//           std::cout << "Qt.inverse() =  \n" << Qt.inverse() << std::endl;
-//           std::cout << "z[t].col(i) =  \n" << z[t].col(i) << std::endl;
-//           std::cout << "Zit =  \n" << Zit << std::endl;
-//           std::cout << "Hit =  \n" << Hit << std::endl;
-//           std::cout << "muStar =  \n" << muStar << std::endl;
-           VectorXd add2 = Hit.transpose() * Qt.inverse() * (z[t].col(i) - Zit + Hit * muStar);
-//            std::cout << "This will be added to xi at "<< xt << " - " << mj << " =  \n" << add2 << std::endl;
+          //  std::cout << "the big mu vector  =  \n" << muStar << std::endl;
+          // std::cout << "Hit.transpose() =  \n" << Hit.transpose() << std::endl;
+          // std::cout << "Qt.inverse() =  \n" << Qt.inverse() << std::endl;
+          // std::cout << "z[t].col(i) =  \n" << z[t].col(i) << std::endl;
+          // std::cout << "Zit =  \n" << Zit << std::endl;
+          // std::cout << "Hit =  \n" << Hit << std::endl;
+          // std::cout << "muStar =  \n" << muStar << std::endl;
+          VectorXd add2 = Hit.transpose() * Qt.inverse() * (z[t].col(i) - Zit + Hit * muStar);
+          //  std::cout << "This will be added to xi at "<< xt << " - " << mj << " =  \n" << add2 << std::endl;
 
            Vector3d xtT = add2.segment(0,3);
            Vector3d xtB = add2.segment(3,3);

@@ -65,7 +65,9 @@ void vel_callback(const nav_msgs::Odometry& msg) {
 	double newZ = tf::getYaw(odom_quat);
 	if(newX != prevX || newY != prevY || newZ != prevZ) {
 		// Add new measurement matrix to z, n columns row 0 = range ; row 1 = angle in rad
-		Zs.push_back(feature_extractor(savescan,point_cloud_publisher_,occupub));	
+		MatrixXd newFeat = feature_extractor(savescan,point_cloud_publisher_,occupub);
+		// std::cout <<"New Feature : \n" << newFeat << std::endl;
+		Zs.push_back(newFeat);	
 		//Declare Odometry here
 		speed = sqrt((newX-prevX)*(newX-prevX) + (newY-prevY)*(newY-prevY));
 
