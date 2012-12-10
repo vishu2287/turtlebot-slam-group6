@@ -54,11 +54,11 @@ MatrixXd graph_slam (MatrixXd u, std::vector<MatrixXd> z, int deltaT) {
     // std::cout << "omega_tilde = \n" << omega_tilde << std::endl;
     // std::cout << "xi_tilde = \n" << xi_tilde << std::endl;
 
-    // // Call solve method
+    // // // Call solve method
     std::vector < MatrixXd > muAndSigma = solve(omega_tilde, xi_tilde, omega, xi, t);
     MatrixXd mu = muAndSigma.front();
     MatrixXd sigma = muAndSigma.back();
-    std::cout << "mu = \n" << mu << std::endl;
+    // std::cout << "mu = \n" << mu << std::endl;
     // std::cout << "sigma = \n" << sigma << std::endl;
 
 //	int d = 15;
@@ -75,6 +75,6 @@ MatrixXd graph_slam (MatrixXd u, std::vector<MatrixXd> z, int deltaT) {
 //	std::cout << "correspondenceProbability = \n" << correspondenceProbability
 //			<< std::endl;
 
-	return mu; // should return full mu
+	return muPath; // should return full mu
 }
 
