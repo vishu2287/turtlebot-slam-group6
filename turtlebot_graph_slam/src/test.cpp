@@ -13,8 +13,11 @@
 #include "laser_geometry/laser_geometry.h"
 #include "nav_msgs/OccupancyGrid.h"
 #include "nav_msgs/Path.h"
+#include <scanmatch.hpp>
+#include <lasertrans.hpp>
 using namespace Eigen;
 	ros::Publisher point_cloud_publisher_;
+	ros::Publisher point_cloud_publisher_second;
 	ros::Publisher occupub;
 	ros::Publisher robotPathPublisher;
 //std::vector <Vector2d> odoms; //Odometry saver TODO somehow did not work on 1 system
@@ -31,16 +34,19 @@ nav_msgs::Path robotPath;
 MatrixXd mut = MatrixXd::Zero(3, 1);
 MatrixXd u = MatrixXd::Zero(2, 1);
 bool flag = false;
+bool laserflag = false;
 double speed;
 double angular;
 sensor_msgs::LaserScan::ConstPtr savescan;	
+sensor_msgs::LaserScan::ConstPtr secondscan;
 /*	Laserscancallback needed for feature extraction
 --------------------------------------------------------------------------------------*/
 void callback(const sensor_msgs::LaserScan::ConstPtr& msg) { // Always call graph slam for new laser readings
-	if(!flag){
-		savescan = msg;
-		flag=true;
-	}
+		if(laserflag){
+			savescan = msg;
+		} else {
+			secondscan = msg;
+		}
 	//publish occupancy grid
 	publishOccupancyGrid(world,occupub);
 	if(t==0){
@@ -57,63 +63,38 @@ void rob_callback(const ros::TimerEvent&) {
 }
 /*		Velocity callback function, called when robot moves
 --------------------------------------------------------------------------------------*/
+int velcounter = 0;
 void vel_callback(const nav_msgs::Odometry& msg) { 
+
+
+		
 	Vector3d newPose = Vector3d::Zero(3, 1);
 	double newX = msg.pose.pose.position.x;
 	double newY = msg.pose.pose.position.y;
 	geometry_msgs::Quaternion odom_quat = msg.pose.pose.orientation;
 	double newZ = tf::getYaw(odom_quat);
 	if(newX != prevX || newY != prevY || newZ != prevZ) {
-		// Add new measurement matrix to z, n columns row 0 = range ; row 1 = angle in rad
-		MatrixXd newFeat = feature_extractor(savescan,point_cloud_publisher_,occupub);
-		// std::cout <<"New Feature : \n" << newFeat << std::endl;
-		Zs.push_back(newFeat);	
+	// Flag for scanmatching, if robot moves, match scans !
+		if(laserflag)
+			laserflag = false;
+		else
+			laserflag = true;
+		velcounter++;
+	ROS_INFO_STREAM("velcounter" << velcounter);
+		if(velcounter > 5){
+			point_cloud_publisher_.publish(lasertrans(savescan));
+			point_cloud_publisher_second.publish(lasertrans(secondscan)); 
+			if( (lasertrans(savescan).points.size() != 0) && (lasertrans(secondscan).points.size() != 0) ){
+				scanmatch(lasertrans(savescan),lasertrans(secondscan));
+				}
+		}
 		//Declare Odometry here
 		speed = sqrt((newX-prevX)*(newX-prevX) + (newY-prevY)*(newY-prevY));
-
-
-		angular = (newZ - prevZ);
-		// std::cout << "New Z = \n" << newZ << std::endl;
-		//speed = sqrt(msg.linear.x*msg.linear.x+msg.linear.y*msg.linear.y);
-		// angular = msg.angular.z;
-		Vector2d odometry = Vector2d::Zero(2, 1);
-		odometry[0] = speed;
-		odometry[1] = angular+=0.0000000001;	//small value to get results TODO find better solution
-//  	 	ROS_INFO_STREAM("Robot speed linear:"<< odometry[0]);
-//		ROS_INFO_STREAM("Robot speed angular:"<< odometry[1]);
-		// Increment time t
-		t += deltaT;
-		// Expand old u and add new odometry
-		MatrixXd newU(2, t);
-		newU.block(0, 0, 2, u.cols()) = u;
-		newU.block(0, t - 1, 2, 1) = odometry;
-		u = newU;
-		// Call the graph slam algorithm with unknown correspondences with odometry and measurement matrix + time deltaT
-		MatrixXd mu = graph_slam(u, Zs, deltaT);
-		mut = mu;
-//		std::cout << "MU = \n" << mu << std::endl;
-		//Update the occupancy grid, according to Mu here
-		world = updateOccupancyGrid(world,mu,t);
-		flag = false; 
-		prevX = newX;
+	
+	}
+	prevX = newX;
 		prevY = newY;
 		prevZ = newZ;
-
-		//-- Test: compute and publish the path
-		
-		// geometry_msgs::PoseStamped robotPose;
-		// robotPose.pose.position.x = newX;
-		// robotPose.pose.position.y = newY;
-		// robotPose.pose.orientation = tf::createQuaternionMsgFromYaw(newZ);
-		// robotPose.header.stamp = ros::Time::now();
-		// robotPose.header.frame_id = "/path";
-		// robotPath.header.stamp = ros::Time::now();;
-		// robotPath.header.frame_id = "/path";
-		// robotPath.poses.push_back(robotPose);
-		// robotPathPublisher.publish(robotPath);
-
-		// -- End of test
-	}
 	
 }
 int main(int argc, char **argv) {
@@ -126,6 +107,7 @@ int main(int argc, char **argv) {
 	ros::Subscriber velSub = n.subscribe("odom", 100, vel_callback);
 	robotPathPublisher = n.advertise<nav_msgs::Path> ("/path", 100, false);
 	point_cloud_publisher_ = n.advertise<sensor_msgs::PointCloud> ("/cloud", 100,false);
+	point_cloud_publisher_second = n.advertise<sensor_msgs::PointCloud> ("/cloud2", 100,false);
 	occupub = n.advertise<nav_msgs::OccupancyGrid> ("/world", 100,false);
 	ros::spin();
 	return 0;
