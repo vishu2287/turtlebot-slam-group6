@@ -12,6 +12,7 @@
 #include "nav_msgs/OccupancyGrid.h"
 
 using namespace Eigen;
+
 sensor_msgs::PointCloud lasertrans (const sensor_msgs::LaserScan::ConstPtr& msg){
 
 	 tf::TransformListener tfListener_;
@@ -27,10 +28,8 @@ sensor_msgs::PointCloud lasertrans (const sensor_msgs::LaserScan::ConstPtr& msg)
 	 catch (...)
 	 {
 	 sensor_msgs::PointCloud error;
-		ROS_INFO_STREAM("errorstart");
 	 return error;
 	// std::cout << e.what();			//TODO Fix errors, they still occur decomment to see whats happening
 	 }
-	ROS_INFO_STREAM("normalstart");
 	 return cloud;
 }
