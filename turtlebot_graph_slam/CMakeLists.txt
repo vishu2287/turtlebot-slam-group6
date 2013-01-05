@@ -42,4 +42,4 @@ rosbuild_add_executable(turtlebot_graph_slam  src/OccupancyGrid.cpp)
 #rosbuild_add_executable(turtlebot_graph_slam  src/simple_slam.cpp)
 rosbuild_add_executable(turtlebot_graph_slam  src/scanmatch.cpp)
 rosbuild_add_executable(turtlebot_graph_slam  src/lasertrans.cpp)
-
+rosbuild_add_executable(turtlebot_graph_slam  src/GraphBasedAlgo1.cpp)
