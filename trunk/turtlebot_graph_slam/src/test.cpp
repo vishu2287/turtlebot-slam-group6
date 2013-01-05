@@ -18,6 +18,7 @@
 using namespace Eigen;
 	ros::Publisher point_cloud_publisher_;
 	ros::Publisher point_cloud_publisher_second;
+		ros::Publisher point_cloud_publisher_combined;
 	ros::Publisher occupub;
 	ros::Publisher robotPathPublisher;
 //std::vector <Vector2d> odoms; //Odometry saver TODO somehow did not work on 1 system
@@ -34,21 +35,35 @@ nav_msgs::Path robotPath;
 MatrixXd mut = MatrixXd::Zero(3, 1);
 MatrixXd u = MatrixXd::Zero(2, 1);
 bool flag = false;
-bool laserflag = false;
+bool laserflag1 = true;
+bool laserflag2 = true;
 double speed;
 double angular;
+// maintain two laserscans if robot moves 0.5 meters forward
 sensor_msgs::LaserScan::ConstPtr savescan;	
 sensor_msgs::LaserScan::ConstPtr secondscan;
+// 3 pointclouds for two different laserscans and the ICP output cloud
+sensor_msgs::PointCloud first;
+sensor_msgs::PointCloud second;
+sensor_msgs::PointCloud combined;
+// TUNABLE PARAMETERS
+double MATCH_DISTANCE = 0.3;	// Distance after which a laser scan should be matched again
 /*	Laserscancallback needed for feature extraction
 --------------------------------------------------------------------------------------*/
 void callback(const sensor_msgs::LaserScan::ConstPtr& msg) { // Always call graph slam for new laser readings
-		if(laserflag){
+		if(laserflag1){
 			savescan = msg;
-		} else {
+			laserflag1 = false;
+		}
+		if(!laserflag2) {
 			secondscan = msg;
+			laserflag2 = true;			//SAVE 2 scans here one at 0 one after going MATCH_DISTANCE
 		}
 	//publish occupancy grid
 	publishOccupancyGrid(world,occupub);
+	point_cloud_publisher_.publish(first);
+	point_cloud_publisher_second.publish(second); 
+	point_cloud_publisher_combined.publish(combined); 
 	if(t==0){
 		robotpos(0,0,0,0,0);
 	}else{
@@ -61,42 +76,50 @@ void callback(const sensor_msgs::LaserScan::ConstPtr& msg) { // Always call grap
 void rob_callback(const ros::TimerEvent&) {
 	//current robot position in world is always 0,0
 }
+bool distance(double x1,double x2, double y1, double y2){
+	double length = sqrt(pow(x2-x1,2)+pow(y2-y1,2));
+	if(length >= MATCH_DISTANCE){
+		return true;
+	}
+	return false;
+}
 /*		Velocity callback function, called when robot moves
 --------------------------------------------------------------------------------------*/
 int velcounter = 0;
+bool makesecond = false;
 void vel_callback(const nav_msgs::Odometry& msg) { 
-
-
-		
 	Vector3d newPose = Vector3d::Zero(3, 1);
 	double newX = msg.pose.pose.position.x;
 	double newY = msg.pose.pose.position.y;
 	geometry_msgs::Quaternion odom_quat = msg.pose.pose.orientation;
 	double newZ = tf::getYaw(odom_quat);
-	if(newX != prevX || newY != prevY || newZ != prevZ) {
-	// Flag for scanmatching, if robot moves, match scans !
-		if(laserflag)
-			laserflag = false;
-		else
-			laserflag = true;
-		velcounter++;
-	ROS_INFO_STREAM("velcounter" << velcounter);
-		if(velcounter > 5){
-			point_cloud_publisher_.publish(lasertrans(savescan));
-			point_cloud_publisher_second.publish(lasertrans(secondscan)); 
-			if( (lasertrans(savescan).points.size() != 0) && (lasertrans(secondscan).points.size() != 0) ){
-				scanmatch(lasertrans(savescan),lasertrans(secondscan));
-				}
-		}
-		//Declare Odometry here
-		speed = sqrt((newX-prevX)*(newX-prevX) + (newY-prevY)*(newY-prevY));
-	
-	}
-	prevX = newX;
+	if(velcounter == 0){
+		prevX = newX;
 		prevY = newY;
 		prevZ = newZ;
-	
+		velcounter = 1;
+	}
+	if(makesecond){
+		first = lasertrans(savescan);
+		second = lasertrans(secondscan); 
+		combined = scanmatch(first,second);
+		//Declare Odometry here
+		speed = sqrt((newX-prevX)*(newX-prevX) + (newY-prevY)*(newY-prevY));
+		prevX = newX;
+		prevY = newY;
+		prevZ = newZ;
+		makesecond = false;
+		laserflag1 = !laserflag1;
+
+	}
+	if(distance(prevX,newX,prevY,newY)) {
+	// Flag for scanmatching, if robot moves, match scans !
+		laserflag2 = !laserflag2;
+		makesecond = true;
+
+	}
 }
+
 int main(int argc, char **argv) {
 	 
 	ros::init(argc, argv, "test");
@@ -108,8 +131,10 @@ int main(int argc, char **argv) {
 	robotPathPublisher = n.advertise<nav_msgs::Path> ("/path", 100, false);
 	point_cloud_publisher_ = n.advertise<sensor_msgs::PointCloud> ("/cloud", 100,false);
 	point_cloud_publisher_second = n.advertise<sensor_msgs::PointCloud> ("/cloud2", 100,false);
+	point_cloud_publisher_combined = n.advertise<sensor_msgs::PointCloud> ("/cloudcombined", 100,false);
 	occupub = n.advertise<nav_msgs::OccupancyGrid> ("/world", 100,false);
 	ros::spin();
+
 	return 0;
 }
 
