@@ -84,7 +84,7 @@ MatrixXd algorithm1(VectorXd x, std::vector<Vector3d> z, std::vector<Matrix3d> o
 	}
 
 	// release the first node
-	H.block(0, 0, 3, 3) -= Matrix3d::Identity(3, 3);
+//	H.block(0, 0, 3, 3) -= Matrix3d::Identity(3, 3);
 
 
 
