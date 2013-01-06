@@ -3,6 +3,7 @@
 #include <feature_extractor.hpp>
 #include <graph_slam.hpp>
 #include <OccupancyGrid.hpp>
+#include <GraphBasedAlgo1.hpp>
 #include <robotpos.hpp>
 #include <simple_slam.hpp>
 #include <std_msgs/String.h>
@@ -70,11 +71,64 @@ void callback(const sensor_msgs::LaserScan::ConstPtr& msg) { // Always call grap
 		robotpos(mut((t*3)-3),mut((t*3)-2),0,0,mut((t*3)-1));
 		// std::cout << "X = \n" << mut((t*3)-3) << std::endl;
 	}
+
 }
 /*	Robot Position function, values from Graphslam should be incorporated here
 --------------------------------------------------------------------------------------*/
 void rob_callback(const ros::TimerEvent&) {
 	//current robot position in world is always 0,0
+
+	std::vector<int> is;
+	is.push_back(0);
+	is.push_back(1);
+	is.push_back(2);
+	is.push_back(3);
+	is.push_back(4);
+
+	std::vector<int> js;
+	js.push_back(1);
+	js.push_back(2);
+	js.push_back(3);
+	js.push_back(4);
+	js.push_back(5);
+
+	VectorXd x(18, 1);
+	x << 	  0,   0,  -0.3,
+			  3,   1,  -0.3,
+			  5,   3,  -1.5,
+			  4,   5,  -1.9,
+			  4,   8,  -0.6,
+			  7,  10,  -0.4;
+
+	std::vector<Vector3d> z;
+	Vector3d z1(3,1);
+	z1 <<	3.5, 0.5, -0.3;
+	Vector3d z2(3,1);
+	z2 <<	1.5, 1.5, -0.3;
+	Vector3d z3(3,1);
+	z3 <<	0.5, 2.5, -0.3;
+	Vector3d z4(3,1);
+	z4 <<	0.5, 2.5,    1;
+	Vector3d z5(3,1);
+	z5 <<	  2, 1.5,  0.3;
+	z.push_back(z1);
+	z.push_back(z2);
+	z.push_back(z3);
+	z.push_back(z4);
+	z.push_back(z5);
+
+	Matrix3d covariance = Matrix3d::Identity(3, 3);
+//	covariance(0,0) = 50;
+//	covariance(1,1) = 60;
+//	covariance(2,2) = 70;
+	std::vector<Matrix3d> omegas;
+	omegas.push_back(covariance.inverse());
+	omegas.push_back(covariance.inverse());
+	omegas.push_back(covariance.inverse());
+	omegas.push_back(covariance.inverse());
+	omegas.push_back(covariance.inverse());
+
+	algorithm1(x, z, omegas, is, js);
 }
 bool distance(double x1,double x2, double y1, double y2){
 	double length = sqrt(pow(x2-x1,2)+pow(y2-y1,2));
@@ -125,7 +179,7 @@ int main(int argc, char **argv) {
 	ros::init(argc, argv, "test");
 	ros::NodeHandle n;
 	world = initializeOccupancyGrid(2000, 0.05);
-	ros::Timer timer = n.createTimer(ros::Duration(0.1), rob_callback);
+	ros::Timer timer = n.createTimer(ros::Duration(5), rob_callback);
     ros::Subscriber laserSub = n.subscribe("base_scan", 100, callback);
 	ros::Subscriber velSub = n.subscribe("odom", 100, vel_callback);
 	robotPathPublisher = n.advertise<nav_msgs::Path> ("/path", 100, false);
