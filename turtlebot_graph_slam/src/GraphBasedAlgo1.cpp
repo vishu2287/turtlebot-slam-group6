@@ -7,34 +7,53 @@
 using namespace std;
 using namespace Eigen;
 
-MatrixXd algorithm1(VectorXd x, std::vector<Vector3d> z, std::vector<Matrix3d> omega, std::vector<int> is, std::vector<int> js) {
+MatrixXd algorithm1(VectorXd x, std::vector<Vector3d> z, std::vector<Matrix3d> omegas, std::vector<int> is, std::vector<int> js) {
+	ROS_INFO("ALGORITHM 1");
+
 	// find the maximum likelihood solution
 	bool converged = false;
 
-	VectorXd b(x.rows(),1);
-	MatrixXd H(x.rows(),x.rows());
+//	VectorXd b(x.rows(),1);
+//	MatrixXd H(x.rows(),x.rows());
 
-	while(!converged)
-	{
+//	while(!converged)
+//	{
 		VectorXd b = VectorXd::Zero(x.rows(),1);
 		MatrixXd H = MatrixXd::Zero(x.rows(),x.rows());
 		for(int constraintIndex = 0; constraintIndex < z.size(); constraintIndex++)
 		{
+//			std::cout << "constraintIndex = \n" << constraintIndex << std::endl;
+
 			// Get the indices of the nodes this constraint refers to
 			int i = is[constraintIndex];
 			int j = js[constraintIndex];
 
-			Vector3d x_i = x.block(i, 0, 3, 1);			// (28)
-			Vector3d x_j = x.block(j, 0, 3, 1);
+//			std::cout << "i = \n" << i << std::endl;
+//			std::cout << "j = \n" << j << std::endl;
+
+			Vector3d x_i = x.block(i*3, 0, 3, 1);		// (28)
+			Vector3d x_j = x.block(j*3, 0, 3, 1);
 			Vector3d z_i_j = z[constraintIndex];		// (29)
+
+//			std::cout << "x_i = \n" << x_i << std::endl;
+//			std::cout << "x_j = \n" << x_j << std::endl;
+//			std::cout << "z_i_j = \n" << z_i_j << std::endl;
 
 			Vector2d t_i = x_i.block(0, 0, 2, 1);		// Position vector of node i
 			Vector2d t_j = x_j.block(0, 0, 2, 1);		// Position vector of node j
 			Vector2d t_i_j = z_i_j.block(0, 0, 2, 1);	// Measured position difference vector between nodes i and j
 
+//			std::cout << "t_i = \n" << t_i << std::endl;
+//			std::cout << "t_j = \n" << t_j << std::endl;
+//			std::cout << "t_i_j = \n" << t_i_j << std::endl;
+
 			double phi_i = x_i(2,0);					// Angle of node i
 			double phi_j = x_j(2,0);					// Angle of node j
 			double phi_i_j = z_i_j(2,0);				// Measured angle between nodes i and j
+
+//			std::cout << "phi_i = \n" << phi_i << std::endl;
+//			std::cout << "phi_j = \n" << phi_j << std::endl;
+//			std::cout << "phi_i_j = \n" << phi_i_j << std::endl;
 
 			Matrix2d R_i(2,2);							// Rotation matrix for angle of node i
 			R_i(0,0) =  cos(phi_i);
@@ -69,28 +88,34 @@ MatrixXd algorithm1(VectorXd x, std::vector<Vector3d> z, std::vector<Matrix3d> o
 			B_i_j.block(0, 0, 2, 2) = R_i_j.transpose()*R_i.transpose();
 			B_i_j(2,2) = 1;
 
+			std::cout << "A_i_j = \n" << A_i_j << std::endl;
+			std::cout << "B_i_j = \n" << B_i_j << std::endl;
+
 			// compute the contribution of this constraint to the linear system
-			Matrix3d omega_i_j = omega[constraintIndex];
-			H.block(i, i, 3, 3) += A_i_j.transpose()*omega_i_j*A_i_j;
-			H.block(i, j, 3, 3) += A_i_j.transpose()*omega_i_j*B_i_j;
-			H.block(j, i, 3, 3) += B_i_j.transpose()*omega_i_j*A_i_j;
-			H.block(j, j, 3, 3) += B_i_j.transpose()*omega_i_j*B_i_j;
+			Matrix3d omega_i_j = omegas[constraintIndex];
+			H.block(i*3, i*3, 3, 3) += A_i_j.transpose()*omega_i_j*A_i_j;
+			H.block(i*3, j*3, 3, 3) += A_i_j.transpose()*omega_i_j*B_i_j;
+			H.block(j*3, i*3, 3, 3) += B_i_j.transpose()*omega_i_j*A_i_j;
+			H.block(j*3, j*3, 3, 3) += B_i_j.transpose()*omega_i_j*B_i_j;
 
 			// compute the coefficient vector
-			b.block(i, 0, 3, 1) += A_i_j.transpose()*omega_i_j*e_i_j;
-			b.block(j, 0, 3, 1) += B_i_j.transpose()*omega_i_j*e_i_j;
+			b.block(i*3, 0, 3, 1) += A_i_j.transpose()*omega_i_j*e_i_j;
+			b.block(j*3, 0, 3, 1) += B_i_j.transpose()*omega_i_j*e_i_j;
 		}
 		// keep the first node fixed
 		H.block(0, 0, 3, 3) += Matrix3d::Identity(3, 3);
 
 		// solve the linear system using sparse Cholesky factorization
-		Vector3d delta_x = H.ldlt().solve(b);
+		VectorXd delta_x = H.ldlt().solve(-b);
 
 		// update the parameters
 		x += delta_x;
-	}
+//	}
 	// release the first node
 	H.block(0, 0, 3, 3) -= Matrix3d::Identity(3, 3);
+
+	std::cout << "H = \n" << H << std::endl;
+	std::cout << "x = \n" << x << std::endl;
 
 	return H; // @todo: also return x
 }
