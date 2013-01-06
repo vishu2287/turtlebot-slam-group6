@@ -3,11 +3,17 @@
 #include <math.h>
 #include <vector>
 #include <Eigen/Dense>
+#include <iostream>
+using namespace std;
 using namespace Eigen;
 
 MatrixXd algorithm1(VectorXd x, std::vector<Vector3d> z, std::vector<Matrix3d> omega, std::vector<int> is, std::vector<int> js) {
 	// find the maximum likelihood solution
 	bool converged = false;
+
+	VectorXd b(x.rows(),1);
+	MatrixXd H(x.rows(),x.rows());
+
 	while(!converged)
 	{
 		VectorXd b = VectorXd::Zero(x.rows(),1);
@@ -63,7 +69,6 @@ MatrixXd algorithm1(VectorXd x, std::vector<Vector3d> z, std::vector<Matrix3d> o
 			B_i_j.block(0, 0, 2, 2) = R_i_j.transpose()*R_i.transpose();
 			B_i_j(2,2) = 1;
 
-
 			// compute the contribution of this constraint to the linear system
 			Matrix3d omega_i_j = omega[constraintIndex];
 			H.block(i, i, 3, 3) += A_i_j.transpose()*omega_i_j*A_i_j;
@@ -79,19 +84,14 @@ MatrixXd algorithm1(VectorXd x, std::vector<Vector3d> z, std::vector<Matrix3d> o
 		H.block(0, 0, 3, 3) += Matrix3d::Identity(3, 3);
 
 		// solve the linear system using sparse Cholesky factorization
+		Vector3d delta_x = H.ldlt().solve(b);
 
 		// update the parameters
+		x += delta_x;
 	}
-
 	// release the first node
-//	H.block(0, 0, 3, 3) -= Matrix3d::Identity(3, 3);
+	H.block(0, 0, 3, 3) -= Matrix3d::Identity(3, 3);
 
-
-
-
-
-
-	MatrixXd H_star = MatrixXd::Zero(3,3);
-	return H_star;
+	return H; // @todo: also return x
 }
 
