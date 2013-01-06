@@ -102,15 +102,26 @@ void rob_callback(const ros::TimerEvent&) {
 
 	std::vector<Vector3d> z;
 	Vector3d z1(3,1);
-	z1 <<	3.5, 0.5,  0.3;
+//	z1 <<	3.5, 0.5,  0.3;
+//	Vector3d z2(3,1);
+//	z2 <<	1.5, 1.5,  0.3;
+//	Vector3d z3(3,1);
+//	z3 <<	0.5, 2.5,  0.3;
+//	Vector3d z4(3,1);
+//	z4 <<	0.5, 2.5,   -1;
+//	Vector3d z5(3,1);
+//	z5 <<	  2, 1.5, -0.3;
+
+	z1 <<	3.53,   0,  0.3;
 	Vector3d z2(3,1);
-	z2 <<	1.5, 1.5,  0.3;
+	z2 <<	2.12,   0,  0.3;
 	Vector3d z3(3,1);
-	z3 <<	0.5, 2.5,  0.3;
+	z3 <<	2.55,   0,  0.3;
 	Vector3d z4(3,1);
-	z4 <<	0.5, 2.5,   -1;
+	z4 <<	2.55,   0, -0.3;
 	Vector3d z5(3,1);
-	z5 <<	  2, 1.5, -0.3;
+	z5 <<	2.50,   0, -0.3;
+
 	z.push_back(z1);
 	z.push_back(z2);
 	z.push_back(z3);
