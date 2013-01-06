@@ -17,7 +17,7 @@ sensor_msgs::PointCloud scanmatch(sensor_msgs::PointCloud one ,  sensor_msgs::Po
 	//while ! converging  			//START of the icp iterations
 	int secondsize = two.points.size();
 	int saver[two.points.size()];
-	int Threshold = 1;
+	int Threshold = 4;
 	for(int runthroughs = 0; runthroughs < Threshold ; runthroughs++){
 		double sum = 0;
 		 // SEARCH CLOSEST NEIGHBOR
@@ -91,15 +91,68 @@ sensor_msgs::PointCloud scanmatch(sensor_msgs::PointCloud one ,  sensor_msgs::Po
 		std::cout << "Translation Matrix" << R;
 		// Final calculation
 		// ----------------------------------------------------
-		 for(int i = 0; i < two.points.size();i++){
+		 for(int i = 0; i < one.points.size();i++){
 			Vector3d M(3);
-			M(0) = two.points[i].x;
-			M(1) = two.points[i].y;
+			M(0) = one.points[i].x;
+			M(1) = one.points[i].y;
 			M(2) = 1;
 			VectorXd sol = Tmat*M;
-			two.points[i].x = sol(0);
-			two.points[i].y = sol(1);
+			one.points[i].x = sol(0);
+			one.points[i].y = sol(1);
 		 }
 	}
-return two;
+return one;
 }
+/*bool contains(int test [], int i){
+	for(int i= 0; i < sizeof(test) ; i++){
+		if(test[i] == i)
+			return true;
+	}
+	return false;
+}
+sensor_msgs::PointCloud scanmatch(sensor_msgs::PointCloud one ,  sensor_msgs::PointCloud two){
+ ROS_INFO_STREAM("Scanmatcher is starting...");
+	//while ! converging  			//START of the icp iterations
+	int secondsize = two.points.size();
+	int saver[two.points.size()];
+	double lengthsaver[two.points.size()];
+	int Threshold = 5;
+	std::vector <geometry_msgs::Point32 > firstpoints;
+	std::vector <geometry_msgs::Point32 > secondpoints;
+	for(int runthroughs = 0; runthroughs < Threshold ; runthroughs++){
+		double sum = 0;
+		 // SEARCH CLOSEST NEIGHBOR
+		 //-----------------------------------------------------------------------
+		 for(int i = 0; i < two.points.size();i++){
+			double prev = 1000000;
+			for(int z = 0; z < one.points.size();z++){
+				double length = sqrt(pow(one.points[z].x-two.points[i].x,2)+pow(one.points[z].y-two.points[i].y,2));
+				if(length == 0)
+					continue;
+				if(length < prev){
+					//First occurence of point pair
+					if(lengthsaver[i] == 0){
+						 //Save position of closest neighbor here
+						 lengthsaver[i] = length;
+						 saver[i] = z;
+					}
+					//If pair already exists
+					else if(contains(saver,z)){
+						if(lengthsaver[i] < length){
+						}
+						// If save length > current length
+						else{
+							lengthsaver[i] = length;
+					                saver[i] = z;
+						}
+					} else {
+						lengthsaver[i] = length;
+						saver[i] = z;
+					}
+					prev = length;
+				}
+			}
+		 }
+		for(int i = 0; i < two.points.size();i++){
+			
+		}*/
