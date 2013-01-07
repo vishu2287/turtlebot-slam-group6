@@ -10,29 +10,46 @@
 #include <tf/transform_listener.h>
 #include <laser_geometry/laser_geometry.h>
 #include "nav_msgs/OccupancyGrid.h"
+#include <geometry_msgs/Point32.h>
 using namespace Eigen;
 //TODO FIX LASERSCAN SIZE so both scans have the same number of scans
+
+double getDistance(geometry_msgs::Point32 one, geometry_msgs::Point32 two) {
+	return sqrt(pow((one.x - two.x), 2) + pow((one.y - two.y), 2));
+}
+
 sensor_msgs::PointCloud scanmatch(sensor_msgs::PointCloud one ,  sensor_msgs::PointCloud two){
  ROS_INFO_STREAM("Scanmatcher is starting...");
 	//while ! converging  			//START of the icp iterations
 	int secondsize = two.points.size();
 	int saver[two.points.size()];
-	int Threshold = 4;
-	for(int runthroughs = 0; runthroughs < Threshold ; runthroughs++){
-		double sum = 0;
+	double delta = 0.01;
+	double distance = 1000;
+	double oldDistance = 10000;
+	double distances[two.points.size()];
+	//for(int runthroughs = 0; runthroughs < Threshold ; runthroughs++){
+		while(abs(oldDistance - distance) > delta) {
+			oldDistance = distance;
+			distance = 0;
 		 // SEARCH CLOSEST NEIGHBOR
 		 //-----------------------------------------------------------------------
 		 for(int i = 0; i < two.points.size();i++){
 			double prev = 1000000;
 			for(int z = 0; z < one.points.size();z++){
-				double length = sqrt(pow(one.points[z].x-two.points[i].x,2)+pow(one.points[z].y-two.points[i].y,2));
+				double length = getDistance(one.points[z], two.points[i]);// sqrt(pow(one.points[z].x-two.points[i].x,2)+pow(one.points[z].y-two.points[i].y,2));
 				if(length < prev){
 					prev = length;
 					//Save position of closest neighbor here
 					saver[i] = z;
-				}
+					distances[i] = length;				}
 			}
+
+			//std::cout << "The nearest neighbour of point " << i << " in the second scan is point " << saver[i] << " in the first scan"<< "\n";
 		 }
+		 for(int i = 0; i < two.points.size(); i++) {
+		 	distance += distances[i];
+		 }
+		 // std::cout << "Total distance = " << distance << "\n";
 
 		// Calculate center points of both scans
 		// ----------------------------------------------------
@@ -60,10 +77,10 @@ sensor_msgs::PointCloud scanmatch(sensor_msgs::PointCloud one ,  sensor_msgs::Po
 		MatrixXd Mtd = MatrixXd::Zero(2,two.points.size());
 		MatrixXd Mmd = MatrixXd::Zero(2,two.points.size());
 		 for(int i = 0; i < two.points.size();i++){
-			Mmd(0,i) = two.points[i].x-centroidxtwo;
-			Mmd(1,i) = two.points[i].y-centroidytwo;
-			Mtd(0,i) = one.points[saver[i]].x-centroidxone;
-			Mtd(1,i) = one.points[saver[i]].y-centroidyone;
+			Mtd(0,i) = two.points[i].x-centroidxtwo;
+			Mtd(1,i) = two.points[i].y-centroidytwo;
+			Mmd(0,i) = one.points[saver[i]].x-centroidxone;
+			Mmd(1,i) = one.points[saver[i]].y-centroidyone;
 		 }
 		MatrixXd H = Mmd*Mtd.transpose() ;
 		ROS_INFO_STREAM("Matrizes created!");
@@ -73,10 +90,10 @@ sensor_msgs::PointCloud scanmatch(sensor_msgs::PointCloud one ,  sensor_msgs::Po
 		 MatrixXd U = svd.matrixU();
 		 MatrixXd V = svd.matrixV();
 		 MatrixXd R = V*U.transpose();
-			std::cout << "R" << R;
+			//std::cout << "R" << R;
 		// Estimate translation vector and build final transformation matrix
 		// ----------------------------------------------------
-		std::cout << "R" << R;
+		//std::cout << "R" << R;
 		VectorXd centertwo(2);
 		VectorXd centerone(2);
 		centertwo(0) = centroidxtwo;
@@ -88,7 +105,7 @@ sensor_msgs::PointCloud scanmatch(sensor_msgs::PointCloud one ,  sensor_msgs::Po
 		Tmat << R(0,0),R(0,1),t(0),
 			R(1,0),R(1,1),t(1),
 			0,0,1;
-		std::cout << "Translation Matrix" << R;
+		//std::cout << "Translation Matrix" << R;
 		// Final calculation
 		// ----------------------------------------------------
 		 for(int i = 0; i < one.points.size();i++){
