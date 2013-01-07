@@ -148,6 +148,23 @@ bool distance(double x1,double x2, double y1, double y2){
 	}
 	return false;
 }
+
+bool rotation(double rot1, double rot2) {
+	if(rot1 < 0 && rot2 > 0) {
+		rot1 *= -1;
+		rot2 = rot1 + M_PI/2;
+	}
+	if(rot2 < 0 && rot1 > 0) {
+		rot2 *= -1;
+		rot2 = rot2 + M_PI/2;
+	}
+	double rotDifference = rot2-rot1;
+	if(rotDifference >= 0.3) {
+		return true;
+	}
+	return false;
+}
+
 /*		Velocity callback function, called when robot moves
 --------------------------------------------------------------------------------------*/
 int velcounter = 0;
@@ -177,7 +194,7 @@ void vel_callback(const nav_msgs::Odometry& msg) {
 		makesecond = false;
 		laserflag1 = !laserflag1;
 	}
-	if(distance(prevX,newX,prevY,newY)) {
+	if(distance(prevX,newX,prevY,newY) || rotation(prevZ, newZ)) {
 	// Flag for scanmatching, if robot moves, match scans !
 		laserflag2 = !laserflag2;
 		makesecond = true;
