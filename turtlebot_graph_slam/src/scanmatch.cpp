@@ -50,21 +50,7 @@ MatrixXd robotpos = MatrixXd::Zero(3,1);
 
 			//std::cout << "The nearest neighbour of point " << i << " in the second scan is point " << saver[i] << " in the first scan"<< "\n";
 		 }
-	//BEST COVARIANCE ON PLANET FOR EVA
-		MatrixXd Cov_Matrix = MatrixXd::Zero(sizeof(saver),sizeof(saver));
-		for(int i = 0; i < two.points.size();i++){
-			/*int x = two.points[i].x;
-			int y = two.points[i].y;
-			int x1 = one.points[saver[i]].x;
-			int y1 = one.points[saver[i]].x;
-			double meanfirst = (x+y)/2.;
-			double meansecond = (x1+y1)/2.;
-			double mult = x*x1;
-			double mult1 = y*y1;
-			double meanxy = (mult+mult1)/2;
-			double meanboth = meanfirst*meansecond;
-			Cov_Matrix(i,i) = meanxy-meanboth;*/
-		}	
+	
 		 for(int i = 0; i < two.points.size(); i++) {
 		 	distance += distances[i];
 		 }
