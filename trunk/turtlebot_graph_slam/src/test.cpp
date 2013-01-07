@@ -168,7 +168,7 @@ void vel_callback(const nav_msgs::Odometry& msg) {
 		first = lasertrans(savescan);
 		second = lasertrans(secondscan); 
 		if(!(first.points.size()<=0) || !(second.points.size()<=0))
-		MatrixXd robotpos = scanmatch(first,second,0,0,0);
+		MatrixXd robotpos = scanmatch(first,second);
 		//Declare Odometry here
 		speed = sqrt((newX-prevX)*(newX-prevX) + (newY-prevY)*(newY-prevY));
 		prevX = newX;
