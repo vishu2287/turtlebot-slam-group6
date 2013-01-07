@@ -125,9 +125,11 @@ MatrixXd robotpos = MatrixXd::Zero(1,3);
 		VectorXd robotsol = Tmat*temp_coord;
 		robotx = robotsol(0);
 		roboty = robotsol(1);
+		robotphi += acos(R(0,0));
 	}
 std::cout << "ROBOTX" << -robotx;
 std::cout << "ROBOTY" << -roboty;
+std::cout << "RobotTurn" << -robotphi;
 robotpos(0,0) = -robotx;
 robotpos(0,1) = -roboty;
 return robotpos;
