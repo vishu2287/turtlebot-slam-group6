@@ -13,4 +13,4 @@ nav_msgs::OccupancyGrid initializeOccupancyGrid(int SIZE, double resolution);
 
 void publishOccupancyGrid(nav_msgs::OccupancyGrid og,ros::Publisher occupub);
 
-nav_msgs::OccupancyGrid updateOccupancyGrid(nav_msgs::OccupancyGrid og, VectorXd mu, int t);
+nav_msgs::OccupancyGrid updateOccupancyGrid(nav_msgs::OccupancyGrid og, std::vector < sensor_msgs::LaserScan::ConstPtr > laserscansaver, std::vector<MatrixXd> poses);

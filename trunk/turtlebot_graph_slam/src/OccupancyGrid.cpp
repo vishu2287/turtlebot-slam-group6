@@ -4,6 +4,7 @@
 #include <queue>
 #include <map>
 #include <Eigen/Dense>
+#include <lasertrans.hpp>
 #include "nav_msgs/OccupancyGrid.h"
 #include <tf/transform_listener.h>
 #include <laser_geometry/laser_geometry.h>
@@ -30,15 +31,25 @@ nav_msgs::OccupancyGrid initializeOccupancyGrid(int length, double resolution) {
 void publishOccupancyGrid(nav_msgs::OccupancyGrid og,ros::Publisher occupub){
 	occupub.publish(og);
 }
-
     /*		Populate a Occupancy GridFF
     --------------------------------------------------------------------------------------*/
-nav_msgs::OccupancyGrid updateOccupancyGrid(nav_msgs::OccupancyGrid og, VectorXd mu, int t) {
+nav_msgs::OccupancyGrid updateOccupancyGrid(nav_msgs::OccupancyGrid og, std::vector < sensor_msgs::LaserScan::ConstPtr > laserscansaver, std::vector<MatrixXd> poses){
     // ROS_INFO_STREAM("Occupancy Grid has height: "<<og.info.height<<" and width: "<<og.info.width);
-    for(int i = 0; i < og.data.size();i++){
+        for(int i = 0; i < og.data.size();i++){
 		og.data[i] = -1;
 	}
-    for(int pose = (t+1)*3; pose < mu.size(); pose += 3) {
+	for(int i = 0 ; i < laserscansaver.size() ; i++){
+		sensor_msgs::PointCloud temp = lasertrans(laserscansaver[i]);
+		if(i>= poses.size())
+			break;
+	ROS_INFO_STREAM("Occupancy Grid has height: "<<poses[i](0,0)<<" and width: "<<poses[i](1,0));
+		for(int z = 0; z < temp.points.size() ; z++){
+			        int grid_x = (unsigned int)(((temp.points[z].x+poses[i](0,0))/RESOLUTION + SIZE/2));
+   			        int grid_y = (unsigned int)(((temp.points[z].y+poses[i](1,0))/RESOLUTION + SIZE/2));
+       			        og.data[((grid_y*og.info.width)+grid_x)] = 100;
+		}
+	}
+    /*for(int pose = (t+1)*3; pose < mu.size(); pose += 3) {
         double x = mu(pose);
         if(x < -10 || x > 10){ //There are sometimes values of 30000000 and - 30000000 ... for testing
             x = 0;
@@ -52,6 +63,6 @@ nav_msgs::OccupancyGrid updateOccupancyGrid(nav_msgs::OccupancyGrid og, VectorXd
         int grid_y = (unsigned int)((y/RESOLUTION + SIZE/2));
         //ROS_INFO_STREAM("Grid X = "<< grid_x << ", Grid Y =" << grid_y);
         og.data[((grid_y*og.info.width)+grid_x)] = 100;
-    }
+    }*/
     return og;
 }
