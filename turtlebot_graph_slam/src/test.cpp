@@ -68,7 +68,7 @@ void callback(const sensor_msgs::LaserScan::ConstPtr& msg) { // Always call grap
 	if(t==0){
 		robotpos(0,0,0,0,0);
 	}else{
-		robotpos(mut((t*3)-3),mut((t*3)-2),0,0,mut((t*3)-1));
+		//robotpos(mut((t*3)-3),mut((t*3)-2),0,0,mut((t*3)-1));
 		// std::cout << "X = \n" << mut((t*3)-3) << std::endl;
 	}
 
@@ -167,7 +167,8 @@ void vel_callback(const nav_msgs::Odometry& msg) {
 	if(makesecond){
 		first = lasertrans(savescan);
 		second = lasertrans(secondscan); 
-		combined = scanmatch(first,second);
+		if(!(first.points.size()<=0) || !(second.points.size()<=0))
+		MatrixXd robotpos = scanmatch(first,second,0,0,0);
 		//Declare Odometry here
 		speed = sqrt((newX-prevX)*(newX-prevX) + (newY-prevY)*(newY-prevY));
 		prevX = newX;
@@ -175,7 +176,6 @@ void vel_callback(const nav_msgs::Odometry& msg) {
 		prevZ = newZ;
 		makesecond = false;
 		laserflag1 = !laserflag1;
-
 	}
 	if(distance(prevX,newX,prevY,newY)) {
 	// Flag for scanmatching, if robot moves, match scans !
