@@ -53,12 +53,12 @@ sensor_msgs::PointCloud first;
 sensor_msgs::PointCloud second;
 sensor_msgs::PointCloud combined;
 // TUNABLE PARAMETERS
-double MATCH_DISTANCE = 0.3;	// Distance after which a laser scan should be matched again
+double MATCH_DISTANCE = 0.15;	// Distance after which a laser scan should be matched again
 /*	Laserscancallback needed for feature extraction
 --------------------------------------------------------------------------------------*/
 void callback(const sensor_msgs::LaserScan::ConstPtr& msg) { // Always call graph slam for new laser readings
 		if(laserflag1){
-			laserscansaver.push_back(msg);
+			
 			savescan = msg;
 			laserflag1 = false;
 		}
@@ -183,16 +183,17 @@ void vel_callback(const nav_msgs::Odometry& msg) {
 		//Save 000 as first position of the robot 
 		MatrixXd temp = MatrixXd::Zero(3,1);
 		robotpossaver.push_back(temp);
+		laserscansaver.push_back(savescan);
 		velcounter = 1;
 	}
 	if(makesecond){
-		first = lasertrans(savescan);
-		second = lasertrans(secondscan); 
+		first = lasertrans(savescan);		second = lasertrans(secondscan); 
 		if(!(first.points.size()<=0) || !(second.points.size()<=0)){
 			MatrixXd robotpos_match = scanmatch(first,second);
 			robotx += robotpos_match(0,0);
 			roboty += robotpos_match(1,0);
 			robotpossaver.push_back(robotpos_match);
+			laserscansaver.push_back(secondscan);
 			world = updateOccupancyGrid(world,laserscansaver,robotpossaver);
 			/*MatrixXd Cov_Matrix = MatrixXd::Zero(3,3);
 				int x = two.points[i].x;
@@ -203,7 +204,7 @@ void vel_callback(const nav_msgs::Odometry& msg) {
 				double meansecond = (x1+y1)/2.;
 				double mult = x*x1;
 				double mult1 = y*y1;
-				double meanxy = (mult+mult1)/2;
+				double meanxy88 = (mult+mult1)/2;
 				double meanboth = meanfirst*meansecond;
 				Cov_Matrix(i,i) = meanxy-meanboth;*/
 
