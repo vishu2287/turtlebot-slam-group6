@@ -136,7 +136,7 @@ std::cout << "ROBOTY" << -roboty;
 std::cout << "RobotTurn" << -robotphi;
 robotpos(0,0) = -robotx;
 robotpos(1,0) = -roboty;
-robotpos(2,0) = -roboty;
+robotpos(2,0) = -robotphi;
 return robotpos;
 }
 /*bool contains(int test [], int i){

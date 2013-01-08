@@ -38,14 +38,18 @@ nav_msgs::OccupancyGrid updateOccupancyGrid(nav_msgs::OccupancyGrid og, std::vec
         for(int i = 0; i < og.data.size();i++){
 		og.data[i] = -1;
 	}
+	double xtranspose = 0;
+	double ytranspose = 0;
 	for(int i = 0 ; i < laserscansaver.size() ; i++){
 		sensor_msgs::PointCloud temp = lasertrans(laserscansaver[i]);
 		if(i>= poses.size())
 			break;
-	ROS_INFO_STREAM("Occupancy Grid has height: "<<poses[i](0,0)<<" and width: "<<poses[i](1,0));
+	xtranspose+=poses[i](0,0);
+	ytranspose+=poses[i](1,0);
+	ROS_INFO_STREAM("Occupancy Grid has height: "<<xtranspose<<" and width: "<<ytranspose);
 		for(int z = 0; z < temp.points.size() ; z++){
-			        int grid_x = (unsigned int)(((temp.points[z].x+poses[i](0,0))/RESOLUTION + SIZE/2));
-   			        int grid_y = (unsigned int)(((temp.points[z].y+poses[i](1,0))/RESOLUTION + SIZE/2));
+			        int grid_x = (unsigned int)(((temp.points[z].x+xtranspose)/RESOLUTION + SIZE/2));
+   			        int grid_y = (unsigned int)(((temp.points[z].y+ytranspose)/RESOLUTION + SIZE/2));
        			        og.data[((grid_y*og.info.width)+grid_x)] = 100;
 		}
 	}
