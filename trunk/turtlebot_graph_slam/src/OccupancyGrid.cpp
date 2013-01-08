@@ -46,7 +46,7 @@ nav_msgs::OccupancyGrid updateOccupancyGrid(nav_msgs::OccupancyGrid og, std::vec
 			break;
 	xtranspose+=poses[i](0,0);
 	ytranspose+=poses[i](1,0);
-	ROS_INFO_STREAM("Occupancy Grid has height: "<<xtranspose<<" and width: "<<ytranspose);
+	//ROS_INFO_STREAM("Occupancy Grid has height: "<<xtranspose<<" and width: "<<ytranspose);
 		for(int z = 0; z < temp.points.size() ; z++){
 			        int grid_x = (unsigned int)(((temp.points[z].x+xtranspose)/RESOLUTION + SIZE/2));
    			        int grid_y = (unsigned int)(((temp.points[z].y+ytranspose)/RESOLUTION + SIZE/2));

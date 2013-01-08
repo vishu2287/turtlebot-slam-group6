@@ -24,17 +24,20 @@ MatrixXd robotpos = MatrixXd::Zero(3,1);
 	//while ! converging  			//START of the icp iterations
 	int secondsize = two.points.size();
 	int saver[two.points.size()];
-	double delta = 0.01;
+	bool errors[two.points.size()];
+	double delta = 0.0005;
 	double distance = 1000;
 	double oldDistance = 10000;
 	double distances[two.points.size()];
 	double robotx = 0;
 	double roboty = 0;
 	double robotphi = 0;
+	double MAX_DISTANCE = 4;
 	//for(int runthroughs = 0; runthroughs < Threshold ; runthroughs++){
 		while(abs(oldDistance - distance) > delta) {
 			oldDistance = distance;
 			distance = 0;
+		int numberofpairs = 0;
 		 // SEARCH CLOSEST NEIGHBOR
 		 //-----------------------------------------------------------------------
 		 for(int i = 0; i < two.points.size();i++){
@@ -42,19 +45,27 @@ MatrixXd robotpos = MatrixXd::Zero(3,1);
 			for(int z = 0; z < one.points.size();z++){
 				double length = getDistance(one.points[z], two.points[i]);// sqrt(pow(one.points[z].x-two.points[i].x,2)+pow(one.points[z].y-two.points[i].y,2));
 				if(length < prev){
-					prev = length;
+					if(length >= MAX_DISTANCE){
+						errors[i] = true;
+						
+					} else {
 					//Save position of closest neighbor here
 					saver[i] = z;
-					distances[i] = length;				}
+					distances[i] = length;	
+					numberofpairs++;
+					}
+					prev = length;
+				}
 			}
 
 			//std::cout << "The nearest neighbour of point " << i << " in the second scan is point " << saver[i] << " in the first scan"<< "\n";
 		 }
 	
 		 for(int i = 0; i < two.points.size(); i++) {
+			if(!errors[i])
 		 	distance += distances[i];
 		 }
-		 // std::cout << "Total distance = " << distance << "\n";
+		  std::cout << "Total distance = " << distance << "\n";
 
 		// Calculate center points of both scans
 		// ----------------------------------------------------
@@ -67,25 +78,32 @@ MatrixXd robotpos = MatrixXd::Zero(3,1);
 		 double x1 = 0;
 		 double y1 = 0;
 		 for(int i = 0; i < two.points.size();i++){
+			if(!errors[i]){
 			x+= two.points[i].x;
 			y+= two.points[i].y;
 			x1+= one.points[saver[i]].x;
 			y1+= one.points[saver[i]].y;
+			}
 		 }
-		 centroidxtwo = x/two.points.size();			//Checken ob es double bleibt
-		 centroidytwo = y/two.points.size();
-		 centroidxone = x1/two.points.size();
-		 centroidyone = y1/two.points.size();
+		 centroidxtwo = x/numberofpairs;			//Checken ob es double bleibt
+		 centroidytwo = y/numberofpairs;
+		 centroidxone = x1/numberofpairs;
+		 centroidyone = y1/numberofpairs;
 		 ROS_INFO_STREAM("Correspondence and centroids created !");
 		// Calculate Correlation matrix H
 		// ----------------------------------------------------
-		MatrixXd Mtd = MatrixXd::Zero(2,two.points.size());
-		MatrixXd Mmd = MatrixXd::Zero(2,two.points.size());
+		MatrixXd Mtd = MatrixXd::Zero(2,numberofpairs);
+		MatrixXd Mmd = MatrixXd::Zero(2,numberofpairs);
+		int counter = 0;
 		 for(int i = 0; i < two.points.size();i++){
-			Mtd(0,i) = two.points[i].x-centroidxtwo;
-			Mtd(1,i) = two.points[i].y-centroidytwo;
-			Mmd(0,i) = one.points[saver[i]].x-centroidxone;
-			Mmd(1,i) = one.points[saver[i]].y-centroidyone;
+			if(!errors[i]){
+			Mtd(0,i-counter) = two.points[i].x-centroidxtwo;
+			Mtd(1,i-counter) = two.points[i].y-centroidytwo;
+			Mmd(0,i-counter) = one.points[saver[i]].x-centroidxone;
+			Mmd(1,i-counter) = one.points[saver[i]].y-centroidyone;
+			} else {
+			counter++;
+			}
 		 }
 		MatrixXd H = Mmd*Mtd.transpose() ;
 		ROS_INFO_STREAM("Matrizes created!");
