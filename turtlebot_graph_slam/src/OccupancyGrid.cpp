@@ -26,19 +26,27 @@ nav_msgs::OccupancyGrid initializeOccupancyGrid(int length, double resolution) {
     ROS_INFO_STREAM("MAP HEIGHT : " << og.info.height);
     og.data.resize(SIZE * SIZE);
 
+    for(int i = 0; i < og.data.size();i++){
+       og.data[i] = -1;
+    }
+
     return og;
 }
 //publish Occupacy grid
 void publishOccupancyGrid(nav_msgs::OccupancyGrid og,ros::Publisher occupub){
 	occupub.publish(og);
 }
+
+// Used for calculating the free space
+int linearFunction(int x, int y1, int y2, int x1, int x2)
+{
+    return x2+(double)(y2-x2)/(y1-x1)*(x-x1);
+}
     /*		Populate a Occupancy GridFF
     --------------------------------------------------------------------------------------*/
 nav_msgs::OccupancyGrid updateOccupancyGrid(nav_msgs::OccupancyGrid og, std::vector < sensor_msgs::LaserScan::ConstPtr > laserscansaver, std::vector<MatrixXd> poses){
     // ROS_INFO_STREAM("Occupancy Grid has height: "<<og.info.height<<" and width: "<<og.info.width);
-//        for(int i = 0; i < og.data.size();i++){
-//		og.data[i] = -1;
-//	}
+
 //	for(int i = 0 ; i < laserscansaver.size() ; i++){
 //        for(int i = laserscansaver.size() ; i < laserscansaver.size() ; i++){
             int i = laserscansaver.size()-1;
@@ -64,19 +72,43 @@ nav_msgs::OccupancyGrid updateOccupancyGrid(nav_msgs::OccupancyGrid og, std::vec
             double a21 =  sin(yaw);
             double a22 =  cos(yaw);
 
-            double x1 = grid_x;
-            double x2 = grid_y;
+            int x1 = grid_x;
+            int x2 = grid_y;
 
-            double p1 = xPose/RESOLUTION + SIZE/2;
-            double p2 = yPose/RESOLUTION + SIZE/2;
+            int p1 = (int)(xPose/RESOLUTION + SIZE/2);
+            int p2 = (int)(yPose/RESOLUTION + SIZE/2);
 
-            double diffX = x1-p1;
-            double diffY = x2-p2;
+            int diffX = x1-p1;
+            int diffY = x2-p2;
 
             grid_x = a11*diffX + a12*diffY + p1;
             grid_y = a21*diffX + a22*diffY + p2;
 
             og.data[((grid_y*og.info.width)+grid_x)] = 100;
+
+            // Set freespace between x and p
+            int path = p1-grid_x;
+            if(path<0)
+            {
+                for(int a = grid_x-1; a>p1; a--)
+                {
+                    int f = linearFunction(a, grid_x, grid_y, p1, p2);
+                    og.data[((f*og.info.width)+a)] = 0;
+                }
+            }
+            else if(path > 0)
+            {
+                for(int a = grid_x+1; a<p1; a++)
+                {
+                    int f = linearFunction(a, grid_x, grid_y, p1, p2);
+                    og.data[((f*og.info.width)+a)] = 0;
+                }
+            }
+            else
+            {
+                // @todo: Handle when no x defference exists
+            }
+
         }
 
 //	}
