@@ -36,13 +36,15 @@ void publishOccupancyGrid(nav_msgs::OccupancyGrid og,ros::Publisher occupub){
     --------------------------------------------------------------------------------------*/
 nav_msgs::OccupancyGrid updateOccupancyGrid(nav_msgs::OccupancyGrid og, std::vector < sensor_msgs::LaserScan::ConstPtr > laserscansaver, std::vector<MatrixXd> poses){
     // ROS_INFO_STREAM("Occupancy Grid has height: "<<og.info.height<<" and width: "<<og.info.width);
-        for(int i = 0; i < og.data.size();i++){
-		og.data[i] = -1;
-	}
-	for(int i = 0 ; i < laserscansaver.size() ; i++){
+//        for(int i = 0; i < og.data.size();i++){
+//		og.data[i] = -1;
+//	}
+//	for(int i = 0 ; i < laserscansaver.size() ; i++){
+//        for(int i = laserscansaver.size() ; i < laserscansaver.size() ; i++){
+            int i = laserscansaver.size()-1;
 		sensor_msgs::PointCloud temp = lasertrans(laserscansaver[i]);
-		if(i>= poses.size())
-			break;
+//		if(i>= poses.size())
+//			break;
         double xPose = poses[i](0,0);
         double yPose = poses[i](1,0);
         double yaw = poses[i](2,0);
@@ -75,8 +77,8 @@ nav_msgs::OccupancyGrid updateOccupancyGrid(nav_msgs::OccupancyGrid og, std::vec
             grid_y = a21*diffX + a22*diffY + p2;
 
             og.data[((grid_y*og.info.width)+grid_x)] = 100;
-		}
+        }
 
-	}
+//	}
     return og;
 }

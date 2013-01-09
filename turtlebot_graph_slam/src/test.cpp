@@ -38,41 +38,28 @@ double roboty = 0;
 MatrixXd u = MatrixXd::Zero(2, 1);
 
 bool flag = false;
-bool laserflag1 = true;
-bool laserflag2 = true;
 double speed;
 double angular;
 //MAINTAIN a list of laserscans for each pose and of all robotposes
 std::vector < sensor_msgs::LaserScan::ConstPtr > laserscansaver;
 std::vector<MatrixXd> robotpossaver;
 // maintain two laserscans if robot moves 0.5 meters forward
-sensor_msgs::LaserScan::ConstPtr savescan;	
-sensor_msgs::LaserScan::ConstPtr secondscan;
+sensor_msgs::LaserScan::ConstPtr currentScan;
+sensor_msgs::LaserScan::ConstPtr scan2;
 // 3 pointclouds for two different laserscans and the ICP output cloud
-sensor_msgs::PointCloud first;
-sensor_msgs::PointCloud second;
+sensor_msgs::PointCloud pointCloud1;
+sensor_msgs::PointCloud pointCloud2;
 sensor_msgs::PointCloud combined;
 // TUNABLE PARAMETERS
-double MATCH_DISTANCE = 0.15;	// Distance after which a laser scan should be matched again
+double MATCH_DISTANCE = 0.5;	// Distance after which a laser scan should be matched again
 /*	Laserscancallback needed for feature extraction
 --------------------------------------------------------------------------------------*/
 void callback(const sensor_msgs::LaserScan::ConstPtr& msg) { // Always call graph slam for new laser readings
-		if(laserflag1){
-			
-			savescan = msg;
-			laserflag1 = false;
-		}
-		if(!laserflag2) {
-			secondscan = msg;
-			laserflag2 = true;			//SAVE 2 scans here one at 0 one after going MATCH_DISTANCE
-		}
-	//publish occupancy grid
-	publishOccupancyGrid(world,occupub);
-	point_cloud_publisher_.publish(first);
-	point_cloud_publisher_second.publish(second); 
-	point_cloud_publisher_combined.publish(combined); 
-        robotpos(robotx,roboty,0,0,0);
-
+    /**
+      Simply save the current scan.
+      It will be used by the velocity callback function as seen fit.
+    */
+    currentScan = msg;
 }
 /*	Robot Position function, values from Graphslam should be incorporated here
 --------------------------------------------------------------------------------------*/
@@ -166,64 +153,108 @@ bool rotation(double rot1, double rot2) {
 	return false;
 }
 
-/*		Velocity callback function, called when robot moves
+/*		Velocity callback function, called continuously
 --------------------------------------------------------------------------------------*/
 int velcounter = 0;
 bool makesecond = false;
 void vel_callback(const nav_msgs::Odometry& msg) { 
-	Vector3d newPose = Vector3d::Zero(3, 1);
-	double newX = msg.pose.pose.position.x;
-	double newY = msg.pose.pose.position.y;
-	geometry_msgs::Quaternion odom_quat = msg.pose.pose.orientation;
-	double newZ = tf::getYaw(odom_quat);
-	if(velcounter == 0){
-		prevX = newX;
-		prevY = newY;
-		prevZ = newZ;
-		//Save 000 as first position of the robot 
-		MatrixXd temp = MatrixXd::Zero(3,1);
-		robotpossaver.push_back(temp);
-		laserscansaver.push_back(savescan);
-		velcounter = 1;
-	}
-	if(makesecond){
-		first = lasertrans(savescan);		second = lasertrans(secondscan); 
-		if(!(first.points.size()<=0) || !(second.points.size()<=0)){
-			MatrixXd robotpos_match = scanmatch(first,second);
-			robotx += robotpos_match(0,0);
-			roboty += robotpos_match(1,0);
-			robotpossaver.push_back(robotpos_match);
-			laserscansaver.push_back(secondscan);
-			world = updateOccupancyGrid(world,laserscansaver,robotpossaver);
-			/*MatrixXd Cov_Matrix = MatrixXd::Zero(3,3);
-				int x = two.points[i].x;
-				int y = two.points[i].y;
-				int x1 = one.points[saver[i]].x;
-				int y1 = one.points[saver[i]].x;
-				double meanfirst = (x+y)/2.;
-				double meansecond = (x1+y1)/2.;
-				double mult = x*x1;
-				double mult1 = y*y1;
-				double meanxy88 = (mult+mult1)/2;
-				double meanboth = meanfirst*meansecond;
-				Cov_Matrix(i,i) = meanxy-meanboth;*/
 
-		}
-		//robotpossaver.push_back(robotpos);
-		//Declare Odometry here
-		speed = sqrt((newX-prevX)*(newX-prevX) + (newY-prevY)*(newY-prevY));
-		prevX = newX;
-		prevY = newY;
-		prevZ = newZ;
-		makesecond = false;
-		laserflag1 = !laserflag1;
-	}
-	if(distance(prevX,newX,prevY,newY) || rotation(prevZ, newZ)) {
-	// Flag for scanmatching, if robot moves, match scans !
-		laserflag2 = !laserflag2;
-		makesecond = true;
+    // Get the current position of the robot
+    double newX = msg.pose.pose.position.x;
+    double newY = msg.pose.pose.position.y;
+    geometry_msgs::Quaternion odom_quat = msg.pose.pose.orientation;
+    double newZ = tf::getYaw(odom_quat);
 
-	}
+
+    // If this is the first call create the first node
+    if(velcounter == 0 && currentScan){
+
+        // Save the current position as previous
+        prevX = newX;
+        prevY = newY;
+        prevZ = newZ;
+
+        //Save first position of the robot
+        MatrixXd firstNode(3,1);
+        firstNode(0,0) = newX;
+        firstNode(1,0) = newY;
+        firstNode(2,0) = newZ;
+        robotpossaver.push_back(firstNode);
+
+        // Save the current scan
+        laserscansaver.push_back(currentScan);
+
+        // Save the first scan as previous
+        scan2 = currentScan;
+
+        velcounter++;
+
+        std::cout << "Origin node created" << std::endl;
+        std::cout << "Number of saved poses = " << robotpossaver.size() << std::endl;
+        std::cout << "Number of saved scans = " << laserscansaver.size() << std::endl;
+        std::cout << "-----" << std::endl;
+    }
+
+    // If the robot has walked far enough to make the second scan
+    if(distance(prevX,newX,prevY,newY) /*|| rotation(prevZ, newZ)*/) {
+
+        // Save current scan
+        laserscansaver.push_back(currentScan);
+
+        // Save current robot pose
+        MatrixXd robotPose(3,1);
+        robotPose(0,0) = newX;
+        robotPose(1,0) = newY;
+        robotPose(2,0) = newZ;
+        robotpossaver.push_back(robotPose);
+
+        std::cout << "New node created" << std::endl;
+        std::cout << "Number of saved poses = " << robotpossaver.size() << std::endl;
+        std::cout << "Number of saved scans = " << laserscansaver.size() << std::endl;
+        std::cout << "-----" << std::endl;
+
+        // Transform the current and last scan to PointClouds
+        pointCloud1 = lasertrans(currentScan);
+        pointCloud2 = lasertrans(scan2);
+
+        // Publish clouds
+        point_cloud_publisher_.publish(pointCloud1);
+        point_cloud_publisher_second.publish(pointCloud2);
+
+        // Update grid
+        world = updateOccupancyGrid(world,laserscansaver,robotpossaver);
+        publishOccupancyGrid(world,occupub);
+
+        // If both clouds are not empty
+//        if(!(pointCloud1.points.size()<=0) || !(pointCloud2.points.size()<=0)){
+
+//            // Use scanmatch for both clouds
+//            MatrixXd robotpos_match = scanmatch(pointCloud1,pointCloud2);
+
+//            // Get X and Y
+//            robotx += robotpos_match(0,0);
+//            roboty += robotpos_match(1,0);
+
+//            // Save the matches position in a list
+//            robotpossaver.push_back(robotpos_match);
+
+//            // Save the last scan in a list
+//            laserscansaver.push_back(scan2);
+
+//            // Update the occupancy grid
+//            world = updateOccupancyGrid(world,laserscansaver,robotpossaver);
+//        }
+        //robotpossaver.push_back(robotpos);
+
+        // Save current pose as previous
+        prevX = newX;
+        prevY = newY;
+        prevZ = newZ;
+
+        // Save current scan as previous
+        scan2 = currentScan;
+    }
+    robotpos(newX,newY,0,0,newZ);
 }
 
 int main(int argc, char **argv) {
@@ -232,7 +263,7 @@ int main(int argc, char **argv) {
 	ros::NodeHandle n;
 	world = initializeOccupancyGrid(2000, 0.05);
 	ros::Timer timer = n.createTimer(ros::Duration(5), rob_callback);
-        ros::Subscriber laserSub = n.subscribe("base_scan", 100, callback);
+    ros::Subscriber laserSub = n.subscribe("base_scan", 100, callback);
 	ros::Subscriber velSub = n.subscribe("odom", 100, vel_callback);
 	robotPathPublisher = n.advertise<nav_msgs::Path> ("/path", 100, false);
 	point_cloud_publisher_ = n.advertise<sensor_msgs::PointCloud> ("/cloud", 100,false);
