@@ -45,7 +45,7 @@ std::vector < sensor_msgs::LaserScan::ConstPtr > laserscansaver;
 std::vector<MatrixXd> robotpossaver;
 // maintain two laserscans if robot moves 0.5 meters forward
 sensor_msgs::LaserScan::ConstPtr currentScan;
-sensor_msgs::LaserScan::ConstPtr scan2;
+sensor_msgs::LaserScan::ConstPtr prevScan;
 // 3 pointclouds for two different laserscans and the ICP output cloud
 sensor_msgs::PointCloud pointCloud1;
 sensor_msgs::PointCloud pointCloud2;
@@ -185,7 +185,7 @@ void vel_callback(const nav_msgs::Odometry& msg) {
         laserscansaver.push_back(currentScan);
 
         // Save the first scan as previous
-        scan2 = currentScan;
+        prevScan = currentScan;
 
         velcounter++;
 
@@ -208,14 +208,30 @@ void vel_callback(const nav_msgs::Odometry& msg) {
         robotPose(2,0) = newZ;
         robotpossaver.push_back(robotPose);
 
+        // Transform the current and last scan to PointClouds
+        pointCloud1 = lasertrans(currentScan);
+        pointCloud2 = lasertrans(prevScan);
+
+        // If both clouds are not empty
+        if(!pointCloud1.points.empty() || !pointCloud2.points.empty()){
+
+            // Use scanmatch for both clouds
+            MatrixXd zTransformation = scanmatch(pointCloud1,pointCloud2);
+
+            // Get X, Y and yaw
+            double zX = zTransformation(0,0);
+            double zY = zTransformation(1,0);
+            double zYaw = zTransformation(2,0);
+
+            std::cout << "zX = " <<zX<< std::endl;
+            std::cout << "zY = " <<zY<< std::endl;
+            std::cout << "zYaw = " <<zYaw<< std::endl;
+        }
+
         std::cout << "New node created" << std::endl;
         std::cout << "Number of saved poses = " << robotpossaver.size() << std::endl;
         std::cout << "Number of saved scans = " << laserscansaver.size() << std::endl;
         std::cout << "-----" << std::endl;
-
-        // Transform the current and last scan to PointClouds
-        pointCloud1 = lasertrans(currentScan);
-        pointCloud2 = lasertrans(scan2);
 
         // Publish clouds
         point_cloud_publisher_.publish(pointCloud1);
@@ -225,34 +241,13 @@ void vel_callback(const nav_msgs::Odometry& msg) {
         world = updateOccupancyGrid(world,laserscansaver,robotpossaver);
         publishOccupancyGrid(world,occupub);
 
-        // If both clouds are not empty
-//        if(!(pointCloud1.points.size()<=0) || !(pointCloud2.points.size()<=0)){
-
-//            // Use scanmatch for both clouds
-//            MatrixXd robotpos_match = scanmatch(pointCloud1,pointCloud2);
-
-//            // Get X and Y
-//            robotx += robotpos_match(0,0);
-//            roboty += robotpos_match(1,0);
-
-//            // Save the matches position in a list
-//            robotpossaver.push_back(robotpos_match);
-
-//            // Save the last scan in a list
-//            laserscansaver.push_back(scan2);
-
-//            // Update the occupancy grid
-//            world = updateOccupancyGrid(world,laserscansaver,robotpossaver);
-//        }
-        //robotpossaver.push_back(robotpos);
-
         // Save current pose as previous
         prevX = newX;
         prevY = newY;
         prevZ = newZ;
 
         // Save current scan as previous
-        scan2 = currentScan;
+        prevScan = currentScan;
     }
     robotpos(newX,newY,0,0,newZ);
 }
