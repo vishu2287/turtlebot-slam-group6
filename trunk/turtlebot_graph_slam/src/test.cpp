@@ -31,6 +31,7 @@ double prevY = 0;
 double prevZ = 0;
 nav_msgs::OccupancyGrid world;
 nav_msgs::Path robotPath;
+robotpospub robopub;
 //Robotvariables
 double robotx = 0;
 double roboty = 0;
@@ -168,7 +169,8 @@ void vel_callback(const nav_msgs::Odometry& msg) {
 
     // If this is the first call create the first node
     if(velcounter == 0 && currentScan){
-
+	
+	
         // Save the current position as previous
         prevX = newX;
         prevY = newY;
@@ -188,11 +190,13 @@ void vel_callback(const nav_msgs::Odometry& msg) {
         prevScan = currentScan;
 
         velcounter++;
-
+	
         std::cout << "Origin node created" << std::endl;
         std::cout << "Number of saved poses = " << robotpossaver.size() << std::endl;
         std::cout << "Number of saved scans = " << laserscansaver.size() << std::endl;
         std::cout << "-----" << std::endl;
+	// Initialize robotpublisher He will make a ros::spin at this point so the whole program will be runthrough again
+	robopub.robotpos(0,0,0,0,0);
     }
 
     // If the robot has walked far enough to make the second scan
@@ -249,7 +253,11 @@ void vel_callback(const nav_msgs::Odometry& msg) {
         // Save current scan as previous
         prevScan = currentScan;
     }
-    robotpos(newX,newY,0,0,newZ);
+	//Update robotpublisher values
+	robopub.robotxx = newX;
+	robopub.robotyy = newY;
+	robopub.robotyyaw = newZ;
+    //robotpos(newX,newY,0,0,newZ);
 }
 
 int main(int argc, char **argv) {

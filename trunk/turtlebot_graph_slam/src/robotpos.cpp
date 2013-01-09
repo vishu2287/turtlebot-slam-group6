@@ -1,7 +1,16 @@
 #include "ros/ros.h"
 #include <tf/transform_broadcaster.h>
+#include <robotpos.hpp>
 
-void robotpos(double x, double y, double roll, double pitch, double yaw) {
+double robotxx = 0;
+double robotyy = 0;
+double robotyyaw = 0;
+
+void robotpospub::robotpos(double x, double y, double roll, double pitch, double yaw) {
+	std::cout << "Robotpublisher created" << std::endl;
+	robotxx = x;
+	robotyy = y;
+	robotyyaw = yaw;
 	int32_t publish_rate_ = 100;
 	tf::TransformBroadcaster tf_br_;
 	tf::StampedTransform tf_map_to_baselink_;
@@ -22,11 +31,11 @@ void robotpos(double x, double y, double roll, double pitch, double yaw) {
 
 		// specify actual transformation vectors from odometry
 		// NOTE: zeros have to be substituted with actual variable data
-		tf_map_to_baselink_.setOrigin(tf::Vector3(x, y, 0.0f));
+		tf_map_to_baselink_.setOrigin(tf::Vector3(robotxx, robotyy, 0.0f));
 		if (yaw < 0) {
 			yaw = 2 * M_PI + yaw;
 		}
-		tf_map_to_baselink_.setRotation(tf::createQuaternionFromYaw(yaw));
+		tf_map_to_baselink_.setRotation(tf::createQuaternionFromYaw(robotyyaw));
 
 		// broadcast transform
 		tf_br_.sendTransform(tf_map_to_baselink_);
