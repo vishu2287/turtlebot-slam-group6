@@ -10,4 +10,4 @@
 #include <laser_geometry/laser_geometry.h>
 #include "nav_msgs/OccupancyGrid.h"
 using namespace Eigen;
-MatrixXd scanmatch(sensor_msgs::PointCloud one ,  sensor_msgs::PointCloud two);
+Vector3d scanmatch(sensor_msgs::PointCloud one ,  sensor_msgs::PointCloud two);
