@@ -59,6 +59,16 @@ sensor_msgs::PointCloud pointCloud2;
 sensor_msgs::PointCloud combined;
 // TUNABLE PARAMETERS
 double MATCH_DISTANCE = 0.5;	// Distance after which a laser scan should be matched again
+
+// Constraint lists
+std::vector<int> is;
+std::vector<int> js;
+std::vector<Vector3d> z;
+std::vector<Matrix3d> omegas;
+// Temporary variables for building simple constraints
+int iCounter = 0;
+int jCounter = 1;
+
 /*	Laserscancallback needed for feature extraction
 --------------------------------------------------------------------------------------*/
 void callback(const sensor_msgs::LaserScan::ConstPtr& msg) { // Always call graph slam for new laser readings
@@ -261,16 +271,6 @@ void vel_callback(const nav_msgs::Odometry& msg) {
         // Save current scan
         laserscansaver.push_back(currentScan);
 
-        // Save current robot pose
-        Vector3d robotPose;
-        robotPose(0) = newX;
-        robotPose(1) = newY;
-        robotPose(2) = newZ;
-        robotpossaver.push_back(robotPose);
-
-        //Publish Pose Array
-        publishPath();
-
         // Transform the current and last scan to PointClouds
         pointCloud1 = lasertrans(currentScan);
         pointCloud2 = lasertrans(prevScan);
@@ -279,7 +279,7 @@ void vel_callback(const nav_msgs::Odometry& msg) {
         if(!pointCloud1.points.empty() || !pointCloud2.points.empty()){
 
             // Use scanmatch for both clouds
-            MatrixXd zTransformation = scanmatch(pointCloud1,pointCloud2);
+            Vector3d zTransformation = scanmatch(pointCloud1,pointCloud2);
 
             // Get X, Y and yaw
             double zX = zTransformation(0,0);
@@ -289,12 +289,41 @@ void vel_callback(const nav_msgs::Odometry& msg) {
             std::cout << "zX = " <<zX<< std::endl;
             std::cout << "zY = " <<zY<< std::endl;
             std::cout << "zYaw = " <<zYaw<< std::endl;
+
+            // @todo: Compare with the actual odometry transformation
+//            std::cout << "xX = " <<zX<< std::endl;
+//            std::cout << "xY = " <<zY<< std::endl;
+//            std::cout << "xYaw = " <<newZ-prevZ<< std::endl;
+
+            // Save current robot pose
+            Vector3d newNode;
+            newNode(0) = newX;
+            newNode(1) = newY;
+            newNode(2) = newZ;
+            robotpossaver.push_back(newNode);
+
+            // CREATE CONSTRAINT BETWEEN CURRENT AND LAST NODE
+            // @TODO: CREATE CONSTRAINT BETWEEN CURRENT AND CLOSE NODES
+            is.push_back(iCounter);
+            js.push_back(jCounter);
+            iCounter++;
+            jCounter++;
+            z.push_back(zTransformation);
+            Matrix3d covariance = Matrix3d::Identity(3, 3);
+            omegas.push_back(covariance.inverse());
+
+            // Perform Graph SLAM
+//            robotpossaver =
+                    algorithm1(robotpossaver, z, omegas, is, js);
+
+            std::cout << "New node created" << std::endl;
+            std::cout << "Number of saved poses = " << robotpossaver.size() << std::endl;
+            std::cout << "Number of saved scans = " << laserscansaver.size() << std::endl;
+            std::cout << "-----" << std::endl;
         }
 
-        std::cout << "New node created" << std::endl;
-        std::cout << "Number of saved poses = " << robotpossaver.size() << std::endl;
-        std::cout << "Number of saved scans = " << laserscansaver.size() << std::endl;
-        std::cout << "-----" << std::endl;
+        //Publish Pose Array
+        publishPath();
 
         // Publish clouds
         point_cloud_publisher_.publish(pointCloud1);

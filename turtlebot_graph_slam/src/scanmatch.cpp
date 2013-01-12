@@ -18,8 +18,7 @@ double getDistance(geometry_msgs::Point32 one, geometry_msgs::Point32 two) {
     return sqrt(pow((one.x - two.x), 2) + pow((one.y - two.y), 2));
 }
 
-MatrixXd scanmatch(sensor_msgs::PointCloud model ,  sensor_msgs::PointCloud target){
-    MatrixXd robotpos = MatrixXd::Zero(3,1);
+Vector3d scanmatch(sensor_msgs::PointCloud model ,  sensor_msgs::PointCloud target){
     ROS_INFO_STREAM("Scanmatcher is starting...");
     //while ! converging  			//START of the icp iterations
     int modelSize = model.points.size();
@@ -181,9 +180,10 @@ MatrixXd scanmatch(sensor_msgs::PointCloud model ,  sensor_msgs::PointCloud targ
 //        std::cout << "distanceDiff :" << distanceDiff << "\n";
     }
     std::cout << "\nScan matcher took " << its << " iterations.\n";
-    robotpos(0,0) = robotx;
-    robotpos(1,0) = roboty;
-    robotpos(2,0) = robotphi;
+    Vector3d robotpos;
+    robotpos(0) = robotx;
+    robotpos(1) = roboty;
+    robotpos(2) = robotphi;
     return robotpos;
 }
 /*bool contains(int test [], int i){
