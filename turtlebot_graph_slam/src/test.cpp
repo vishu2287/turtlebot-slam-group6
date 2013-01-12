@@ -49,7 +49,7 @@ double speed;
 double angular;
 //MAINTAIN a list of laserscans for each pose and of all robotposes
 std::vector < sensor_msgs::LaserScan::ConstPtr > laserscansaver;
-std::vector<MatrixXd> robotpossaver;
+std::vector<Vector3d> robotpossaver;
 // maintain two laserscans if robot moves 0.5 meters forward
 sensor_msgs::LaserScan::ConstPtr currentScan;
 sensor_msgs::LaserScan::ConstPtr prevScan;
@@ -97,17 +97,17 @@ void publishPath(){
     // LINE_STRIP/LINE_LIST markers use only the x component of scale, for the line width
     line_strip.scale.x = 0.01;
         for(unsigned int i = 0; i < posearray.poses.size(); i++){
-            geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(robotpossaver[i](2,0));
-            posearray.poses[i].position.x = robotpossaver[i](0,0);
-            posearray.poses[i].position.y = robotpossaver[i](1,0);
+            geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(robotpossaver[i](2));
+            posearray.poses[i].position.x = robotpossaver[i](0);
+            posearray.poses[i].position.y = robotpossaver[i](1);
             posearray.poses[i].position.z = 0;
             posearray.poses[i].orientation.x = odom_quat.x;
             posearray.poses[i].orientation.y = odom_quat.y;
             posearray.poses[i].orientation.z = odom_quat.z;
             posearray.poses[i].orientation.w =  odom_quat.w;
 	        geometry_msgs::Point p;
-            p.x = robotpossaver[i](0,0);
-            p.y = robotpossaver[i](1,0);
+            p.x = robotpossaver[i](0);
+            p.y = robotpossaver[i](1);
 	        points.points.push_back(p);
       		line_strip.points.push_back(p);
         }
@@ -229,10 +229,10 @@ void vel_callback(const nav_msgs::Odometry& msg) {
         prevZ = newZ;
 
         //Save first position of the robot
-        MatrixXd firstNode(3,1);
-        firstNode(0,0) = newX;
-        firstNode(1,0) = newY;
-        firstNode(2,0) = newZ;
+        Vector3d firstNode;
+        firstNode(0) = newX;
+        firstNode(1) = newY;
+        firstNode(2) = newZ;
         robotpossaver.push_back(firstNode);
 
         //Publish first pose in pose array
@@ -262,10 +262,10 @@ void vel_callback(const nav_msgs::Odometry& msg) {
         laserscansaver.push_back(currentScan);
 
         // Save current robot pose
-        MatrixXd robotPose(3,1);
-        robotPose(0,0) = newX;
-        robotPose(1,0) = newY;
-        robotPose(2,0) = newZ;
+        Vector3d robotPose;
+        robotPose(0) = newX;
+        robotPose(1) = newY;
+        robotPose(2) = newZ;
         robotpossaver.push_back(robotPose);
 
         //Publish Pose Array

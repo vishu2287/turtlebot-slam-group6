@@ -44,7 +44,7 @@ int linearFunction(int x, int y1, int y2, int x1, int x2)
 }
     /*		Populate a Occupancy GridFF
     --------------------------------------------------------------------------------------*/
-nav_msgs::OccupancyGrid updateOccupancyGrid(nav_msgs::OccupancyGrid og, std::vector < sensor_msgs::LaserScan::ConstPtr > laserscansaver, std::vector<MatrixXd> poses){
+nav_msgs::OccupancyGrid updateOccupancyGrid(nav_msgs::OccupancyGrid og, std::vector < sensor_msgs::LaserScan::ConstPtr > laserscansaver, std::vector<Vector3d> poses){
     // ROS_INFO_STREAM("Occupancy Grid has height: "<<og.info.height<<" and width: "<<og.info.width);
 
 //	for(int i = 0 ; i < laserscansaver.size() ; i++){
