@@ -70,7 +70,7 @@ void callback(const sensor_msgs::LaserScan::ConstPtr& msg) { // Always call grap
 }
 /*	Process X vector to Pose Array and Connect each node with lines
 --------------------------------------------------------------------------------------*/
-void processarray(geometry_msgs::PoseArray &array){
+void publishPath(){
     visualization_msgs::Marker points, line_strip;
     points.header.frame_id = line_strip.header.frame_id =  "/world";
     points.header.stamp = line_strip.header.stamp =  ros::Time::now();
@@ -87,9 +87,9 @@ void processarray(geometry_msgs::PoseArray &array){
     // Line strip is blue
     line_strip.color.b = 1.0;
     line_strip.color.a = 1.0;
-       posearray.header.stamp = ros::Time::now();
-       posearray.header.frame_id = "/world";
-       posearray.poses.resize(robotpossaver.size());
+    posearray.header.stamp = ros::Time::now();
+    posearray.header.frame_id = "/world";
+    posearray.poses.resize(robotpossaver.size());
     // POINTS markers use x and y scale for width/height respectively
     //points.scale.x = 0.2;
     //points.scale.y = 0.2;
@@ -97,17 +97,17 @@ void processarray(geometry_msgs::PoseArray &array){
     // LINE_STRIP/LINE_LIST markers use only the x component of scale, for the line width
     line_strip.scale.x = 0.01;
         for(unsigned int i = 0; i < posearray.poses.size(); i++){
-		geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(robotpossaver[i](2,0));
-                posearray.poses[i].position.x = robotpossaver[i](0,0);
-                posearray.poses[i].position.y = robotpossaver[i](1,0);
-                posearray.poses[i].position.z = 0;
-                posearray.poses[i].orientation.x = odom_quat.x;
-                posearray.poses[i].orientation.y = odom_quat.y;
-                posearray.poses[i].orientation.z = odom_quat.z;
-                posearray.poses[i].orientation.w =  odom_quat.w;
+            geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(robotpossaver[i](2,0));
+            posearray.poses[i].position.x = robotpossaver[i](0,0);
+            posearray.poses[i].position.y = robotpossaver[i](1,0);
+            posearray.poses[i].position.z = 0;
+            posearray.poses[i].orientation.x = odom_quat.x;
+            posearray.poses[i].orientation.y = odom_quat.y;
+            posearray.poses[i].orientation.z = odom_quat.z;
+            posearray.poses[i].orientation.w =  odom_quat.w;
 	        geometry_msgs::Point p;
-		p.x = robotpossaver[i](0,0);
-		p.y = robotpossaver[i](1,0);
+            p.x = robotpossaver[i](0,0);
+            p.y = robotpossaver[i](1,0);
 	        points.points.push_back(p);
       		line_strip.points.push_back(p);
         }
@@ -209,8 +209,8 @@ bool rotation(double rot1, double rot2) {
 
 /*		Velocity callback function, called continuously
 --------------------------------------------------------------------------------------*/
-int velcounter = 0;
-bool makesecond = false;
+bool initialised;
+bool makesecond;
 void vel_callback(const nav_msgs::Odometry& msg) { 
 
     // Get the current position of the robot
@@ -221,8 +221,7 @@ void vel_callback(const nav_msgs::Odometry& msg) {
 
 
     // If this is the first call create the first node
-    if(velcounter == 0 && currentScan){
-	
+    if(!initialised && currentScan){
 	
         // Save the current position as previous
         prevX = newX;
@@ -235,22 +234,25 @@ void vel_callback(const nav_msgs::Odometry& msg) {
         firstNode(1,0) = newY;
         firstNode(2,0) = newZ;
         robotpossaver.push_back(firstNode);
-	//Publish first pose in pose array
-	processarray(posearray);
+
+        //Publish first pose in pose array
+        publishPath();
+
         // Save the current scan
         laserscansaver.push_back(currentScan);
 
         // Save the first scan as previous
         prevScan = currentScan;
 
-        velcounter++;
+        initialised = true;
 	
         std::cout << "Origin node created" << std::endl;
         std::cout << "Number of saved poses = " << robotpossaver.size() << std::endl;
         std::cout << "Number of saved scans = " << laserscansaver.size() << std::endl;
         std::cout << "-----" << std::endl;
-	// Initialize robotpublisher He will make a ros::spin at this point so the whole program will be runthrough again
-	robopub.robotpos(0,0,0,0,0);
+
+        // Initialize robotpublisher He will make a ros::spin at this point so the whole program will be runthrough again
+        robopub.robotpos(0,0,0,0,0);
     }
 
     // If the robot has walked far enough to make the second scan
@@ -265,8 +267,10 @@ void vel_callback(const nav_msgs::Odometry& msg) {
         robotPose(1,0) = newY;
         robotPose(2,0) = newZ;
         robotpossaver.push_back(robotPose);
-	//Publish Pose Array
-	processarray(posearray);
+
+        //Publish Pose Array
+        publishPath();
+
         // Transform the current and last scan to PointClouds
         pointCloud1 = lasertrans(currentScan);
         pointCloud2 = lasertrans(prevScan);
