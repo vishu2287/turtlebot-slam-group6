@@ -16,12 +16,17 @@
 #include "nav_msgs/Path.h"
 #include <scanmatch.hpp>
 #include <lasertrans.hpp>
+#include <geometry_msgs/PoseArray.h>
+#include <visualization_msgs/Marker.h>
+
 using namespace Eigen;
 	ros::Publisher point_cloud_publisher_;
 	ros::Publisher point_cloud_publisher_second;
 	ros::Publisher point_cloud_publisher_combined;
 	ros::Publisher occupub;
 	ros::Publisher robotPathPublisher;
+	ros::Publisher robotPosePublisher;
+	ros::Publisher marker_pub;
 //std::vector <Vector2d> odoms; //Odometry saver TODO somehow did not work on 1 system
 std::vector <MatrixXd> Zs; //Z saver TODO Test if this works!
 int t = 0;
@@ -32,6 +37,7 @@ double prevZ = 0;
 nav_msgs::OccupancyGrid world;
 nav_msgs::Path robotPath;
 robotpospub robopub;
+geometry_msgs::PoseArray posearray;
 //Robotvariables
 double robotx = 0;
 double roboty = 0;
@@ -61,6 +67,53 @@ void callback(const sensor_msgs::LaserScan::ConstPtr& msg) { // Always call grap
       It will be used by the velocity callback function as seen fit.
     */
     currentScan = msg;
+}
+/*	Process X vector to Pose Array and Connect each node with lines
+--------------------------------------------------------------------------------------*/
+void processarray(geometry_msgs::PoseArray &array){
+    visualization_msgs::Marker points, line_strip;
+    points.header.frame_id = line_strip.header.frame_id =  "/world";
+    points.header.stamp = line_strip.header.stamp =  ros::Time::now();
+    points.ns = line_strip.ns =  "points_and_lines";
+    points.action = line_strip.action = visualization_msgs::Marker::ADD;
+    points.pose.orientation.w = line_strip.pose.orientation.w =  1.0;
+    points.id = 0;
+    line_strip.id = 1;
+    points.type = visualization_msgs::Marker::POINTS;
+    line_strip.type = visualization_msgs::Marker::LINE_STRIP;
+    // Points are green
+    points.color.g = 1.0f;
+    points.color.a = 1.0;
+    // Line strip is blue
+    line_strip.color.b = 1.0;
+    line_strip.color.a = 1.0;
+       posearray.header.stamp = ros::Time::now();
+       posearray.header.frame_id = "/world";
+       posearray.poses.resize(robotpossaver.size());
+    // POINTS markers use x and y scale for width/height respectively
+    //points.scale.x = 0.2;
+    //points.scale.y = 0.2;
+
+    // LINE_STRIP/LINE_LIST markers use only the x component of scale, for the line width
+    line_strip.scale.x = 0.01;
+        for(unsigned int i = 0; i < posearray.poses.size(); i++){
+		geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(robotpossaver[i](2,0));
+                posearray.poses[i].position.x = robotpossaver[i](0,0);
+                posearray.poses[i].position.y = robotpossaver[i](1,0);
+                posearray.poses[i].position.z = 0;
+                posearray.poses[i].orientation.x = odom_quat.x;
+                posearray.poses[i].orientation.y = odom_quat.y;
+                posearray.poses[i].orientation.z = odom_quat.z;
+                posearray.poses[i].orientation.w =  odom_quat.w;
+	        geometry_msgs::Point p;
+		p.x = robotpossaver[i](0,0);
+		p.y = robotpossaver[i](1,0);
+	        points.points.push_back(p);
+      		line_strip.points.push_back(p);
+        }
+    robotPosePublisher.publish(posearray);
+    marker_pub.publish(points);
+    marker_pub.publish(line_strip);
 }
 /*	Robot Position function, values from Graphslam should be incorporated here
 --------------------------------------------------------------------------------------*/
@@ -182,7 +235,8 @@ void vel_callback(const nav_msgs::Odometry& msg) {
         firstNode(1,0) = newY;
         firstNode(2,0) = newZ;
         robotpossaver.push_back(firstNode);
-
+	//Publish first pose in pose array
+	processarray(posearray);
         // Save the current scan
         laserscansaver.push_back(currentScan);
 
@@ -211,7 +265,8 @@ void vel_callback(const nav_msgs::Odometry& msg) {
         robotPose(1,0) = newY;
         robotPose(2,0) = newZ;
         robotpossaver.push_back(robotPose);
-
+	//Publish Pose Array
+	processarray(posearray);
         // Transform the current and last scan to PointClouds
         pointCloud1 = lasertrans(currentScan);
         pointCloud2 = lasertrans(prevScan);
@@ -269,9 +324,11 @@ int main(int argc, char **argv) {
     ros::Subscriber laserSub = n.subscribe("base_scan", 100, callback);
 	ros::Subscriber velSub = n.subscribe("odom", 100, vel_callback);
 	robotPathPublisher = n.advertise<nav_msgs::Path> ("/path", 100, false);
+	robotPosePublisher = n.advertise<geometry_msgs::PoseArray> ("/poses", 100, false);
 	point_cloud_publisher_ = n.advertise<sensor_msgs::PointCloud> ("/cloud", 100,false);
 	point_cloud_publisher_second = n.advertise<sensor_msgs::PointCloud> ("/cloud2", 100,false);
 	point_cloud_publisher_combined = n.advertise<sensor_msgs::PointCloud> ("/cloudcombined", 100,false);
+	marker_pub = n.advertise<visualization_msgs::Marker>("/lines", false);
 	occupub = n.advertise<nav_msgs::OccupancyGrid> ("/world", 100,false);
 	ros::spin();
 
