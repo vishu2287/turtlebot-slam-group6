@@ -244,9 +244,9 @@ void vel_callback(const nav_msgs::Odometry& msg) {
 
                 // In order to test Graph SLAM with the actual odometry, with random noise
                 double random = 0.2*(rand() % 100/100.);
-                zTransformation(0) = xX;// - 0.1 + random;
-                zTransformation(1) = xY;// - 0.1 + random;
-                zTransformation(2) = xYaw;// - 0.1 + random;
+                zTransformation(0) = xX - 0.1 + random;
+                zTransformation(1) = xY - 0.1 + random;
+                zTransformation(2) = xYaw - 0.1 + random;
 
                 // Create a constraint between ith and jth node and save measurement transform
                 Constraint c;
