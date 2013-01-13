@@ -280,69 +280,60 @@ void vel_callback(const nav_msgs::Odometry& msg) {
         // If both clouds are not empty
         if(!pointCloud1.points.empty() || !pointCloud2.points.empty()){
 
-            // Use scanmatch for both clouds
-            Vector3d zTransformation = scanmatch(pointCloud1,pointCloud2);
-
-            // Get X, Y and yaw
-            double zX = zTransformation(0,0);
-            double zY = zTransformation(1,0);
-            double zYaw = zTransformation(2,0);
-
-            std::cout << "zX = " <<zX<< std::endl;
-            std::cout << "zY = " <<zY<< std::endl;
-            std::cout << "zYaw = " <<zYaw<< std::endl;
-
-            // @todo: Compare with the actual odometry transformation
-//            std::cout << "xX = " <<zX<< std::endl;
-//            std::cout << "xY = " <<zY<< std::endl;
-//            std::cout << "xYaw = " <<newZ-prevZ<< std::endl;
-
-            // Create and save new node for current robot pose
+            // Create new node for current robot pose
             Vector3d newNode;
             newNode(0) = newX;
             newNode(1) = newY;
             newNode(2) = newZ;
+
+            // Add new node to the graph
             nodes.push_back(newNode);
 
-            std::cout << "New node created" << std::endl;
-            std::cout << "Number of saved poses = " << nodes.size() << std::endl;
-            std::cout << "Number of saved scans = " << laserscansaver.size() << std::endl;
-            std::cout << "-----" << std::endl;
-
-            // CREATE AND SAVE CONSTRAINT BETWEEN CURRENT AND PREVIOUS NODE
+            // Create constraints between current node and previous node
+            // and current node and close nodes (loop closing)
             int j = nodes.size()-1;
-            Constraint cWithPrev;
-            cWithPrev.i = j-1;
-            cWithPrev.j = j;
-            cWithPrev.z = zTransformation;
-            Matrix3d covarianceWithPrev = Matrix3d::Identity(3, 3);
-            cWithPrev.omega = covarianceWithPrev.inverse();
-            constraints.push_back(cWithPrev);
-
-            // CREATE CONSTRAINTS BETWEEN CURRENT AND CLOSE NODES
             for(int i = 0; i<j; i++)
             {
                 double oldX = nodes[i](0);
                 double oldY = nodes[i](1);
-                std::cout << "oldX = " << oldX << std::endl;
-                std::cout << "oldY = " << oldY << std::endl;
-                std::cout << "DISTANCE = " << distance(oldX,newX,oldY,newY) << std::endl;
-                if(distance(oldX,newX,oldY,newY)< MATCH_DISTANCE)
+
+                if(distance(oldX,newX,oldY,newY)< MATCH_DISTANCE || i == j-1)
                 {
+                    // Use scanmatch for both clouds
+                    Vector3d zTransformation = scanmatch(pointCloud1,pointCloud2);
+
+                    // Get X, Y and yaw transformation according to scanmatcher
+                    double zX = zTransformation(0,0);
+                    double zY = zTransformation(1,0);
+                    double zYaw = zTransformation(2,0);
+
+                    std::cout << "zX = " <<zX<< std::endl;
+                    std::cout << "zY = " <<zY<< std::endl;
+                    std::cout << "zYaw = " <<zYaw<< std::endl;
+
+                    // @todo: Compare with the actual odometry transformation
+        //            std::cout << "xX = " <<zX<< std::endl;
+        //            std::cout << "xY = " <<zY<< std::endl;
+        //            std::cout << "xYaw = " <<newZ-prevZ<< std::endl;
+
+                    // Create a constraint between ith and jth node and save measurement transform
                     Constraint c;
                     c.i = i;
                     c.j = j;
                     c.z = zTransformation;
                     Matrix3d covariance = Matrix3d::Identity(3, 3);
                     c.omega = covariance.inverse();
+
+                    // Add constraint to the graph
                     constraints.push_back(c);
                 }
             }
+            std::cout << "Number of nodes in the graph = " << nodes.size() << std::endl;
+            std::cout << "Number of constraints in the graph = " << constraints.size() << std::endl;
 
-            // Perform Graph SLAM
+            // Perform Graph SLAM optimization
 //            nodes =
                     algorithm1(nodes, constraints);
-
         }
 
         //Publish Pose Array
