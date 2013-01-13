@@ -291,14 +291,19 @@ void vel_callback(const nav_msgs::Odometry& msg) {
 
             // Create constraints between current node and previous node
             // and current node and close nodes (loop closing)
+            bool loopDetected = false;
             int j = nodes.size()-1;
             for(int i = 0; i<j; i++)
             {
                 double oldX = nodes[i](0);
                 double oldY = nodes[i](1);
-
-                if(distance(oldX,newX,oldY,newY)< MATCH_DISTANCE || i == j-1)
+                double nodeDistance = distance(oldX,newX,oldY,newY);
+                if(nodeDistance < MATCH_DISTANCE || i == j-1)
                 {
+                    // Mark as loop detection
+                    if(nodeDistance < MATCH_DISTANCE)
+                        loopDetected = true;
+
                     // Use scanmatch for both clouds
                     Vector3d zTransformation = scanmatch(pointCloud1,pointCloud2);
 
@@ -331,7 +336,8 @@ void vel_callback(const nav_msgs::Odometry& msg) {
             std::cout << "Number of nodes in the graph = " << nodes.size() << std::endl;
             std::cout << "Number of constraints in the graph = " << constraints.size() << std::endl;
 
-            // Perform Graph SLAM optimization
+            // Perform Graph SLAM optimization whenever a loop is detected
+            if(loopDetected)
 //            nodes =
                     algorithm1(nodes, constraints);
         }
