@@ -64,10 +64,6 @@ double MATCH_DISTANCE = 0.5;	// Distance after which a laser scan should be matc
 // Constraint list
 std::vector<Constraint> constraints;
 
-// Temporary variables for building simple constraints
-int iCounter = 0;
-int jCounter = 1;
-
 /*	Laserscancallback needed for feature extraction
 --------------------------------------------------------------------------------------*/
 void callback(const sensor_msgs::LaserScan::ConstPtr& msg) { // Always call graph slam for new laser readings
@@ -204,12 +200,8 @@ void rob_callback(const ros::TimerEvent&) {
 
 	algorithm1(x, z, omegas, is, js);*/
 }
-bool distance(double x1,double x2, double y1, double y2){
-	double length = sqrt(pow(x2-x1,2)+pow(y2-y1,2));
-	if(length >= MATCH_DISTANCE){
-		return true;
-	}
-	return false;
+double distance(double x1,double x2, double y1, double y2){
+    return sqrt(pow(x2-x1,2)+pow(y2-y1,2));
 }
 
 bool rotation(double rot1, double rot2) {
@@ -231,8 +223,7 @@ bool rotation(double rot1, double rot2) {
 /*		Velocity callback function, called continuously
 --------------------------------------------------------------------------------------*/
 bool initialised;
-bool makesecond;
-void vel_callback(const nav_msgs::Odometry& msg) { 
+void vel_callback(const nav_msgs::Odometry& msg) {
 
     // Get the current position of the robot
     double newX = msg.pose.pose.position.x;
@@ -277,7 +268,7 @@ void vel_callback(const nav_msgs::Odometry& msg) {
     }
 
     // If the robot has walked far enough to make the second scan
-    if(distance(prevX,newX,prevY,newY) /*|| rotation(prevZ, newZ)*/) {
+    if(distance(prevX,newX,prevY,newY)>= MATCH_DISTANCE /*|| rotation(prevZ, newZ)*/) {
 
         // Save current scan
         laserscansaver.push_back(currentScan);
@@ -306,34 +297,52 @@ void vel_callback(const nav_msgs::Odometry& msg) {
 //            std::cout << "xY = " <<zY<< std::endl;
 //            std::cout << "xYaw = " <<newZ-prevZ<< std::endl;
 
-            // Save current robot pose
+            // Create and save new node for current robot pose
             Vector3d newNode;
             newNode(0) = newX;
             newNode(1) = newY;
             newNode(2) = newZ;
             nodes.push_back(newNode);
 
-            // CREATE CONSTRAINT BETWEEN CURRENT AND LAST NODE
-            // @TODO: CREATE CONSTRAINT BETWEEN CURRENT AND CLOSE NODES
+            std::cout << "New node created" << std::endl;
+            std::cout << "Number of saved poses = " << nodes.size() << std::endl;
+            std::cout << "Number of saved scans = " << laserscansaver.size() << std::endl;
+            std::cout << "-----" << std::endl;
 
-            Constraint c;
-            c.i = iCounter;
-            c.j = jCounter;
-            c.z = zTransformation;
-            iCounter++;
-            jCounter++;
-            Matrix3d covariance = Matrix3d::Identity(3, 3);
-            c.omega = covariance.inverse();
-            constraints.push_back(c);
+            // CREATE AND SAVE CONSTRAINT BETWEEN CURRENT AND PREVIOUS NODE
+            int j = nodes.size()-1;
+            Constraint cWithPrev;
+            cWithPrev.i = j-1;
+            cWithPrev.j = j;
+            cWithPrev.z = zTransformation;
+            Matrix3d covarianceWithPrev = Matrix3d::Identity(3, 3);
+            cWithPrev.omega = covarianceWithPrev.inverse();
+            constraints.push_back(cWithPrev);
+
+            // CREATE CONSTRAINTS BETWEEN CURRENT AND CLOSE NODES
+            for(int i = 0; i<j; i++)
+            {
+                double oldX = nodes[i](0);
+                double oldY = nodes[i](1);
+                std::cout << "oldX = " << oldX << std::endl;
+                std::cout << "oldY = " << oldY << std::endl;
+                std::cout << "DISTANCE = " << distance(oldX,newX,oldY,newY) << std::endl;
+                if(distance(oldX,newX,oldY,newY)< MATCH_DISTANCE)
+                {
+                    Constraint c;
+                    c.i = i;
+                    c.j = j;
+                    c.z = zTransformation;
+                    Matrix3d covariance = Matrix3d::Identity(3, 3);
+                    c.omega = covariance.inverse();
+                    constraints.push_back(c);
+                }
+            }
 
             // Perform Graph SLAM
 //            nodes =
                     algorithm1(nodes, constraints);
 
-            std::cout << "New node created" << std::endl;
-            std::cout << "Number of saved poses = " << nodes.size() << std::endl;
-            std::cout << "Number of saved scans = " << laserscansaver.size() << std::endl;
-            std::cout << "-----" << std::endl;
         }
 
         //Publish Pose Array
