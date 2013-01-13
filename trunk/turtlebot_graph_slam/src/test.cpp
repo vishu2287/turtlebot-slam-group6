@@ -148,6 +148,99 @@ bool rotation(double rot1, double rot2) {
     }
     return false;
 }
+int getMatches(sensor_msgs::PointCloud prev ,  sensor_msgs::PointCloud current)
+{
+    int matches = 0;
+    for(int i = 0; i<prev.points.size(); i++)
+    {
+        double x1 = prev.points[i].x;
+        double y1 = prev.points[i].y;
+        for(int j = 0; j<current.points.size(); j++)
+        {
+            double x2 = current.points[j].x;
+            double y2 = current.points[j].y;
+
+            if(distance(x1,x2,y1,y2) < 0.2)
+            {
+                matches++;
+                break;
+            }
+        }
+    }
+//    std::cout << "matches = " << matches << std::endl;
+    return matches;
+}
+
+sensor_msgs::PointCloud transform(sensor_msgs::PointCloud cloud, double t1, double t2, double angle, double p1, double p2)
+{
+    double a11 =  cos(angle);
+    double a12 = -sin(angle);
+    double a21 =  sin(angle);
+    double a22 =  cos(angle);
+
+    for(int i = 0; i<cloud.points.size(); i++)
+    {
+        double x1 = cloud.points[i].x;
+        double x2 = cloud.points[i].y;
+
+        double diffX = x1-p1;
+        double diffY = x2-p2;
+
+        cloud.points[i].x = a11*diffX + a12*diffY + p1 + t1;
+        cloud.points[i].y = a21*diffX + a22*diffY + p2 + t2;
+    }
+    return cloud;
+}
+
+Vector3d scanmatchOlli(sensor_msgs::PointCloud prev ,  sensor_msgs::PointCloud current, double p1, double p2){
+
+    std::cout << "number of scans = " << prev.points.size() << std::endl;
+    int maxMatches = getMatches(prev, current);
+    std::cout << "maxMatches = " << maxMatches << std::endl;
+    double bestAngle = 0;
+    double bestX = 0;
+    double bestY = 0;
+
+    sensor_msgs::PointCloud transformedBest;
+
+    double threshold = 0.06;
+    double step = 0.2;
+
+    for(double angle = -threshold; angle<threshold; angle+= step)
+    {
+        for(double x = -threshold; x < threshold; x+=step)
+        {
+            for(double y = -threshold; y < threshold; y+=step)
+            {
+                sensor_msgs::PointCloud transformed = transform(prev, x, y, angle, p1, p2);
+                int matches = getMatches(transformed, current);
+
+                point_cloud_publisher_combined.publish(transformed);
+
+                if(matches > maxMatches)
+                {
+                    maxMatches = matches;
+                    bestAngle = angle;
+                    bestX = x;
+                    bestY = y;
+                    transformedBest = transformed;
+                }
+            }
+        }
+    }
+    std::cout << "bestX = " << bestX << std::endl;
+    std::cout << "bestY = " << bestY << std::endl;
+    std::cout << "bestAngle = " << bestAngle << std::endl;
+    std::cout << "maxMatches = " << maxMatches << std::endl;
+
+    point_cloud_publisher_combined.publish(transformedBest);
+
+    Vector3d correction;
+    correction(0) = bestX;
+    correction(1) = bestY;
+    correction(2) = bestAngle;
+    return correction;
+}
 
 void vel_callback(const nav_msgs::Odometry& msg) {
 
@@ -217,20 +310,20 @@ void vel_callback(const nav_msgs::Odometry& msg) {
                     loopDetected = true;
 
                 // Transform the ith and jth scan to PointClouds
-                prevPointCloud = lasertransBase(scans[i]);
-                currentPointCloud = lasertransBase(scans[j]);
+                currentPointCloud = lasertrans(scans[i]);
+                prevPointCloud = lasertrans(scans[j]);
 
                 // Use scanmatch for both clouds
-                Vector3d zTransformation = scanmatch(prevPointCloud,currentPointCloud);
+                Vector3d zTransformation;// = scanmatch(currentPointCloud,prevPointCloud);
 
                 // Get X, Y and yaw transformation according to scanmatcher
-                double zX = zTransformation(0);
-                double zY = zTransformation(1);
-                double zYaw = zTransformation(2);
+//                double zX = zTransformation(0);
+//                double zY = zTransformation(1);
+//                double zYaw = zTransformation(2);
 
-                std::cout << "zX = " <<zX<< std::endl;
-                std::cout << "zY = " <<zY<< std::endl;
-                std::cout << "zYaw = " <<zYaw<< std::endl;
+//                std::cout << "zX = " <<zX<< std::endl;
+//                std::cout << "zY = " <<zY<< std::endl;
+//                std::cout << "zYaw = " <<zYaw<< std::endl;
 
                 // Compare with the actual odometry transformation
                 double diffX = newX-oldX;
@@ -242,11 +335,13 @@ void vel_callback(const nav_msgs::Odometry& msg) {
                 std::cout << "xY = " <<xY<< std::endl;
                 std::cout << "xYaw = " <<xYaw<< std::endl;
 
+                Vector3d correction = scanmatchOlli(prevPointCloud, currentPointCloud, xX, xY);
+
                 // In order to test Graph SLAM with the actual odometry, with random noise
                 double random = 0.2*(rand() % 100/100.);
-                zTransformation(0) = xX - 0.1 + random;
-                zTransformation(1) = xY - 0.1 + random;
-                zTransformation(2) = xYaw - 0.1 + random;
+                zTransformation(0) = xX+correction(0);// - 0.1 + random;
+                zTransformation(1) = xY+correction(1);// - 0.1 + random;
+                zTransformation(2) = xYaw+correction(2);// - 0.1 + random;
 
                 // Create a constraint between ith and jth node and save measurement transform
                 Constraint c;
@@ -281,7 +376,10 @@ void vel_callback(const nav_msgs::Odometry& msg) {
         point_cloud_publisher_second.publish(currentPointCloud);
 
         // Update grid
-        occupancyGrid = updateOccupancyGrid(occupancyGrid,scans,nodes);
+        if(loopDetected)
+            occupancyGrid = updateOccupancyGridAll(occupancyGrid,scans,nodes);
+        else
+            occupancyGrid = updateOccupancyGrid(occupancyGrid,scans,nodes);
         publishOccupancyGrid(occupancyGrid,occupub);
 
         // Save current pose as previous

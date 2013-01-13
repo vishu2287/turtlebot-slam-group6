@@ -15,7 +15,6 @@ using namespace Eigen;
 
 sensor_msgs::PointCloud lasertransBase (const sensor_msgs::LaserScan::ConstPtr& msg){
 
-
     sensor_msgs::PointCloud cloud;
     cloud.header.frame_id = "/world";
     int num_ranges = msg->ranges.size();
@@ -49,7 +48,6 @@ sensor_msgs::PointCloud lasertransBase (const sensor_msgs::LaserScan::ConstPtr& 
     return cloud;
 }
 sensor_msgs::PointCloud lasertrans (const sensor_msgs::LaserScan::ConstPtr& msg){
-
 
     tf::TransformListener tfListener_;
     tfListener_.setExtrapolationLimit(ros::Duration(0.1));
