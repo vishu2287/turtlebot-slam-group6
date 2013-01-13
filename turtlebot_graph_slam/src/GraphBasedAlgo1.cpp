@@ -4,10 +4,11 @@
 #include <vector>
 #include <Eigen/Dense>
 #include <iostream>
+#include <Constraint.hpp>
 using namespace std;
 using namespace Eigen;
 
-std::vector<Vector3d> algorithm1(std::vector<Vector3d> x, std::vector<Vector3d> z, std::vector<Matrix3d> omegas, std::vector<int> is, std::vector<int> js) {
+std::vector<Vector3d> algorithm1(std::vector<Vector3d> x, std::vector<Constraint> constraints) {
 
 	// find the maximum likelihood solution
 	bool converged = false;
@@ -19,20 +20,21 @@ std::vector<Vector3d> algorithm1(std::vector<Vector3d> x, std::vector<Vector3d> 
 //	{
         VectorXd b = VectorXd::Zero(3*x.size(),1);
         MatrixXd H = MatrixXd::Zero(3*x.size(),3*x.size());
-		for(int constraintIndex = 0; constraintIndex < z.size(); constraintIndex++)
+        for(int constraintIndex = 0; constraintIndex < constraints.size(); constraintIndex++)
 		{
 //            std::cout << "constraintIndex = \n" << constraintIndex << std::endl;
+            Constraint c = constraints[constraintIndex];
 
 			// Get the indices of the nodes this constraint refers to
-			int i = is[constraintIndex];
-			int j = js[constraintIndex];
+            int i = c.i;
+            int j = c.j;
 
 //            std::cout << "i = \n" << i << std::endl;
 //            std::cout << "j = \n" << j << std::endl;
 
             Vector3d x_i = x[i];		// (28)
             Vector3d x_j = x[j];
-			Vector3d z_i_j = z[constraintIndex];		// (29)
+            Vector3d z_i_j = c.z;		// (29)
 
 //            std::cout << "x_i = \n" << x_i << std::endl;
 //            std::cout << "x_j = \n" << x_j << std::endl;
@@ -91,7 +93,7 @@ std::vector<Vector3d> algorithm1(std::vector<Vector3d> x, std::vector<Vector3d> 
 //			std::cout << "B_i_j = \n" << B_i_j << std::endl;
 
 			// compute the contribution of this constraint to the linear system
-			Matrix3d omega_i_j = omegas[constraintIndex];
+            Matrix3d omega_i_j = c.omega;
 			H.block(i*3, i*3, 3, 3) += A_i_j.transpose()*omega_i_j*A_i_j;
 			H.block(i*3, j*3, 3, 3) += A_i_j.transpose()*omega_i_j*B_i_j;
 			H.block(j*3, i*3, 3, 3) += B_i_j.transpose()*omega_i_j*A_i_j;
