@@ -274,8 +274,8 @@ void vel_callback(const nav_msgs::Odometry& msg) {
         laserscansaver.push_back(currentScan);
 
         // Transform the current and last scan to PointClouds
-        pointCloud1 = lasertrans(prevScan);
-        pointCloud2 = lasertrans(currentScan);
+        pointCloud1 = lasertransBase(prevScan);
+        pointCloud2 = lasertransBase(currentScan);
 
         // If both clouds are not empty
         if(!pointCloud1.points.empty() || !pointCloud2.points.empty()){
@@ -351,6 +351,10 @@ void vel_callback(const nav_msgs::Odometry& msg) {
             if(loopDetected)
 //            nodes =
                     algorithm1(nodes, constraints);
+        }
+        else
+        {
+            std::cout << "clouds are empty" <<std::endl;
         }
 
         //Publish Pose Array
