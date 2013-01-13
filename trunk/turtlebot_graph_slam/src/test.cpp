@@ -223,6 +223,9 @@ bool rotation(double rot1, double rot2) {
 /*		Velocity callback function, called continuously
 --------------------------------------------------------------------------------------*/
 bool initialised;
+double veryLastX;
+double veryLastY;
+double veryLastYaw;
 void vel_callback(const nav_msgs::Odometry& msg) {
 
     // Get the current position of the robot
@@ -327,10 +330,11 @@ void vel_callback(const nav_msgs::Odometry& msg) {
                     std::cout << "xY = " <<xY<< std::endl;
                     std::cout << "xYaw = " <<xYaw<< std::endl;
 
-                    // In order to test Graph SLAM with the actual odometry
-                    zTransformation(0) = xX;
-                    zTransformation(1) = xY;
-                    zTransformation(2) = xYaw;
+                    // In order to test Graph SLAM with the actual odometry, with random noise
+                    double random = 0.2*(rand() % 100/100.);
+                    zTransformation(0) = xX;// - 0.1 + random;
+                    zTransformation(1) = xY;// - 0.1 + random;
+                    zTransformation(2) = xYaw;// - 0.1 + random;
 
                     // Create a constraint between ith and jth node and save measurement transform
                     Constraint c;
@@ -351,10 +355,11 @@ void vel_callback(const nav_msgs::Odometry& msg) {
 //            if(loopDetected)
             nodes =
                     algorithm1(nodes, constraints);
-        }
-        else
-        {
-            std::cout << "clouds are empty" <<std::endl;
+
+            // Set the robot pose to the optimized pose
+            robopub.robotxx = nodes[nodes.size()-1](0);
+            robopub.robotyy = nodes[nodes.size()-1](1);
+            robopub.robotyyaw = nodes[nodes.size()-1](2);
         }
 
         //Publish Pose Array
@@ -376,19 +381,16 @@ void vel_callback(const nav_msgs::Odometry& msg) {
         // Save current scan as previous
         prevScan = currentScan;
     }
-	//Update robotpublisher values
-    if(nodes.empty())
-    {
-        robopub.robotxx = newX;
-        robopub.robotyy = newY;
-        robopub.robotyyaw = newZ;
-    }
-    else
-    {
-        robopub.robotxx = nodes[nodes.size()-1](0);
-        robopub.robotyy = nodes[nodes.size()-1](1);
-        robopub.robotyyaw = nodes[nodes.size()-1](2);
-    }
+
+    // Update robotpublisher values, only approximated odometry
+    robopub.robotxx += newX-veryLastX;
+    robopub.robotyy += newY-veryLastY;
+    robopub.robotyyaw += newZ-veryLastYaw;
+
+    // For approximating the odometry
+    veryLastX = newX;
+    veryLastY = newY;
+    veryLastYaw = newZ;
 }
 
 int main(int argc, char **argv) {
