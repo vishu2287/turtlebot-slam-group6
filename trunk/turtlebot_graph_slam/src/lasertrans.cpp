@@ -23,16 +23,28 @@ sensor_msgs::PointCloud lasertransBase (const sensor_msgs::LaserScan::ConstPtr& 
 
     float incr = msg->angle_increment;
     float minAngle = msg->angle_min;
+    float maxRange = msg->range_max;
     double angle;
-    for (int j = 0; j < num_ranges; j++){
-        angle = (double)(j*incr)+minAngle;
-        double x = msg->ranges[j] * cos(angle);
-        double y = msg->ranges[j] * sin(angle);
-        geometry_msgs::Point32 p;
-        p.x = x;
-        p.y = y;
-        p.z = 0;
-        cloud.points[j] = p;
+    int cloudSize = 0;
+    for(int i = 0; i < num_ranges; i++) {
+        if(msg->ranges[i] < maxRange) {
+            cloudSize++;
+        }
+    }
+    cloud.points.resize(cloudSize);
+    int cloudIndex = 0;
+    for (int j = 0; j < num_ranges; j++) {
+        if(msg->ranges[j] < maxRange) {
+            angle = (double)(j*incr)+minAngle;
+            double x = msg->ranges[j] * cos(angle);
+            double y = msg->ranges[j] * sin(angle);
+            geometry_msgs::Point32 p;
+            p.x = x;
+            p.y = y;
+            p.z = 0;
+            cloud.points[cloudIndex] = p;
+            cloudIndex++;
+        }
     }
     return cloud;
 }
