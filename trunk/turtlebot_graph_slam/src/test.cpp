@@ -320,7 +320,7 @@ void vel_callback(const nav_msgs::Odometry& msg) {
                     std::cout << "zY = " <<zY<< std::endl;
                     std::cout << "zYaw = " <<zYaw<< std::endl;
 
-                    // @todo: Compare with the actual odometry transformation
+                    // Compare with the actual odometry transformation
                     double diffX = newX-oldX;
                     double diffY = newY-oldY;
                     double xX = cos(-oldZ)*diffX - sin(-oldZ)*diffY;
@@ -341,7 +341,7 @@ void vel_callback(const nav_msgs::Odometry& msg) {
                     c.i = i;
                     c.j = j;
                     c.z = zTransformation;
-                    Matrix3d covariance = Matrix3d::Identity(3, 3);
+                    Matrix3d covariance = Matrix3d::Identity(3, 3); // @todo: Find correct matrix
                     c.omega = covariance.inverse();
 
                     // Add constraint to the graph
