@@ -274,8 +274,8 @@ void vel_callback(const nav_msgs::Odometry& msg) {
         laserscansaver.push_back(currentScan);
 
         // Transform the current and last scan to PointClouds
-        pointCloud1 = lasertrans(currentScan);
-        pointCloud2 = lasertrans(prevScan);
+        pointCloud1 = lasertransBase(currentScan);
+        pointCloud2 = lasertransBase(prevScan);
 
         // If both clouds are not empty
         if(!pointCloud1.points.empty() || !pointCloud2.points.empty()){
