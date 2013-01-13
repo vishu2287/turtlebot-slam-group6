@@ -322,7 +322,7 @@ void vel_callback(const nav_msgs::Odometry& msg) {
                     double diffY = newY-oldY;
                     double xX = cos(-oldZ)*diffX - sin(-oldZ)*diffY;
                     double xY = sin(-oldZ)*diffX + cos(-oldZ)*diffY;
-                    double xYaw = newZ-prevZ;
+                    double xYaw = newZ-oldZ;
                     std::cout << "xX = " <<xX<< std::endl;
                     std::cout << "xY = " <<xY<< std::endl;
                     std::cout << "xYaw = " <<xYaw<< std::endl;
@@ -348,8 +348,8 @@ void vel_callback(const nav_msgs::Odometry& msg) {
             std::cout << "Number of constraints in the graph = " << constraints.size() << std::endl;
 
             // Perform Graph SLAM optimization whenever a loop is detected
-            if(loopDetected)
-//            nodes =
+//            if(loopDetected)
+            nodes =
                     algorithm1(nodes, constraints);
         }
         else
@@ -377,18 +377,18 @@ void vel_callback(const nav_msgs::Odometry& msg) {
         prevScan = currentScan;
     }
 	//Update robotpublisher values
-//    if(nodes.empty())
-//    {
+    if(nodes.empty())
+    {
         robopub.robotxx = newX;
         robopub.robotyy = newY;
         robopub.robotyyaw = newZ;
-//    }
-//    else
-//    {
-//        robopub.robotxx = nodes[nodes.size()-1](0);
-//        robopub.robotyy = nodes[nodes.size()-1](1);
-//        robopub.robotyyaw = nodes[nodes.size()-1](2);
-//    }
+    }
+    else
+    {
+        robopub.robotxx = nodes[nodes.size()-1](0);
+        robopub.robotyy = nodes[nodes.size()-1](1);
+        robopub.robotyyaw = nodes[nodes.size()-1](2);
+    }
 }
 
 int main(int argc, char **argv) {
