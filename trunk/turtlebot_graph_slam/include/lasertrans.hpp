@@ -14,6 +14,7 @@
 //Table 11.4 Page 349
 //@TODO: Implement
 sensor_msgs::PointCloud lasertrans (const sensor_msgs::LaserScan::ConstPtr& msg);
+sensor_msgs::PointCloud lasertransBase (const sensor_msgs::LaserScan::ConstPtr& msg);
 
 
 	
