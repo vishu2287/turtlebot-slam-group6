@@ -21,60 +21,56 @@
 #include <visualization_msgs/Marker.h>
 
 using namespace Eigen;
-	ros::Publisher point_cloud_publisher_;
-	ros::Publisher point_cloud_publisher_second;
-	ros::Publisher point_cloud_publisher_combined;
-	ros::Publisher occupub;
-	ros::Publisher robotPathPublisher;
-	ros::Publisher robotPosePublisher;
-	ros::Publisher marker_pub;
-//std::vector <Vector2d> odoms; //Odometry saver TODO somehow did not work on 1 system
-std::vector <MatrixXd> Zs; //Z saver TODO Test if this works!
-int t = 0;
-int deltaT = 1;
+
+/**
+  Publishers
+*/
+ros::Publisher point_cloud_publisher_;
+ros::Publisher point_cloud_publisher_second;
+ros::Publisher point_cloud_publisher_combined;
+ros::Publisher occupub;
+ros::Publisher robotPosePublisher;
+ros::Publisher marker_pub;
+robotpospub robopub;
+
+// Model for the world and the path
+nav_msgs::OccupancyGrid occupancyGrid;
+geometry_msgs::PoseArray posearray;
+
+// Currently saved laser scan
+sensor_msgs::LaserScan::ConstPtr currentScan;
+
+// Scans for every node
+std::vector < sensor_msgs::LaserScan::ConstPtr > scans;
+
+// Lists for the Graph
+std::vector<Vector3d> nodes;
+std::vector<Constraint> constraints;
+
+// PointClouds
+sensor_msgs::PointCloud prevPointCloud;
+sensor_msgs::PointCloud currentPointCloud;
+
+// Help variables for the velocity callback function
 double prevX = 0;
 double prevY = 0;
 double prevZ = 0;
-nav_msgs::OccupancyGrid world;
-nav_msgs::Path robotPath;
-robotpospub robopub;
-geometry_msgs::PoseArray posearray;
-//Robotvariables
-double robotx = 0;
-double roboty = 0;
-//MatrixXd mut = MatrixXd::Zero(3, 1);
-MatrixXd u = MatrixXd::Zero(2, 1);
+bool initialised;
+double veryLastX;
+double veryLastY;
+double veryLastYaw;
 
-bool flag = false;
-double speed;
-double angular;
-//MAINTAIN a list of laserscans for each pose and of all robotposes
-std::vector < sensor_msgs::LaserScan::ConstPtr > laserscansaver;
-std::vector<Vector3d> nodes;
-// maintain two laserscans if robot moves 0.5 meters forward
-sensor_msgs::LaserScan::ConstPtr currentScan;
-sensor_msgs::LaserScan::ConstPtr prevScan;
-// 3 pointclouds for two different laserscans and the ICP output cloud
-sensor_msgs::PointCloud prevPointCloud;
-sensor_msgs::PointCloud currentPointCloud;
-sensor_msgs::PointCloud combined;
-// TUNABLE PARAMETERS
-double MATCH_DISTANCE = 0.5;	// Distance after which a laser scan should be matched again
+// Distance after which a laser scan should be matched again
+double MATCH_DISTANCE = 0.5;
 
-// Constraint list
-std::vector<Constraint> constraints;
-
-/*	Laserscancallback needed for feature extraction
---------------------------------------------------------------------------------------*/
-void callback(const sensor_msgs::LaserScan::ConstPtr& msg) { // Always call graph slam for new laser readings
+void callback(const sensor_msgs::LaserScan::ConstPtr& msg) {
     /**
       Simply save the current scan.
       It will be used by the velocity callback function as seen fit.
     */
     currentScan = msg;
 }
-/*	Process X vector to Pose Array and Connect each node with lines
---------------------------------------------------------------------------------------*/
+
 void publishPath(){
     visualization_msgs::Marker points, line_strip;
     points.header.frame_id = line_strip.header.frame_id =  "/world";
@@ -132,100 +128,27 @@ void publishPath(){
     marker_pub.publish(points);
     marker_pub.publish(line_strip);
 }
-/*	Robot Position function, values from Graphslam should be incorporated here
---------------------------------------------------------------------------------------*/
-void rob_callback(const ros::TimerEvent&) {
-	//current robot position in world is always 0,0
 
-	/*std::vector<int> is;
-	is.push_back(0);
-	is.push_back(1);
-	is.push_back(2);
-	is.push_back(3);
-	is.push_back(4);
-
-	std::vector<int> js;
-	js.push_back(1);
-	js.push_back(2);
-	js.push_back(3);
-	js.push_back(4);
-	js.push_back(5);
-
-	VectorXd x(18, 1);
-	x << 	  0,   0,   0.3,
-			  3,   1,   0.3,
-			  5,   3,   1.5,
-			  4,   5,   1.9,
-			  4,   8,   0.6,
-			  7,  10,   0.4;
-
-	std::vector<Vector3d> z;
-	Vector3d z1(3,1);
-//	z1 <<	3.5, 0.5,  0.3;
-//	Vector3d z2(3,1);
-//	z2 <<	1.5, 1.5,  0.3;
-//	Vector3d z3(3,1);
-//	z3 <<	0.5, 2.5,  0.3;
-//	Vector3d z4(3,1);
-//	z4 <<	0.5, 2.5,   -1;
-//	Vector3d z5(3,1);
-//	z5 <<	  2, 1.5, -0.3;
-
-	z1 <<	3.53,   0,  0.3;
-	Vector3d z2(3,1);
-	z2 <<	2.12,   0,  0.3;
-	Vector3d z3(3,1);
-	z3 <<	2.55,   0,  0.3;
-	Vector3d z4(3,1);
-	z4 <<	2.55,   0, -0.3;
-	Vector3d z5(3,1);
-	z5 <<	2.50,   0, -0.3;
-
-	z.push_back(z1);
-	z.push_back(z2);
-	z.push_back(z3);
-	z.push_back(z4);
-	z.push_back(z5);
-
-	Matrix3d covariance = Matrix3d::Identity(3, 3);
-//	covariance(0,0) = 50;
-//	covariance(1,1) = 60;
-//	covariance(2,2) = 70;
-	std::vector<Matrix3d> omegas;
-	omegas.push_back(covariance.inverse());
-	omegas.push_back(covariance.inverse());
-	omegas.push_back(covariance.inverse());
-	omegas.push_back(covariance.inverse());
-	omegas.push_back(covariance.inverse());
-
-	algorithm1(x, z, omegas, is, js);*/
-}
 double distance(double x1,double x2, double y1, double y2){
     return sqrt(pow(x2-x1,2)+pow(y2-y1,2));
 }
 
 bool rotation(double rot1, double rot2) {
-	if(rot1 < 0 && rot2 > 0) {
-		rot1 *= -1;
-		rot2 = rot1 + M_PI/2;
-	}
-	if(rot2 < 0 && rot1 > 0) {
-		rot2 *= -1;
-		rot2 = rot2 + M_PI/2;
-	}
-	double rotDifference = rot2-rot1;
-	if(rotDifference >= 0.3) {
-		return true;
-	}
-	return false;
+    if(rot1 < 0 && rot2 > 0) {
+        rot1 *= -1;
+        rot2 = rot1 + M_PI/2;
+    }
+    if(rot2 < 0 && rot1 > 0) {
+        rot2 *= -1;
+        rot2 = rot2 + M_PI/2;
+    }
+    double rotDifference = rot2-rot1;
+    if(rotDifference >= 0.3) {
+        return true;
+    }
+    return false;
 }
 
-/*		Velocity callback function, called continuously
---------------------------------------------------------------------------------------*/
-bool initialised;
-double veryLastX;
-double veryLastY;
-double veryLastYaw;
 void vel_callback(const nav_msgs::Odometry& msg) {
 
     // Get the current position of the robot
@@ -254,10 +177,7 @@ void vel_callback(const nav_msgs::Odometry& msg) {
         publishPath();
 
         // Save the current scan
-        laserscansaver.push_back(currentScan);
-
-        // Save the first scan as previous
-        prevScan = currentScan;
+        scans.push_back(currentScan);
 
         initialised = true;
 
@@ -278,7 +198,7 @@ void vel_callback(const nav_msgs::Odometry& msg) {
         nodes.push_back(newNode);
 
         // Label node with current scan
-        laserscansaver.push_back(currentScan);
+        scans.push_back(currentScan);
 
         // Create constraints between current node and previous node
         // and current node and close nodes (loop closing)
@@ -297,8 +217,8 @@ void vel_callback(const nav_msgs::Odometry& msg) {
                     loopDetected = true;
 
                 // Transform the ith and jth scan to PointClouds
-                prevPointCloud = lasertransBase(laserscansaver[i]);
-                currentPointCloud = lasertransBase(laserscansaver[j]);
+                prevPointCloud = lasertransBase(scans[i]);
+                currentPointCloud = lasertransBase(scans[j]);
 
                 // Use scanmatch for both clouds
                 Vector3d zTransformation = scanmatch(prevPointCloud,currentPointCloud);
@@ -361,16 +281,13 @@ void vel_callback(const nav_msgs::Odometry& msg) {
         point_cloud_publisher_second.publish(currentPointCloud);
 
         // Update grid
-        world = updateOccupancyGrid(world,laserscansaver,nodes);
-        publishOccupancyGrid(world,occupub);
+        occupancyGrid = updateOccupancyGrid(occupancyGrid,scans,nodes);
+        publishOccupancyGrid(occupancyGrid,occupub);
 
         // Save current pose as previous
         prevX = newX;
         prevY = newY;
         prevZ = newZ;
-
-        // Save current scan as previous
-        prevScan = currentScan;
     }
 
     // Update robotpublisher values, only approximated odometry
@@ -384,15 +301,18 @@ void vel_callback(const nav_msgs::Odometry& msg) {
     veryLastYaw = newZ;
 }
 
+void rob_callback(const ros::TimerEvent&) {
+
+}
+
 int main(int argc, char **argv) {
 	 
 	ros::init(argc, argv, "test");
 	ros::NodeHandle n;
-	world = initializeOccupancyGrid(2000, 0.05);
+    occupancyGrid = initializeOccupancyGrid(2000, 0.05);
 	ros::Timer timer = n.createTimer(ros::Duration(5), rob_callback);
     ros::Subscriber laserSub = n.subscribe("base_scan", 100, callback);
 	ros::Subscriber velSub = n.subscribe("odom", 100, vel_callback);
-	robotPathPublisher = n.advertise<nav_msgs::Path> ("/path", 100, false);
 	robotPosePublisher = n.advertise<geometry_msgs::PoseArray> ("/poses", 100, false);
 	point_cloud_publisher_ = n.advertise<sensor_msgs::PointCloud> ("/cloud", 100,false);
 	point_cloud_publisher_second = n.advertise<sensor_msgs::PointCloud> ("/cloud2", 100,false);
