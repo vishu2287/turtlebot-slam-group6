@@ -89,7 +89,7 @@ void publishPath(){
     points.id = 0;
     line_strip.id = 1;
     points.type = visualization_msgs::Marker::POINTS;
-    line_strip.type = visualization_msgs::Marker::LINE_STRIP;
+    line_strip.type = visualization_msgs::Marker::LINE_LIST;
     // Points are green
     points.color.g = 1.0f;
     points.color.a = 1.0;
@@ -100,26 +100,38 @@ void publishPath(){
     posearray.header.frame_id = "/world";
     posearray.poses.resize(nodes.size());
     // POINTS markers use x and y scale for width/height respectively
-    //points.scale.x = 0.2;
-    //points.scale.y = 0.2;
+    points.scale.x = 0.1;
+    points.scale.y = 0.1;
 
     // LINE_STRIP/LINE_LIST markers use only the x component of scale, for the line width
-    line_strip.scale.x = 0.01;
-        for(unsigned int i = 0; i < posearray.poses.size(); i++){
-            geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(nodes[i](2));
-            posearray.poses[i].position.x = nodes[i](0);
-            posearray.poses[i].position.y = nodes[i](1);
-            posearray.poses[i].position.z = 0;
-            posearray.poses[i].orientation.x = odom_quat.x;
-            posearray.poses[i].orientation.y = odom_quat.y;
-            posearray.poses[i].orientation.z = odom_quat.z;
-            posearray.poses[i].orientation.w =  odom_quat.w;
-	        geometry_msgs::Point p;
-            p.x = nodes[i](0);
-            p.y = nodes[i](1);
-	        points.points.push_back(p);
-      		line_strip.points.push_back(p);
-        }
+    line_strip.scale.x = 0.02;
+    for(unsigned int i = 0; i < posearray.poses.size(); i++){
+        geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(nodes[i](2));
+        posearray.poses[i].position.x = nodes[i](0);
+        posearray.poses[i].position.y = nodes[i](1);
+        posearray.poses[i].position.z = 0;
+        posearray.poses[i].orientation.x = odom_quat.x;
+        posearray.poses[i].orientation.y = odom_quat.y;
+        posearray.poses[i].orientation.z = odom_quat.z;
+        posearray.poses[i].orientation.w =  odom_quat.w;
+        geometry_msgs::Point p;
+        p.x = nodes[i](0);
+        p.y = nodes[i](1);
+        points.points.push_back(p);
+    }
+
+    // Display lines according to the constraints
+    for(int c = 0; c<constraints.size(); c++)
+    {
+        geometry_msgs::Point p1;
+        p1.x = nodes[constraints[c].i](0);
+        p1.y = nodes[constraints[c].i](1);
+        geometry_msgs::Point p2;
+        p2.x = nodes[constraints[c].j](0);
+        p2.y = nodes[constraints[c].j](1);
+        line_strip.points.push_back(p1);
+        line_strip.points.push_back(p2);
+    }
     robotPosePublisher.publish(posearray);
     marker_pub.publish(points);
     marker_pub.publish(line_strip);
