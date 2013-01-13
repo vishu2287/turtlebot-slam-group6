@@ -42,6 +42,10 @@ int linearFunction(int x, int y1, int y2, int x1, int x2)
 {
     return x2+(double)(y2-x2)/(y1-x1)*(x-x1);
 }
+int linearFunctionInverse(int y, int y1, int y2, int x1, int x2)
+{
+    return x1+(double)(y1-x1)/(y2-x2)*(y-x2);
+}
     /*		Populate a Occupancy GridFF
     --------------------------------------------------------------------------------------*/
 nav_msgs::OccupancyGrid updateOccupancyGrid(nav_msgs::OccupancyGrid og, std::vector < sensor_msgs::LaserScan::ConstPtr > laserscansaver, std::vector<Vector3d> poses){
@@ -87,26 +91,45 @@ nav_msgs::OccupancyGrid updateOccupancyGrid(nav_msgs::OccupancyGrid og, std::vec
             og.data[((grid_y*og.info.width)+grid_x)] = 100;
 
             // Set freespace between x and p
-            int path = p1-grid_x;
-            if(path<0)
+            int pathX = p1-grid_x;
+            int pathY = p2-grid_y;
+            if(abs(pathX) >= abs(pathY))
             {
-                for(int a = grid_x-1; a>p1; a--)
+                if(pathX<0)
                 {
-                    int f = linearFunction(a, grid_x, grid_y, p1, p2);
-                    og.data[((f*og.info.width)+a)] = 0;
+                    for(int x = grid_x-1; x>p1; x--)
+                    {
+                        int y = linearFunction(x, grid_x, grid_y, p1, p2);
+                        og.data[((y*og.info.width)+x)] = 0;
+                    }
                 }
-            }
-            else if(path > 0)
-            {
-                for(int a = grid_x+1; a<p1; a++)
+                else
                 {
-                    int f = linearFunction(a, grid_x, grid_y, p1, p2);
-                    og.data[((f*og.info.width)+a)] = 0;
+                    for(int x = grid_x+1; x<p1; x++)
+                    {
+                        int y = linearFunction(x, grid_x, grid_y, p1, p2);
+                        og.data[((y*og.info.width)+x)] = 0;
+                    }
                 }
             }
             else
             {
-                // @todo: Handle when no x defference exists
+                if(pathY<0)
+                {
+                    for(int y = grid_y-1; y>p2; y--)
+                    {
+                        int x = linearFunctionInverse(y, grid_x, grid_y, p1, p2);
+                        og.data[((y*og.info.width)+x)] = 0;
+                    }
+                }
+                else
+                {
+                    for(int y = grid_y+1; y<p2; y++)
+                    {
+                        int x = linearFunctionInverse(y, grid_x, grid_y, p1, p2);
+                        og.data[((y*og.info.width)+x)] = 0;
+                    }
+                }
             }
 
         }
