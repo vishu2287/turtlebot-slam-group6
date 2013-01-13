@@ -17,7 +17,7 @@ sensor_msgs::PointCloud lasertransBase (const sensor_msgs::LaserScan::ConstPtr& 
 
 
     sensor_msgs::PointCloud cloud;
-
+    cloud.header.frame_id = "/base_link";
     int num_ranges = msg->ranges.size();
     cloud.points.resize(num_ranges);
 
@@ -31,6 +31,7 @@ sensor_msgs::PointCloud lasertransBase (const sensor_msgs::LaserScan::ConstPtr& 
         geometry_msgs::Point32 p;
         p.x = x;
         p.y = y;
+        p.z = 0;
         cloud.points[j] = p;
     }
     return cloud;
