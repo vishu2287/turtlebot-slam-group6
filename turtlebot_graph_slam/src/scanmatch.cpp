@@ -18,7 +18,7 @@ double getDistance(geometry_msgs::Point32 one, geometry_msgs::Point32 two) {
     return sqrt(pow((one.x - two.x), 2) + pow((one.y - two.y), 2));
 }
 
-Vector3d scanmatch(sensor_msgs::PointCloud model ,  sensor_msgs::PointCloud target){
+Vector3d scanmatch(sensor_msgs::PointCloud target ,  sensor_msgs::PointCloud model){
     ROS_INFO_STREAM("Scanmatcher is starting...");
     //while ! converging  			//START of the icp iterations
     int modelSize = model.points.size();
@@ -137,7 +137,7 @@ Vector3d scanmatch(sensor_msgs::PointCloud model ,  sensor_msgs::PointCloud targ
         //std::cout << "R" << R;
         // Estimate translation vector and build final transformation matrix
         // ----------------------------------------------------
-//        std::cout << "R" << R;
+//        std::cout << "R" << R <<"\n";
 //         ROS_INFO_STREAM("SVD complete");
         centerOfModel(0) = centroidModelX;
         centerOfModel(1) = centroidModelY;
