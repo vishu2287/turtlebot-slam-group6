@@ -55,8 +55,8 @@ std::vector<Vector3d> nodes;
 sensor_msgs::LaserScan::ConstPtr currentScan;
 sensor_msgs::LaserScan::ConstPtr prevScan;
 // 3 pointclouds for two different laserscans and the ICP output cloud
-sensor_msgs::PointCloud pointCloud1;
-sensor_msgs::PointCloud pointCloud2;
+sensor_msgs::PointCloud prevPointCloud;
+sensor_msgs::PointCloud currentPointCloud;
 sensor_msgs::PointCloud combined;
 // TUNABLE PARAMETERS
 double MATCH_DISTANCE = 0.5;	// Distance after which a laser scan should be matched again
@@ -260,11 +260,6 @@ void vel_callback(const nav_msgs::Odometry& msg) {
         prevScan = currentScan;
 
         initialised = true;
-	
-        std::cout << "Origin node created" << std::endl;
-        std::cout << "Number of saved poses = " << nodes.size() << std::endl;
-        std::cout << "Number of saved scans = " << laserscansaver.size() << std::endl;
-        std::cout << "-----" << std::endl;
 
         // Initialize robotpublisher He will make a ros::spin at this point so the whole program will be runthrough again
         robopub.robotpos(0,0,0,0,0);
@@ -273,101 +268,97 @@ void vel_callback(const nav_msgs::Odometry& msg) {
     // If the robot has walked far enough to make the second scan
     if(distance(prevX,newX,prevY,newY)>= MATCH_DISTANCE /*|| rotation(prevZ, newZ)*/) {
 
-        // Save current scan
+        // Create new node for current robot pose
+        Vector3d newNode;
+        newNode(0) = newX;
+        newNode(1) = newY;
+        newNode(2) = newZ;
+
+        // Add new node to the graph
+        nodes.push_back(newNode);
+
+        // Label node with current scan
         laserscansaver.push_back(currentScan);
 
-        // Transform the current and last scan to PointClouds
-        pointCloud1 = lasertransBase(prevScan);
-        pointCloud2 = lasertransBase(currentScan);
-
-        // If both clouds are not empty
-        if(!pointCloud1.points.empty() || !pointCloud2.points.empty()){
-
-            // Create new node for current robot pose
-            Vector3d newNode;
-            newNode(0) = newX;
-            newNode(1) = newY;
-            newNode(2) = newZ;
-
-            // Add new node to the graph
-            nodes.push_back(newNode);
-
-            // Create constraints between current node and previous node
-            // and current node and close nodes (loop closing)
-            bool loopDetected = false;
-            int j = nodes.size()-1;
-            for(int i = 0; i<j; i++)
+        // Create constraints between current node and previous node
+        // and current node and close nodes (loop closing)
+        bool loopDetected = false;
+        int j = nodes.size()-1;
+        for(int i = 0; i<j; i++)
+        {
+            double oldX = nodes[i](0);
+            double oldY = nodes[i](1);
+            double oldZ = nodes[i](2);
+            double nodeDistance = distance(oldX,newX,oldY,newY);
+            if(nodeDistance < MATCH_DISTANCE || i == j-1)
             {
-                double oldX = nodes[i](0);
-                double oldY = nodes[i](1);
-                double oldZ = nodes[i](2);
-                double nodeDistance = distance(oldX,newX,oldY,newY);
-                if(nodeDistance < MATCH_DISTANCE || i == j-1)
-                {
-                    // Mark as loop detection
-                    if(nodeDistance < MATCH_DISTANCE)
-                        loopDetected = true;
+                // Mark as loop detection
+                if(nodeDistance < MATCH_DISTANCE)
+                    loopDetected = true;
 
-                    // Use scanmatch for both clouds
-                    Vector3d zTransformation = scanmatch(pointCloud1,pointCloud2);
+                // Transform the ith and jth scan to PointClouds
+                prevPointCloud = lasertransBase(laserscansaver[i]);
+                currentPointCloud = lasertransBase(laserscansaver[j]);
 
-                    // Get X, Y and yaw transformation according to scanmatcher
-                    double zX = zTransformation(0);
-                    double zY = zTransformation(1);
-                    double zYaw = zTransformation(2);
+                // Use scanmatch for both clouds
+                Vector3d zTransformation = scanmatch(prevPointCloud,currentPointCloud);
 
-                    std::cout << "zX = " <<zX<< std::endl;
-                    std::cout << "zY = " <<zY<< std::endl;
-                    std::cout << "zYaw = " <<zYaw<< std::endl;
+                // Get X, Y and yaw transformation according to scanmatcher
+                double zX = zTransformation(0);
+                double zY = zTransformation(1);
+                double zYaw = zTransformation(2);
 
-                    // Compare with the actual odometry transformation
-                    double diffX = newX-oldX;
-                    double diffY = newY-oldY;
-                    double xX = cos(-oldZ)*diffX - sin(-oldZ)*diffY;
-                    double xY = sin(-oldZ)*diffX + cos(-oldZ)*diffY;
-                    double xYaw = newZ-oldZ;
-                    std::cout << "xX = " <<xX<< std::endl;
-                    std::cout << "xY = " <<xY<< std::endl;
-                    std::cout << "xYaw = " <<xYaw<< std::endl;
+                std::cout << "zX = " <<zX<< std::endl;
+                std::cout << "zY = " <<zY<< std::endl;
+                std::cout << "zYaw = " <<zYaw<< std::endl;
 
-                    // In order to test Graph SLAM with the actual odometry, with random noise
-                    double random = 0.2*(rand() % 100/100.);
-                    zTransformation(0) = xX;// - 0.1 + random;
-                    zTransformation(1) = xY;// - 0.1 + random;
-                    zTransformation(2) = xYaw;// - 0.1 + random;
+                // Compare with the actual odometry transformation
+                double diffX = newX-oldX;
+                double diffY = newY-oldY;
+                double xX = cos(-oldZ)*diffX - sin(-oldZ)*diffY;
+                double xY = sin(-oldZ)*diffX + cos(-oldZ)*diffY;
+                double xYaw = newZ-oldZ;
+                std::cout << "xX = " <<xX<< std::endl;
+                std::cout << "xY = " <<xY<< std::endl;
+                std::cout << "xYaw = " <<xYaw<< std::endl;
 
-                    // Create a constraint between ith and jth node and save measurement transform
-                    Constraint c;
-                    c.i = i;
-                    c.j = j;
-                    c.z = zTransformation;
-                    Matrix3d covariance = Matrix3d::Identity(3, 3); // @todo: Find correct matrix
-                    c.omega = covariance.inverse();
+                // In order to test Graph SLAM with the actual odometry, with random noise
+                double random = 0.2*(rand() % 100/100.);
+                zTransformation(0) = xX;// - 0.1 + random;
+                zTransformation(1) = xY;// - 0.1 + random;
+                zTransformation(2) = xYaw;// - 0.1 + random;
 
-                    // Add constraint to the graph
-                    constraints.push_back(c);
-                }
+                // Create a constraint between ith and jth node and save measurement transform
+                Constraint c;
+                c.i = i;
+                c.j = j;
+                c.z = zTransformation;
+                Matrix3d covariance = Matrix3d::Identity(3, 3); // @todo: Find correct matrix
+                c.omega = covariance.inverse();
+
+                // Add constraint to the graph
+                constraints.push_back(c);
             }
-            std::cout << "Number of nodes in the graph = " << nodes.size() << std::endl;
-            std::cout << "Number of constraints in the graph = " << constraints.size() << std::endl;
-
-            // Perform Graph SLAM optimization whenever a loop is detected
-//            if(loopDetected)
-            nodes =
-                    algorithm1(nodes, constraints);
-
-            // Set the robot pose to the optimized pose
-            robopub.robotxx = nodes[nodes.size()-1](0);
-            robopub.robotyy = nodes[nodes.size()-1](1);
-            robopub.robotyyaw = nodes[nodes.size()-1](2);
         }
+        std::cout << "Number of nodes in the graph = " << nodes.size() << std::endl;
+        std::cout << "Number of constraints in the graph = " << constraints.size() << std::endl;
+
+        // Perform Graph SLAM optimization whenever a loop is detected
+        //            if(loopDetected)
+        nodes =
+                algorithm1(nodes, constraints);
+
+        // Set the robot pose to the optimized pose
+        robopub.robotxx = nodes[nodes.size()-1](0);
+        robopub.robotyy = nodes[nodes.size()-1](1);
+        robopub.robotyyaw = nodes[nodes.size()-1](2);
 
         //Publish Pose Array
         publishPath();
 
         // Publish clouds
-        point_cloud_publisher_.publish(pointCloud1);
-        point_cloud_publisher_second.publish(pointCloud2);
+        point_cloud_publisher_.publish(prevPointCloud);
+        point_cloud_publisher_second.publish(currentPointCloud);
 
         // Update grid
         world = updateOccupancyGrid(world,laserscansaver,nodes);
