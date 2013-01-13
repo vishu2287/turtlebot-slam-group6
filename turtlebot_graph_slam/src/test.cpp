@@ -274,8 +274,8 @@ void vel_callback(const nav_msgs::Odometry& msg) {
         laserscansaver.push_back(currentScan);
 
         // Transform the current and last scan to PointClouds
-        pointCloud1 = lasertransBase(currentScan);
-        pointCloud2 = lasertransBase(prevScan);
+        pointCloud1 = lasertrans(prevScan);
+        pointCloud2 = lasertrans(currentScan);
 
         // If both clouds are not empty
         if(!pointCloud1.points.empty() || !pointCloud2.points.empty()){
@@ -297,6 +297,7 @@ void vel_callback(const nav_msgs::Odometry& msg) {
             {
                 double oldX = nodes[i](0);
                 double oldY = nodes[i](1);
+                double oldZ = nodes[i](2);
                 double nodeDistance = distance(oldX,newX,oldY,newY);
                 if(nodeDistance < MATCH_DISTANCE || i == j-1)
                 {
@@ -308,18 +309,28 @@ void vel_callback(const nav_msgs::Odometry& msg) {
                     Vector3d zTransformation = scanmatch(pointCloud1,pointCloud2);
 
                     // Get X, Y and yaw transformation according to scanmatcher
-                    double zX = zTransformation(0,0);
-                    double zY = zTransformation(1,0);
-                    double zYaw = zTransformation(2,0);
+                    double zX = zTransformation(0);
+                    double zY = zTransformation(1);
+                    double zYaw = zTransformation(2);
 
                     std::cout << "zX = " <<zX<< std::endl;
                     std::cout << "zY = " <<zY<< std::endl;
                     std::cout << "zYaw = " <<zYaw<< std::endl;
 
                     // @todo: Compare with the actual odometry transformation
-        //            std::cout << "xX = " <<zX<< std::endl;
-        //            std::cout << "xY = " <<zY<< std::endl;
-        //            std::cout << "xYaw = " <<newZ-prevZ<< std::endl;
+                    double diffX = newX-oldX;
+                    double diffY = newY-oldY;
+                    double xX = cos(-oldZ)*diffX - sin(-oldZ)*diffY;
+                    double xY = sin(-oldZ)*diffX + cos(-oldZ)*diffY;
+                    double xYaw = newZ-prevZ;
+                    std::cout << "xX = " <<xX<< std::endl;
+                    std::cout << "xY = " <<xY<< std::endl;
+                    std::cout << "xYaw = " <<xYaw<< std::endl;
+
+                    // In order to test Graph SLAM with the actual odometry
+                    zTransformation(0) = xX;
+                    zTransformation(1) = xY;
+                    zTransformation(2) = xYaw;
 
                     // Create a constraint between ith and jth node and save measurement transform
                     Constraint c;
@@ -362,10 +373,18 @@ void vel_callback(const nav_msgs::Odometry& msg) {
         prevScan = currentScan;
     }
 	//Update robotpublisher values
-	robopub.robotxx = newX;
-	robopub.robotyy = newY;
-	robopub.robotyyaw = newZ;
-    //robotpos(newX,newY,0,0,newZ);
+//    if(nodes.empty())
+//    {
+        robopub.robotxx = newX;
+        robopub.robotyy = newY;
+        robopub.robotyyaw = newZ;
+//    }
+//    else
+//    {
+//        robopub.robotxx = nodes[nodes.size()-1](0);
+//        robopub.robotyy = nodes[nodes.size()-1](1);
+//        robopub.robotyyaw = nodes[nodes.size()-1](2);
+//    }
 }
 
 int main(int argc, char **argv) {
