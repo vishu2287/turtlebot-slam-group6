@@ -4,6 +4,7 @@
 #include <graph_slam.hpp>
 #include <OccupancyGrid.hpp>
 #include <GraphBasedAlgo1.hpp>
+#include <Constraint.hpp>
 #include <robotpos.hpp>
 #include <simple_slam.hpp>
 #include <std_msgs/String.h>
@@ -49,7 +50,7 @@ double speed;
 double angular;
 //MAINTAIN a list of laserscans for each pose and of all robotposes
 std::vector < sensor_msgs::LaserScan::ConstPtr > laserscansaver;
-std::vector<Vector3d> robotpossaver;
+std::vector<Vector3d> nodes;
 // maintain two laserscans if robot moves 0.5 meters forward
 sensor_msgs::LaserScan::ConstPtr currentScan;
 sensor_msgs::LaserScan::ConstPtr prevScan;
@@ -60,11 +61,9 @@ sensor_msgs::PointCloud combined;
 // TUNABLE PARAMETERS
 double MATCH_DISTANCE = 0.5;	// Distance after which a laser scan should be matched again
 
-// Constraint lists
-std::vector<int> is;
-std::vector<int> js;
-std::vector<Vector3d> z;
-std::vector<Matrix3d> omegas;
+// Constraint list
+std::vector<Constraint> constraints;
+
 // Temporary variables for building simple constraints
 int iCounter = 0;
 int jCounter = 1;
@@ -99,7 +98,7 @@ void publishPath(){
     line_strip.color.a = 1.0;
     posearray.header.stamp = ros::Time::now();
     posearray.header.frame_id = "/world";
-    posearray.poses.resize(robotpossaver.size());
+    posearray.poses.resize(nodes.size());
     // POINTS markers use x and y scale for width/height respectively
     //points.scale.x = 0.2;
     //points.scale.y = 0.2;
@@ -107,17 +106,17 @@ void publishPath(){
     // LINE_STRIP/LINE_LIST markers use only the x component of scale, for the line width
     line_strip.scale.x = 0.01;
         for(unsigned int i = 0; i < posearray.poses.size(); i++){
-            geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(robotpossaver[i](2));
-            posearray.poses[i].position.x = robotpossaver[i](0);
-            posearray.poses[i].position.y = robotpossaver[i](1);
+            geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(nodes[i](2));
+            posearray.poses[i].position.x = nodes[i](0);
+            posearray.poses[i].position.y = nodes[i](1);
             posearray.poses[i].position.z = 0;
             posearray.poses[i].orientation.x = odom_quat.x;
             posearray.poses[i].orientation.y = odom_quat.y;
             posearray.poses[i].orientation.z = odom_quat.z;
             posearray.poses[i].orientation.w =  odom_quat.w;
 	        geometry_msgs::Point p;
-            p.x = robotpossaver[i](0);
-            p.y = robotpossaver[i](1);
+            p.x = nodes[i](0);
+            p.y = nodes[i](1);
 	        points.points.push_back(p);
       		line_strip.points.push_back(p);
         }
@@ -243,7 +242,7 @@ void vel_callback(const nav_msgs::Odometry& msg) {
         firstNode(0) = newX;
         firstNode(1) = newY;
         firstNode(2) = newZ;
-        robotpossaver.push_back(firstNode);
+        nodes.push_back(firstNode);
 
         //Publish first pose in pose array
         publishPath();
@@ -257,7 +256,7 @@ void vel_callback(const nav_msgs::Odometry& msg) {
         initialised = true;
 	
         std::cout << "Origin node created" << std::endl;
-        std::cout << "Number of saved poses = " << robotpossaver.size() << std::endl;
+        std::cout << "Number of saved poses = " << nodes.size() << std::endl;
         std::cout << "Number of saved scans = " << laserscansaver.size() << std::endl;
         std::cout << "-----" << std::endl;
 
@@ -300,24 +299,27 @@ void vel_callback(const nav_msgs::Odometry& msg) {
             newNode(0) = newX;
             newNode(1) = newY;
             newNode(2) = newZ;
-            robotpossaver.push_back(newNode);
+            nodes.push_back(newNode);
 
             // CREATE CONSTRAINT BETWEEN CURRENT AND LAST NODE
             // @TODO: CREATE CONSTRAINT BETWEEN CURRENT AND CLOSE NODES
-            is.push_back(iCounter);
-            js.push_back(jCounter);
+
+            Constraint c;
+            c.i = iCounter;
+            c.j = jCounter;
+            c.z = zTransformation;
             iCounter++;
             jCounter++;
-            z.push_back(zTransformation);
             Matrix3d covariance = Matrix3d::Identity(3, 3);
-            omegas.push_back(covariance.inverse());
+            c.omega = covariance.inverse();
+            constraints.push_back(c);
 
             // Perform Graph SLAM
-//            robotpossaver =
-                    algorithm1(robotpossaver, z, omegas, is, js);
+//            nodes =
+                    algorithm1(nodes, constraints);
 
             std::cout << "New node created" << std::endl;
-            std::cout << "Number of saved poses = " << robotpossaver.size() << std::endl;
+            std::cout << "Number of saved poses = " << nodes.size() << std::endl;
             std::cout << "Number of saved scans = " << laserscansaver.size() << std::endl;
             std::cout << "-----" << std::endl;
         }
@@ -330,7 +332,7 @@ void vel_callback(const nav_msgs::Odometry& msg) {
         point_cloud_publisher_second.publish(pointCloud2);
 
         // Update grid
-        world = updateOccupancyGrid(world,laserscansaver,robotpossaver);
+        world = updateOccupancyGrid(world,laserscansaver,nodes);
         publishOccupancyGrid(world,occupub);
 
         // Save current pose as previous
