@@ -202,7 +202,8 @@ void vel_callback(const nav_msgs::Odometry& msg) {
         scans.push_back(currentScan);
 
         initialised = true;
-
+	occupancyGrid = updateOccupancyGrid(occupancyGrid,scans,nodes);
+        publishOccupancyGrid(occupancyGrid,occupub);
         // Initialize robotpublisher He will make a ros::spin at this point so the whole program will be runthrough again
         robopub.robotpos(0,0,0,0,0);
     }
