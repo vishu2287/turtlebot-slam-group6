@@ -11,7 +11,7 @@ void robotpospub::robotpos(double x, double y, double roll, double pitch, double
 	robotxx = x;
 	robotyy = y;
 	robotyyaw = yaw;
-	int32_t publish_rate_ = 1;
+    int32_t publish_rate_ = 10;
 	tf::TransformBroadcaster tf_br_;
 	tf::StampedTransform tf_map_to_baselink_;
 	tf::TransformBroadcaster tf_br_1;
@@ -48,7 +48,6 @@ void robotpospub::robotpos(double x, double y, double roll, double pitch, double
 		tf_br_1.sendTransform(tf_map_to_odom_);
 
 		ros::spinOnce();
-		   std::cout << "PUBLISH=\n";
 		loop_rate.sleep();
 	}
 }
