@@ -55,10 +55,11 @@ sensor_msgs::PointCloud currentPointCloud;
 double prevX = 0;
 double prevY = 0;
 double prevZ = 0;
-bool initialised;
 double veryLastX;
 double veryLastY;
 double veryLastYaw;
+bool initialised;
+bool loopDetected;
 
 // Distance after which a laser scan should be matched again
 double MATCH_DISTANCE = 0.5;
@@ -223,8 +224,8 @@ void vel_callback(const nav_msgs::Odometry& msg) {
 
         // Create constraints between current node and previous node
         // and current node and close nodes (loop closing)
-        bool loopDetected = false;
         int j = nodes.size()-1;
+        loopDetected = false;
         for(int i = 0; i<j; i++)
         {
             double oldX = nodes[i](0);
@@ -291,10 +292,7 @@ void vel_callback(const nav_msgs::Odometry& msg) {
         point_cloud_publisher_second.publish(currentPointCloud);
 
         // Update grid
-        if(loopDetected)
-            occupancyGrid = updateOccupancyGridAll(occupancyGrid,scans,nodes);
-        else
-            occupancyGrid = updateOccupancyGrid(occupancyGrid,scans,nodes);
+        occupancyGrid = updateOccupancyGrid(occupancyGrid,scans,nodes);
         publishOccupancyGrid(occupancyGrid,occupub);
 
         // Save current pose as previous
@@ -314,8 +312,19 @@ void vel_callback(const nav_msgs::Odometry& msg) {
     veryLastYaw = newZ;
 }
 
-void rob_callback(const ros::TimerEvent&) {
-
+/**
+  Whenever a loop closing is detected, the whole occupancy grid is corrected.
+  This is an expensive procedure, so it is seperated here.
+  */
+bool blocked;
+void timer_callback(const ros::TimerEvent&) {
+    if(!blocked && loopDetected)
+    {
+        blocked = true;
+        std::cout << "Updating the complete occupancy grid"  << std::endl;
+        occupancyGrid = updateOccupancyGridAll(occupancyGrid,scans,nodes);
+        blocked = false;
+    }
 }
 
 int main(int argc, char **argv) {
@@ -323,7 +332,7 @@ int main(int argc, char **argv) {
 	ros::init(argc, argv, "test");
 	ros::NodeHandle n;
     occupancyGrid = initializeOccupancyGrid(2000, 0.05);
-	ros::Timer timer = n.createTimer(ros::Duration(5), rob_callback);
+    ros::Timer timer = n.createTimer(ros::Duration(5), timer_callback);
     ros::Subscriber laserSub = n.subscribe("base_scan", 100, callback);
 	ros::Subscriber velSub = n.subscribe("odom", 100, vel_callback);
 	robotPosePublisher = n.advertise<geometry_msgs::PoseArray> ("/poses", 100, false);
