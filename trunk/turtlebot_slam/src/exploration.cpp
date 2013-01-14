@@ -35,13 +35,13 @@ public:
 
 		commandPub = nh.advertise < geometry_msgs::Twist > ("cmd_vel", 1);
 
-		mapSub = nh.subscribe("/map", 1, &Exploration::occupancyGridCallback,
+		mapSub = nh.subscribe("/world", 1, &Exploration::occupancyGridCallback,
 				this);
 
 		frontier_publisher = nh.advertise < sensor_msgs::PointCloud> ("frontiers", 1);
 		next_frontier_publisher = nh.advertise < sensor_msgs::PointCloud> ("next_frontier", 1);
-        next_frontier.header.frame_id = "map";
-		frontier_cloud.header.frame_id = "map";
+        next_frontier.header.frame_id = "/world";
+		frontier_cloud.header.frame_id = "/world";
 	}
 
 //Tell the navigation stack where to run to
@@ -86,8 +86,8 @@ void run(double x, double y){
 		try {
 			ros::Time now = ros::Time::now();
 			geometry_msgs::PointStamped base_point;
-			listener.waitForTransform("/map", "/base_link", now, ros::Duration(0.5));
-			listener.lookupTransform("/map", "/base_link", ros::Time(0), transform);
+			listener.waitForTransform("/world", "/base_link", now, ros::Duration(0.5));
+			listener.lookupTransform("/world", "/base_link", ros::Time(0), transform);
 			double x = transform.getOrigin().x();
 			double y = transform.getOrigin().y();
 			ROS_INFO_STREAM("STARTPOSITION X: " <<x<<" STARTPOSITION Y: " <<y);
