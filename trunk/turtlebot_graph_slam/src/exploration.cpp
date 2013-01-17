@@ -46,6 +46,7 @@ public:
 
 //Tell the navigation stack where to run to
 void run(double x, double y){
+    ROS_ERROR("Run is called in turtlebot_graph_slam");
 	//@TODO make a turn
 
           //tell the action client that we want to spin a thread by default
@@ -68,7 +69,7 @@ void run(double x, double y){
   ROS_INFO_STREAM("Moving to position x:"<<goal.target_pose.pose.position.x<<" y:"<<goal.target_pose.pose.position.y);
   ac.sendGoal(goal);
 
- //ac.waitForResult();
+  ac.waitForResult();
 
   if(ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
     ROS_INFO_STREAM("Robot moved to position x:"<< goal.target_pose.pose.position.x<<" y:"<<goal.target_pose.pose.position.y);

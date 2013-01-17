@@ -1,12 +1,12 @@
 <launch>
 
  <param name="/use_sim_time" value="true" />
-
+ <node pkg="rviz" type="rviz" name="rviz" />
 
 <arg name="map_file" default="$(find turtlebot_slam)/world/swarmlab_map.yaml"/>
 	<node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)" /> 
 
- <node pkg="rviz" type="rviz" name="rviz" />
+
 
  <node pkg="stage" type="stageros" name="stageros" args="$(find turtlebot_graph_slam)/world/swarmlab_single_turtle.world" respawn="false" 	output="screen" />
 
@@ -28,5 +28,5 @@
     <rosparam file="$(find turtlebot_graph_slam)/config/base_local_planner_params.yaml" command="load" />
   </node>
 
-<node name="turtlebot_slam" pkg="turtlebot_slam" type="turtlebot_slam" /> 
+<node name="turtlebot_slam" pkg="turtlebot_slam" type="turtlebot_slam" output="screen"/> 
 </launch>

@@ -326,6 +326,7 @@ void timer_callback(const ros::TimerEvent&) {
         occupancyGrid = updateOccupancyGridAll(occupancyGrid,scans,nodes);
         blocked = false;
     }
+    publishOccupancyGrid(occupancyGrid,occupub);
 }
 
 int main(int argc, char **argv) {
