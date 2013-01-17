@@ -11,7 +11,7 @@ void robotpospub::robotpos(double x, double y, double roll, double pitch, double
 	robotxx = x;
 	robotyy = y;
 	robotyyaw = yaw;
-    int32_t publish_rate_ = 10;
+    int32_t publish_rate_ = 75;
 	tf::TransformBroadcaster tf_br_;
 	tf::StampedTransform tf_map_to_baselink_;
 	tf::TransformBroadcaster tf_br_1;
