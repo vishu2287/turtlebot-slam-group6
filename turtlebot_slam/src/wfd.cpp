@@ -14,7 +14,7 @@ const int FRONTIER_close_list = 4;
 
 // WFD implementation
 	std::vector<std::vector<int> > frontierDetection(const nav_msgs::OccupancyGrid& map, int x, int y) {
-		ROS_INFO("FRONTIER DETECTION START....");
+//		ROS_INFO("FRONTIER DETECTION START....");
 		std::vector<std::vector<int> > frontierList; 
 		std::vector<int> pose;
 		std::vector<std::vector<int> > marker;
@@ -29,7 +29,7 @@ const int FRONTIER_close_list = 4;
 		pose.push_back(y); // y-coordinate robot
 		//create neccessary lists
 		std::vector<std::vector<int> > queue_m;
-		ROS_INFO("queue_m first push pose[0] = %i , pose[1] = %i", pose[0], pose[1]);
+//		ROS_INFO("queue_m first push pose[0] = %i , pose[1] = %i", pose[0], pose[1]);
 		queue_m.push_back(pose);
 		int index1 = pose[0];
 		int index2 = pose[1];
@@ -141,7 +141,7 @@ const int FRONTIER_close_list = 4;
 			marker[index1][index2] = MAP_close_list;
 			
 		} // end of queue_m (loop)
-		ROS_INFO("WFD terminated");
+//		ROS_INFO("WFD terminated");
 
 		return frontierList;
 	}
@@ -150,7 +150,7 @@ const int FRONTIER_close_list = 4;
 	// needs to take care of the actual positions, corners and borders
 	// need to be handled carefully
 	bool isFrontier(const nav_msgs::OccupancyGrid& grid, int x, int y) {
-        std::vector<int> neighbors = getSurrounding(grid, x, y, 3);//*/getNeighbors(grid, x, y);
+        std::vector<int> neighbors = getNeighbors(grid, x, y);
         int numExplored = 0;
         int numUnknown = 0;
 		// checking neighbors
