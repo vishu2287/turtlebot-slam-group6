@@ -7,6 +7,13 @@ Grisetti, G., Kümmerle, R., Stachniss, C., and Burgard, W. (2010).
 \newblock {\sl Intelligent Transportation Systems Magazine, IEEE}, Vol.~2,
   No.~4, pp. 31 --43.
 
+\bibitem{occupancy}
+homepage, ROS (2012).
+\newblock {nav\_msgs/OccupancyGrid.msg}.
+\newblock
+  \url{http://www.ros.org/doc/api/nav\_msgs/html/msg/OccupancyGrid.html}.
+\newblock [Online; accessed 15-December-2012].
+
 \bibitem{Keidar}
 Keidar, Matan and Kaminka, Gal~A. (2012).
 \newblock Robot exploration with fast frontier detection: theory and
@@ -26,6 +33,12 @@ Quigley, Morgan, Conley, Ken, Gerkey, Brian~P., Faust, Josh, Foote, Tully,
   Leibs, Jeremy, Wheeler, Rob, and Ng, Andrew~Y. (2009).
 \newblock Ros: an open-source robot operating system.
 \newblock {\sl ICRA Workshop on Open Source Software}.
+
+\bibitem{swarmlab}
+Swarmlab, Faculty of~Humanities, Department of Knowledge~Engineering and
+  Science, Maastricht~University{Installation instructions}.
+\newblock \url{http://swarmlab.unimaas.nl/autonomous-systems/installation/}.
+\newblock [Online; accessed 10-September-2012].
 
 \bibitem{Thrun}
 Thrun, Sebastian, Burgard, Wolfram, and Fox, Dieter (2005).
