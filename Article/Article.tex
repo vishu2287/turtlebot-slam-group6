@@ -1,6 +1,7 @@
 \documentclass{ba-kecs}
 \usepackage{graphicx,, url}
 \usepackage[numbers]{natbib}
+\usepackage{amssymb,amsmath}
 
 \title{Turtlebot SLAM }
 
@@ -46,7 +47,7 @@ The ROS framework used in this paper is also the product of trade-offs and prior
 \subsection{TurtleBot}
 The robots on which the algorithm from this paper will be tested are called TurtleBots, see figure \ref{fig:turtlebot}, the simulator will also mimic these robots. The TurtleBot is a low-cost, customizable, personal robot kit with open-source software. As a base iRobot Create is used (A) which holds a battery pack and 150 degrees/second Single Axis Gyro. The model shown in figure  \ref{fig:turtlebot} uses a Microsoft Kinect as sensor (B), the one used in this paper uses a laser range sensor, and a laptop (C) to run all the processes. The robot can also be customized using the mounting hardware (D). The robot runs on an open-source SDK based on ROS which integrates all the software needed to get the TurtleBot running and already includes some advanced capabilities like mapping and navigation.
 
-\begin{figure}[htbp]
+\begin{figure}[h]
 	\centering
 		\includegraphics[width=0.50\textwidth]{figures/turtlebot.png}
 	\caption{A TurtleBot}
@@ -104,6 +105,41 @@ To understand the need of these four structures it is necessary to know that WFD
  
  Detecting frontiers and navigating towards them is not possible due to ROS's navigation stack. Instead of sending the robot the goal to a frontier point, an algorithm has to be performed to find a point next to the frontier cell with as much free space around it as possible. 
 \subsection{GraphSLAM}
+Two different approaches of graph-based SLAM are implemented for this project. They differ in complexity and thereby applicability to the problem. Both algorithms create an occupancy grid map. 
+
+First, an algorithm as suggested by \citep{Grisetti} is implemented. Here the graph consists of nodes representing positions along the robot trajectory. Odometry and sensor measurements are incorporated into the constraints contained in the edges. Again, an edge connects two adjacent poses of the robot. This graph-based SLAM approach optimizes the pose graph according to the constraints. This ``optimized" trajectory then determines the positions of obstacles on the map by refining the laser scan data according to the poses they were obtained at. Each edge thus is labelled with the spatial difference between two poses \(x_i\) and \(x_j\). Let this error be denoted by \(e_{ij}(x_i, x_j)\). This graph-based SLAM approach calculates the most likely path as follows:
+First it calculates the Jacobians \(A\) and \(B\) of every two estimated positions connected by an edge.
+\begin{equation}
+\label{eq:jacobi_a}
+	A_{ij} = \frac{\partial e_{ij}(x)}{\partial x_i}\uplus
+\end{equation}
+\begin{equation}
+\label{eq:jacobi_b}
+	B_{ij} = \frac{\partial e_{ij}(x)}{\partial x_j}
+\end{equation}
+Note that in Equations \ref{eq:jacobi_a} and \ref{eq:jacobi_b} the x represents the current guess of the concerning robot position. These Jacobians are then added to an information matrix \(H\) (see Equation \ref{eq:H}).
+\begin{equation}
+\label{eq:H}
+\begin{aligned}
+	H_{[ii]} += A^{T}_{ij} \Omega_{ij} A_{ij} \\
+	H_{[ij]} += A^{T}_{ij} \Omega_{ij} B_{ij} \\
+	H_{[ji]} += B^{T}_{ij} \Omega_{ij} A_{ij} \\
+	H_{[jj]} += B^{T}_{ij} \Omega_{ij} B_{ij} \\
+\end{aligned}
+\end{equation}
+Furthermore a coefficient vector \(b\) is always updated as shown in Equation \ref{eq:b}. This vector in combination with the \(H\) matrix form a set of linear constraints.
+\begin{equation}
+\label{eq:b}
+\begin{aligned}
+	b_{[i]} += A^{T}_{ij} \Omega_{ij} e_{ij} \\
+	b_{[j]} += B^{T}_{ij} \Omega_{ij} e_{ij} 
+\end{aligned}
+\end{equation}
+Optimizing the vector \(x = (x_1, ..., x_n)^T \) according to the constraints specified in \(H\) and \(b\) is the core of this approach. This step is performed using sparse Cholesky factorization. 
+A new node is added to the graph once the robot moved 0.5 meters. The algorithm optimizes the trajectory like explained when a new node is added. In one special case the algorithm adds and edge connecting to non-adjacent nodes to the graph. This happens when the distance between the two connected robot positions is smaller than a margin. In fact, this special case enables the algorithm to create loops in the graph and more accurately estimate the robots trajectory and the map. This procedure is referred to as ``loop closing". 
+\\
+\\
+The second implementation is based on \cite{Thrun}. It creates nodes for each odometry measurement of the robot as well as for each feature in the map spotted by the laser sensor. Each occupancy grid cell containing an obstacle is considered a map feature. Edges are labelled with spatial constraints of the two nodes they are connecting. The output of this implementation is a vector containing the positions of the land marks as well as the trajectory of the robot. Here the constraints labelling the edges ar created using Jacobians similar to the previous approach. The major difference lies in the node creation. Here nodes are added for landmarks while the previous implementation considered the robots' trajectory only. Since no obstacle in the final occupancy grid must be missed all obstacle points are treated as landmarks for this implementation. 
 \subsubsection{Scan matching}
 
 The scan matcher, used by this program, is necessary to acquire an optimized movement vector between two robot positions, which is needed by the GraphSLAM algorithm. The programming of the scan matcher used requires two steps. For the first step the two scans are matched together by making use of raw odometry data, retrieved by the robot's motion sensor. The improvement done by the scan matcher is then to run an iteration of the iterative closest point algorithm (ICP), to incorporate its perception with the movement. 
@@ -147,6 +183,12 @@ Figure \ref{fig:random_map} shows a partial map created by the ROS gmapping pack
 \subsubsection{Benchmarks}
 
 \section{Discussion}
+The Wavefront Frontier detection algorithm \citep{Keidar} succeeds in finding frontiers in a fast and accurate manner.
+
+Implementing the algorithm suggested in \citep{Grisetti} turned out to be well suited for attacking the problem statement of this project. The maps created by this algorithm look accurate. Specifically the margin between the output map and the real map is negligible (FIGURE???). Maps are created in real time and loop closures are added when needed. In fact, the algorithm keeps updating the map with no noticable delay while the robot drives around steering to new goals selected by the WFD algorithm and navigated by ROS' move\_base package.
+
+The second graph-based SLAM implementation \cite{Thrun} clearly is not suited for robots equipped with laser scanners only. Extensive feature extraction methods are required to create occupancy grid maps with the used TurtleBot. Furthermore the algorithm is expected to work best with a robot which is able to detect distinct landmarks as well as a simple environment. A number of unique landmarks can then serve as orientation points to build the map. Additionally the algorithm is able to assess map and trajectory more quickly if there are fewer nodes and constraints in the graph.
+
 \subsubsection{Future research}
 
 \section{Conclusion}
