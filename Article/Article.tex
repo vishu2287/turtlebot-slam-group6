@@ -87,7 +87,7 @@ The implementation used for this paper is written on a Linux operating system. P
 
 As a part of the assignment the robot has to drive autonomously through an unknown map. This feature is implemented using Wavefront frontier detection (WFD).
 
-WFD is using frontiers for its exploration purposes. Creation of frontiers requires the robot to know about the current environment in form of a map. In this example an Occupancy grid is used \ref{mapping}. The general algorithm is then used to acquire four different data structures that store map and frontier information. These four data structures are :
+WFD is using frontiers for its exploration purposes. Creation of frontiers requires the robot to know about the current environment in form of a map. In this example an Occupancy grid is used \ref{sec:mapping}. The general algorithm is then used to acquire four different data structures that store map and frontier information. These four data structures are :
 
 1. Map-Open-List
 \newline
@@ -146,7 +146,7 @@ The scan matcher, used by this program, is necessary to acquire an optimized mov
 
 The general procedure of the algorithm is to first find corresponding neighbors. These are found by using the nearest neighbor search. Points in this implementation can have multiple correspondences to neighbors. To avoid incorporating outlying points, a fixed distance has been set. Outliers would otherwise impact further calculations negatively.
 The next step in the process is to calculate center points for both clouds, which are needed to normalize both clouds in respect ot each other. After performing the calculation the center points for each cloud are subtracted from every point belonging to that cloud. The calculated points are then added to two seperate matrizes, both representing one point cloud. The first cloud's matrix is then multiplied by the transposition of the second cloud matrix, so that a new Matrix is created for which we calculate the SVD values to retrieve a rotational matrix, responsible for rotating the second point cloud to the first one.
-\subsection{Mapping}\label{mapping}
+\subsection{Mapping}\label{sec:mapping}
 
 For Mapping purposes an Occupancy grid is created on which information about obstacles, free/- and unknown space is saved. Using ROS's visualization program, RVIZ, the map can be visualized entirely.
 
