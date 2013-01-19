@@ -1,24 +1,8 @@
-This is 8-bit Big BibTeX version 0.99d
-Implementation:  Microsoft(R) C/C++ for Win32
-Release version: 3.71 (31 May 2005)
-
-The 8-bit codepage and sorting file: 88591lat.csf
-The top-level auxiliary file: Article.aux
+This is BibTeX, Version 0.99cThe top-level auxiliary file: Article.aux
 The style file: ba-kecs.bst
-Reallocated glb_str_ptr (elt_size=4) to 10 items from 0.
-Reallocated global_strs (elt_size=1001) to 10 items from 0.
-Reallocated glb_str_end (elt_size=4) to 10 items from 0.
 Database file #1: references.bib
 `year' is a missing field, not a string, for entry swarmlab
 while executing---line 1390 of file ba-kecs.bst
 Warning--there's no year year in swarmlab
 Warning--empty year in swarmlab
-
-Here's how much of BibTeX's memory you used:
- Cites:                 8 out of 750
- Fields:               60 out of 5000
- Hash table:         4789 out of 5000
- Strings:             639 out of 4000
- Free string pool:   6348 out of 65000
- Wizard functions:   2672 out of 3000
 (There was 1 error message)
