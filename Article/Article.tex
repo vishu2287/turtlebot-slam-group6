@@ -173,17 +173,41 @@ The occupancy grid is using laser scan data for this implementation. Each laser 
 Free space is being incorporated into the map by filling the occupancy grid between a detected obstacle, or detected maximum range point and the current robot position with $0$ values. This is achieved with the help of a linear function. If a point is not the scanner's maximum range away, the point is saved as an obstacle with value $100$.
 
 As time progresses and the robot explores more of its environment the map is constantly updated. This is programmed by saving laser scans for every pose of the robot, which, when traveling for a distance of $0.5$ meters is added and by that the occupancy grid is updated. Upon a loop closure the occupancy grid is optimized with its information about obstacles and free spaces.
-Figure \ref{fig:random_map} shows a partial map created by the ROS gmapping package.
-\begin{figure}[htbp]
-	\centering
-		\includegraphics[width=0.50\textwidth]{figures/random_map.png}
-	\caption{A partial map}
-	\label{fig:random_map}
-\end{figure}
 
 \section{Experiments and Results}
+This section demonstrates the results of the Turtlebot SLAM implementation as described above. Several outputs of the visualization tool RViz are presented and discussed. Comparisons are drawn between different variations of the implementation and the performance of the program is evaluated.
+
+\subsection{Visualization}
+When running the program via the launch file, RViz and Stage are automatically started. Stage shows the robot in its actual position on an accurate test map (see figure \ref{fig:stage_and_rviz} left). RViz shows the current belief of the robot about its environment, position and trajectory (see figure \ref{fig:stage_and_rviz} right). The nodes of the pose graph are visualized by green points and red arrows indicating the past orientation of the robot in this position. The constraints between the nodes are visualized by lines connecting the poses. The yellow points represent the frontier points that have been detected, the orange point being the one the robot is currently navigating to. The acquired information about the environment is displayed as an occupancy grid containing obstacles (black), free space (light gray) and unknown space (dark gray).
+
+\begin{figure}[htbp]
+	\centering
+		\includegraphics[width=0.50\textwidth]{figures/Stage_and_rviz.jpg}
+	\caption{Robot and environment visualization with Stage (left) and RViz (right)}
+	\label{fig:stage_and_rviz}
+\end{figure}
+
+\subsection{Loop closing effect}
+
+\begin{figure}[htbp]
+	\centering
+		\includegraphics[width=0.50\textwidth]{figures/Loop_closing_compared.jpg}
+	\caption{Observed environment without (left) and with (right) loop closing of the pose graph}
+	\label{fig:loop_closing_comparison}
+\end{figure}
+
+\subsection{Navigation evaluation}
+
+\begin{figure}[htbp]
+	\centering
+		\includegraphics[width=0.50\textwidth]{figures/Navigation_comparison.jpg}
+	\caption{Resulting robot trajectory when applying different strategies for selecting the next navigation goal}
+	\label{fig:navigation_comparison}
+\end{figure}
+
+\subsection{Runtime}
+
 \label{sec:exp}
-\subsubsection{Benchmarks}
 
 \section{Discussion}
 \label{sec:disc}
