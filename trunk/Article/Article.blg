@@ -1,3 +1,19 @@
-This is BibTeX, Version 0.99cThe top-level auxiliary file: Article.aux
+This is 8-bit Big BibTeX version 0.99d
+Implementation:  Microsoft(R) C/C++ for Win32
+Release version: 3.71 (31 May 2005)
+
+The 8-bit codepage and sorting file: 88591lat.csf
+The top-level auxiliary file: Article.aux
 The style file: ba-kecs.bst
+Reallocated glb_str_ptr (elt_size=4) to 10 items from 0.
+Reallocated global_strs (elt_size=1001) to 10 items from 0.
+Reallocated glb_str_end (elt_size=4) to 10 items from 0.
 Database file #1: references.bib
+
+Here's how much of BibTeX's memory you used:
+ Cites:                10 out of 750
+ Fields:              108 out of 5000
+ Hash table:         4787 out of 5000
+ Strings:             653 out of 4000
+ Free string pool:   6901 out of 65000
+ Wizard functions:   2672 out of 3000
