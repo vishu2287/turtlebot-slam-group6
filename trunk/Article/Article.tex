@@ -179,7 +179,20 @@ As time progresses and the robot explores more of its environment the map is con
 This section demonstrates the results of the Turtlebot SLAM implementation as described in section \ref{sec:impl}. Several outputs of the visualization tool RViz are presented and discussed. Comparisons are drawn between different variations of the implementation and the performance of the program is evaluated.
 
 \subsection{Visualization}
-When running the program via the launch file, RViz and Stage are automatically started. Stage shows the robot in its actual position on an accurate test map (see figure \ref{fig:stage_and_rviz} left). RViz shows the current belief of the robot about its environment, position and trajectory (see figure \ref{fig:stage_and_rviz} right). The nodes of the pose graph are visualized by green points and red arrows indicating the past orientation of the robot in this position. The constraints between the nodes are visualized by lines connecting the poses. The yellow points represent the frontier points that have been detected, the orange point being the one the robot is currently navigating to. The acquired information about the environment is displayed as an occupancy grid containing obstacles (black), free space (light gray) and unknown space (dark gray).
+When running the program via the launch file, RViz and Stage are automatically started. Stage shows the robot in its actual position on an accurate test map (see figure \ref{fig:stage_and_rviz} left). RViz shows the current belief of the robot about its environment, position and trajectory (see figure \ref{fig:stage_and_rviz} right).
+
+The components of the pose graph and the environment are highlighted by the following labels:
+
+\begin{description}
+\item[green dots: ]past positions of the robot, saved as nodes of the pose graph
+\item[red arrows: ]past orientations of the robot, included in the nodes of the pose graph
+\item[blue lines: ]measurement constraints between the connected poses
+\item[yellow dots: ]frontier points detected by the wavefront frontier detection algorithm
+\item[orange dot: ] next navigation goal
+\item[black area: ] detected obstacles
+\item[light gray area: ] detected free space
+\item[dark gray area: ] unexplored space
+\end{description}
 
 \begin{figure}[htbp]
 	\centering
@@ -189,6 +202,13 @@ When running the program via the launch file, RViz and Stage are automatically s
 \end{figure}
 
 \subsection{Loop closing effect}
+One of the core properties of the Graph SLAM algorithm is the correction of the pose graph and the map whenever a loop closing is detected. This means that when the robot has been exploring an unknown area and then reenters an explored area, the transformation between the current pose and the past re-detected pose gives essential information on the complete pose graph, correcting the current belief about the environment and position.
+
+The effect of loop closing detection is illustrated in figure \ref{fig:loop_closing_comparison}. The transparent red lines indicate the accurate map, while the underlying black areas indicate the belief of the robot about the obstacles of the environment.
+
+The left part of figure \ref{fig:loop_closing_comparison} shows the explored map when walking an eight-shaped path through the map without applying loop detection. It can be seen that the belief about the map differs from the actual map in many areas, especially in the lower half of the map because this half has been explored last, exposing it to most of the measurement uncertainties.
+
+The right part of figure \ref{fig:loop_closing_comparison} depicts the exploration when walking the same path as before but applying loop closing. This results in a pose graph with 7 more constrains, providing more information for correcting the poses and corresponding measurements. One can now see that the lower half of the belief about the map is much more accurate since the area in the center has been re-detected by the algorithm.
 
 \begin{figure}[htbp]
 	\centering
@@ -198,6 +218,13 @@ When running the program via the launch file, RViz and Stage are automatically s
 \end{figure}
 
 \subsection{Navigation evaluation}
+An important aspect which has a high impact on the exploration behavior of the robot is the strategy by which the next navigation goal is determined. When facing the decision for the next goal, the given information are the detected frontiers, which can be spread all over the current map. The most obvious first implementation idea was to select the frontier which lies closest to the robot as the next navigation goal. This is definitely desirable because the robot can then explore this closest point very quickly and find out about the next frontiers.
+
+Figure \ref{fig:navigation_comparison}(a) shows the resulting exploration path of the robot and the explored map after 300 seconds when applying this simple strategy. 10 nodes and 14 constraints have been created in the pose graph during this time which is very little information. Also the nodes are limited a small area of the map. This little degree of exploration is due to the fact that when only considering the closest frontier point there is a high risk that points are selected which are very close to obstacles. When the navigation algorithm tries to find a way to this point, it is inflating the obstacles first, making very close points unreachable. After a point has been discovered to be unreachable, the next closest point to the robot is chosen, which will likely be unreachable as well.
+
+So it can be concluded that the number of close obstacles have to be taken into account in order to select reachable points as next goals. In the upcoming strategy, the sum of obstacles within a radius of 50 grid cells is added to the distance to the robot for every frontier point. The point with the smallest sum is then selected as the next goal. The application of this strategy is shown in figure \ref{fig:navigation_comparison}(b). The robot managed to explore the map within 300 seconds, creating a pose graph with 104 nodes and 150 constraints. However, one can see that the robot did not take a very exploration-efficient route through the map. There are a lot of unreasonable turns in areas that are already explored, while unexplored areas get left out for the time being.
+
+Another aspect is to be added to the evaluation of every frontier point. That is the distance between the currently evaluated frontier point and the previous navigation goal. When this distance is minimized additionally to the distance to the robot and the number of close obstacles, the algorithm will select the next goals in a chain-like fashion, creating a rather intuitive exploration path through the map (figure \ref{fig:navigation_comparison}(c)). The robot was able to explore the map within only 150 seconds, creating a much smaller pose graph of 64 nodes and 66 constraints. This evaluation feature has been given a weight factor of 5 to increase the effect on the goal selection.
 
 \begin{figure}[htbp]
 	\centering
