@@ -237,7 +237,11 @@ Another aspect is to be added to the evaluation of every frontier point. That is
 	\label{fig:navigation_comparison}
 \end{figure}
 
-\subsection{Runtime}
+\subsection{Runtime analysis}
+The implemented Graph SLAM algorithm has been tested on its feasibility. Navigating the robot manually, the complete test map has been explored, building up a pose graph of 123 nodes and 150 constraints. While doing that, the runtime of the complete update function was measured in microseconds. The update function is executed whenever a new node in the graph is created. It contains the algorithms for scan matching and Graph SLAM correction, which have been measured separately.
+
+Figure \ref{fig:runtime} shows the outcome of this runtime measurement. Naturally the runtime increases with increasing graph size, especially due to the growing matrices in the Graph SLAM algorithm.
+
 \begin{figure}[htbp]
 	\centering
 		\includegraphics[width=0.50\textwidth]{figures/Runtime.png}
@@ -245,6 +249,7 @@ Another aspect is to be added to the evaluation of every frontier point. That is
 	\label{fig:runtime}
 \end{figure}
 
+Even with a graph size of over 100 nodes, the runtime of the function stays in a very feasible range between 60 and 80 milliseconds. The robot can be moved without any delay. Taking only the Graph SLAM update into account, the runtime even stays below 20 milliseconds. In contrast the scan matching is executed outstandingly quickly since it is independent of the size of the pose graph. Most of the time is occupied by updating the occupancy grid because every single grid cell has to redrawn for every pose. In order to compromise this, the update of the complete occupancy grid is only executed every third second and only if a loop closing is detected.
 \section{Discussion}
 \label{sec:disc}
 The Wavefront Frontier detection algorithm \citep{Keidar} succeeds in finding frontiers in a fast and accurate manner.
