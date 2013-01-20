@@ -85,14 +85,14 @@ An intuitive way to formulate the SLAM problem is to view it as a pose graph opt
 \label{sec:impl}
 
 The implementation used for this paper is written on a Linux operating system. Programming has been done using ROS and the object oriented programming language C++. The installation process for ROS, as done in this paper, can be reviewed on Maastricht's swarmlab homepage \cite{swarmlab}.
- For the coding part there exist two main packages, one of which includes the exploration and the other one the mapping part of the SLAM problem. To enable the robot with exploration capabilities, the ROS internal navigation stack for the TurtleBot has been used, making movement possible by sending a designated goal to the robot.
+ For the coding part there exist two main packages, one of which includes the exploration and the other one the mapping part of the SLAM problem. To enable the robot with exploration capabilities, the ROS internal navigation stack for the TurtleBot has been used, making movement possible, by sending a designated goal to the robot.
 
 \subsection{Wavefront frontier detection}
 
 As a part of the assignment the robot has to drive autonomously through an unknown map. This feature is implemented using Wavefront frontier detection (WFD).
 
-WFD is using frontiers for its exploration purposes. Creation of frontiers requires the robot to know about the current environment in form of a map. In this example an Occupancy grid is used \ref{sec:mapping}. The general algorithm is then used to acquire four different data structures that store map and frontier information. These four data structures are :
-
+WFD is using frontiers for its exploration purposes. Creation of frontiers requires the robot to know about the current environment in form of a map. In this example an Occupancy grid is used \ref{sec:mapping}. The general algorithm is then applied to acquire four different data structures that store map and frontier information. These four data structures are :
+\newline
 1. Map-Open-List
 \newline
 2. Map-Close-List
@@ -102,12 +102,20 @@ WFD is using frontiers for its exploration purposes. Creation of frontiers requi
 4. Frontier-Close-List 
 \newline
  
-To understand the need of these four structures it is necessary to know that WFD is using a breadth first search (BFS), starting at the current robot position that has to be passed into the function. WFD also requires a current map representation, in this program acquired by the mapping package.
- Upon launching the algorithm it first searches for unoccupied space around the current robot location, which is then saved into the Map-Open-List. 
- Frontiers are found by making use of the occupancy grid's structure. A criterion for a point to be a frontier is that it has to have unknown space and known unoccupied space around it. If a frontier point is found a new BFS is performed, to extract all adjacent frontier points and connect them to one consistent frontier into the Frontier-Open-List.
- The benefit of using WFD is that by maintaining these lists, rescans only need to incorporate points that have not been scanned yet, as the algorithm saves once detected open space and frontiers into its adjacent close lists. For upfollowing scans these points are then no longer considered and by that the algorithm is optimized.
+To understand the need of these four structures it is necessary to know that WFD is using a breadth first search (BFS), starting at the current robot position that has to be passed into the algorithm. WFD also requires a current map representation, which is acquired by the mapping package in this program.
+Upon launching the algorithm it first searches for unoccupied space around the current robot location, which is then saved into the Map-Open-List. 
+Frontiers are found by making use of the occupancy grid's structure. A criterion for a point to be a frontier is that it has to have unknown space and known unoccupied space around it. If a frontier point is found a new BFS is performed, to extract all adjacent frontier points and connect them to one consistent frontier into the Frontier-Open-List. The benefit of using WFD is that by maintaining these lists, rescans only need to incorporate points that have not been scanned yet, as the algorithm saves detected open space and frontiers into its adjacent close lists, if a point is rescanned. For up following scans these points are no longer considered and by that the algorithm does not need to be rerun all over again.
  
- Detecting frontiers and navigating towards them is not possible due to ROS's navigation stack. Instead of sending the robot the goal to a frontier point, an algorithm has to be performed to find a point next to the frontier cell with as much free space around it as possible. 
+ Detecting frontiers and navigating towards them directly is not possible due to ROS's navigation stack. Instead of sending the robot the goal to a frontier point, an algorithm has to be performed to find a point next to the frontier cell with as much free space around it as possible. For detection purposes an evaluation function for the frontiers has been written, which incorporates three features that are used to send a goal to the robot's navigation stack. The three features are :
+ \newline
+ 1. distance of frontier to the robot location
+  \newline
+ 2. number of obstacles around the designated frontier
+  \newline
+ 3. - ?
+  \newline
+  
+  The features are added up and the sum is used for the final goal for the navigation stack. By applying these three features the robot can always access the next point and is by that able to drive throughout the whole map and perform the algorithm and exploration perfectly.
 \subsection{GraphSLAM}
 Two different approaches of graph-based SLAM are implemented for this project. They differ in complexity and thereby applicability to the problem. Both algorithms create an occupancy grid map. 
 
@@ -148,8 +156,9 @@ The second implementation is based on \cite{Thrun}. It creates nodes for each od
 
 The scan matcher, used by this program, is necessary to acquire an optimized movement vector between two robot positions, which is needed by the GraphSLAM algorithm. The programming of the scan matcher used requires two steps. For the first step the two scans are matched together by making use of raw odometry data, retrieved by the robot's motion sensor. The improvement done by the scan matcher is then to run an iteration of the iterative closest point algorithm (ICP), to incorporate its perception with the movement. 
 
-The general procedure of the algorithm is to first find corresponding neighbors. These are found by using the nearest neighbor search. Points in this implementation can have multiple correspondences to neighbors. To avoid incorporating outlying points, a fixed distance has been set. Outliers would otherwise impact further calculations negatively.
-The next step in the process is to calculate center points for both clouds, which are needed to normalize both clouds in respect ot each other. After performing the calculation the center points for each cloud are subtracted from every point belonging to that cloud. The calculated points are then added to two seperate matrizes, both representing one point cloud. The first cloud's matrix is then multiplied by the transposition of the second cloud matrix, so that a new Matrix is created for which we calculate the SVD values to retrieve a rotational matrix, responsible for rotating the second point cloud to the first one.
+The general procedure of the algorithm is to first find corresponding neighbors. These are found by using the nearest neighbor search, through which adjacent points are found by calculating two points from different sets according to their euclidean distance to one another. Points in this implementation can have multiple correspondences to neighbors. To avoid incorporating outlying points, a fixed distance has been set. Outliers would otherwise impact further calculations negatively.
+The next step in the process is to calculate center points for both clouds, which are needed to normalize them in respect ot each other. After performing the calculation the center points for each cloud are subtracted from every point belonging to that cloud. The calculated points are then added to two separate matrices, both representing one point cloud as a $2xn$ Matrix, where n is the number of neighbor pairs. The first cloud's matrix is then multiplied by the transposition of the second cloud matrix, so that a new matrix is created for which we calculate the Singular Value Decomposition (SVD) values to retrieve a rotational matrix, responsible for rotating the second point cloud to the first one. The next step is to translate the second point cloud to the first one with the use of a translation vector. Both rotation matrix and translation vector are then passed to a matrix containing both of them as well as a third line with the values $0 0 1$, for symmetry purposes. That matrix is then used to adjust the second point cloud to the first one. It is also used to correct the robot position.
+
 \subsection{Mapping}\label{sec:mapping}
 
 For Mapping purposes an Occupancy grid is created on which information about obstacles, free/- and unknown space is saved. Using ROS's visualization program, RVIZ, the map can be visualized entirely.
@@ -169,6 +178,7 @@ The occupancy grid is a structure that can be represented by a single dimensiona
 	\caption{Occupancy Grid visualized}
 	\label{fig:Occupancy}
 \end{figure}
+
 Fig.\ref{fig:Occupancy} shows these three occurrences visualized, with a robot in the middle performing a sample scan of its environment.
 The occupancy grid is using laser scan data for this implementation. Each laser scan has information about whether an obstacle has been detected, or whether the maximum range of the scan has been reached. The scan is then transformed into a point cloud to extract its coordinate information and by that, obstacles can be found.
 
