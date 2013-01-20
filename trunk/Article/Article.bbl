@@ -28,6 +28,16 @@ Kramer, James and Scheutz, Matthias (2007).
 \newblock Development environments for autonomous mobile robots: A survey.
 \newblock {\sl Auton. Robots}, Vol.~22, No.~2, pp. 101--132.
 
+\bibitem{Montemerlo02}
+Montemerlo, Michael, Thrun, Sebastian, Koller, Daphne, and Wegbreit, Ben
+  (2002).
+\newblock Fastslam: A factored solution to the simultaneous localization and
+  mapping problem.
+\newblock {\sl Proceedings of the Eighteenth National Conference on Artificial
+  Intelligence and Fourteenth Conference on Innovative Applications of
+  Artificial Intelligence, July 28 - August 1, 2002, Edmonton, Alberta,
+  Canada}, pp. 593--598, AAAI Press / The MIT Press.
+
 \bibitem{Quigley}
 Quigley, Morgan, Conley, Ken, Gerkey, Brian~P., Faust, Josh, Foote, Tully,
   Leibs, Jeremy, Wheeler, Rob, and Ng, Andrew~Y. (2009).
@@ -46,6 +56,12 @@ Thrun, Sebastian, Burgard, Wolfram, and Fox, Dieter (2005).
 \newblock {\sl Probabilistic Robotics (Intelligent Robotics and Autonomous
   Agents)}.
 \newblock The MIT Press.
+
+\bibitem{Roswiki}
+Willow~Garage, Online~Community (2012).
+\newblock {ROS Documentation}.
+\newblock \url{http://www.ros.org/wiki/}.
+\newblock [Online; accessed 20-January-2013].
 
 \bibitem{Yamauchi}
 Yamauchi, Brian (1998).
