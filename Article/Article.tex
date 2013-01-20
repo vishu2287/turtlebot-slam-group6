@@ -92,29 +92,21 @@ The implementation used for this paper is written on a Linux operating system. P
 As a part of the assignment the robot has to drive autonomously through an unknown map. This feature is implemented using Wavefront frontier detection (WFD).
 
 WFD is using frontiers for its exploration purposes. Creation of frontiers requires the robot to know about the current environment in form of a map. In this example an Occupancy grid is used \ref{sec:mapping}. The general algorithm is then applied to acquire four different data structures that store map and frontier information. These four data structures are :
-\newline
-1. Map-Open-List
-\newline
-2. Map-Close-List
-\newline
-3. Frontier-Open-List
-\newline
-4. Frontier-Close-List 
-\newline
- 
+\begin{enumerate}
+\item{Map-Open-List}
+\item{Map-Close-List}
+\item{Frontier-Open-List}
+\item{Frontier-Close-List}
+\end{enumerate}
 To understand the need of these four structures it is necessary to know that WFD is using a breadth first search (BFS), starting at the current robot position that has to be passed into the algorithm. WFD also requires a current map representation, which is acquired by the mapping package in this program.
 Upon launching the algorithm it first searches for unoccupied space around the current robot location, which is then saved into the Map-Open-List. 
 Frontiers are found by making use of the occupancy grid's structure. A criterion for a point to be a frontier is that it has to have unknown space and known unoccupied space around it. If a frontier point is found a new BFS is performed, to extract all adjacent frontier points and connect them to one consistent frontier into the Frontier-Open-List. The benefit of using WFD is that by maintaining these lists, rescans only need to incorporate points that have not been scanned yet, as the algorithm saves detected open space and frontiers into its adjacent close lists, if a point is rescanned. For up following scans these points are no longer considered and by that the algorithm does not need to be rerun all over again.
  
  Detecting frontiers and navigating towards them directly is not possible due to ROS's navigation stack. Instead of sending the robot the goal to a frontier point, an algorithm has to be performed to find a point next to the frontier cell with as much free space around it as possible. For detection purposes an evaluation function for the frontiers has been written, which incorporates three features that are used to send a goal to the robot's navigation stack. The three features are :
- \newline
- 1. distance of frontier to the robot location
-  \newline
- 2. number of obstacles around the designated frontier
-  \newline
- 3. - ?
-  \newline
-  
+\begin{enumerate}
+\item{distance of frontier to the robot location}
+\item{number of obstacles around the designated} \item{distance to the previous goal}
+\end{enumerate}
   The features are added up and the sum is used for the final goal for the navigation stack. By applying these three features the robot can always access the next point and is by that able to drive throughout the whole map and perform the algorithm and exploration perfectly.
 \subsection{GraphSLAM}
 Two different approaches of graph-based SLAM are implemented for this project. They differ in complexity and thereby applicability to the problem. Both algorithms create an occupancy grid map. 
