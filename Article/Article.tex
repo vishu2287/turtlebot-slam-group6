@@ -16,15 +16,15 @@ This article accompanies the research project "TurtleBot SLAM" from the Master "
 \end{abstract}
 
 \section{Introduction}
-Nowadays a lot of tasks are performed by mobile robots, for example transportation, search and rescue and automated vacuum cleaning (figure \ref{fig:vacuum_cleaner}). To efficiently perform these tasks the robot needs a map of its environment. Sometimes the data about the environment is already available as a map. Using for example GPS the robot can then locate itself, making the planning and solving of the task at hand easier. But for tasks in unknown environments or where external referencing  like GPS is unavailable the robot should only rely on internal sensors and make its own map of the environment.
+Nowadays mobile robots are able to assist humans in a diverse set of problems. Transportation, search, rescue and automated vacuum cleaning are examples from different fields. Typically, mobile robots can move through an environment using legs or wheels. In addition they are able to gather information about their environment using sensors. Some even have devices similar to the human arm or hand which allows them to interact with the environment. The vaccuum cleaning robot presented in Figure \ref{fig:vacuum_cleaner} is an example of a robot which has whells to move around. Furthermore it is equipped with a set of sensors. These sensors provide data about the location of obstacles as well as, for example, gaps in the floor the robot is moving on. To efficiently perform this task robots needs a map of its environment. For some tasks map data is available for the robot from the beginning. Provided a map the robot can locate itself using the incoming sensor data. For tasks in unknown environments, however, the robot must rely on internal sensors and make its own map of the environment.
 
-The acquisition of these maps has been a major research focus in the robotics community the last decades \cite{Grisetti}. Building or learning these maps under position uncertainty with inaccurate sensor measurements is often referred to as the Simultaneous Localization And Mapping (SLAM) problem. A large variety of solutions is available to the SLAM problem, these approaches can be classified as either filtering or smoothing.
+The acquisition of these maps has been a major research focus in the robotics community \cite{Grisetti} [\textbf{MORE SOURCES}]. Building or learning these maps under position uncertainty provided only sensor measurements is often referred to as the Simultaneous Localization And Mapping (SLAM) problem. A large variety of solutions is available to the SLAM problem, these approaches can be classified as either filtering or smoothing [\textbf{SOURCE}].
 
-Filtering approaches model the problem as an on-line state estimation. The state of the system consists in the current robot position and the map. New measurements augment and refine the estimate as they become available. Due to their incremental nature these filtering approaches are usually referred to as on-line SLAM methods. The other type of approach estimates the full trajectory from the full set of measurements. These approaches address the so called full SLAM problem and they typically rely on least-square error minimization techniques.
+Filtering approaches model the problem as a so called ``on-line" state estimation problem. The state of such a system consists of the current robot position and the map. New measurements augment and refine the estimate as they become available. Due to their incremental nature these filtering approaches are commonly referred to as on-line SLAM methods. The other type of approach estimates the full trajectory from the full set of measurements. These approaches address the so called full SLAM problem and they typically rely on least-square error minimization techniques [\textbf{SOURCE}].
 
-An intuitive way to formulate the SLAM problem is to cast it as a pose graph optimization problem. Where the nodes represent robot poses or landmarks and in which the edges encode sensor measurements that constraint the connected poses. Once such a graph is constructed the method will try to find a configuration of the nodes that is maximally consistent with the measurements.
+An intuitive way to formulate the SLAM problem is to consider it as a pose graph optimization problem. The nodes of the graph represent robot poses or landmarks. The edges encode sensor measurements that constraint the connected poses. Once such a graph is constructed the graph-based SLAM method tries to find a configuration of the nodes that is maximally consistent with the contraints contained in the edges. (\textbf{abstract graph picture here})
 
-The rest of this paper is structured as follows. Section 2 will provide the reader with the necessary background information on this topic. Section 3 is about the implementation details of the methods used. Section 4 will explain the experiments ran to validate and benchmark the implemented methods and also evaluate the obtained results. Section 5 discusses the acquired results of the experiments and proposes further research based on those. And the last section wraps up the paper with the conclusions of this research.
+The rest of this paper is structured as follows. Section \ref{sec:sota} provides the reader with the necessary background information on the topic. Section \ref{sec:impl} is about the implementation details of the methods used. Section \ref{sec:exp} explains the experiments ran to validate and benchmark the implemented methods and also evaluate the obtained results. Section \ref{sec:disc} discusses the acquired results of the experiments and proposes further research based on those. And the last section wraps up the paper with the conclusions of this research.
 
 \begin{figure}[htp]
 	\centering
@@ -37,6 +37,7 @@ The rest of this paper is structured as follows. Section 2 will provide the read
 The focus of this paper is SLAM, more specifically GraphSLAM and how it is used to construct a map of an unknown environment. GraphSLAM returns as a result the optimized graph representing the path the robot has explored. Because the goal of the robot in this paper is to map the entire area where it has been placed. There is also the need for an exploration strategy to map the still unseen areas of the space where the robot is located. The results returned by the GraphSLAM algorithm are turned into an occupancy grid map and then used for the autonomous exploration. The algorithm is tested in a robot simulator called STAGE which simulates a provided map.
 
 \section{State of the art}
+\label{sec:sota}
 \subsection{ROS}
 ROS (Robot Operating System) \cite{Quigley}, is the framework used in this paper to program the robots and it provides an environment to run simulations for the implemented algorithm. As described by Quigley et al. \cite{Quigley}, writing software for robots is difficult since there are so many possible hardware setups which makes code reuse nontrivial. Adding to this problem of hardware setups is the amount of code needed as it must contain a deep stack starting from driver-level software going up through perception, abstract reasoning and beyond. Since the required expertise is well beyond the capabilities of a single researcher, robotics software architectures must also support large scale software integration efforts.
 
@@ -79,6 +80,7 @@ Conversely, the smoothing approaches keep using all measurements to estimate the
 An intuitive way to address the SLAM problem is to pose it as a graph optimization problem. A graph will be constructed where the nodes represent robot poses or landmarks and where edges correspond to measurements that constraint the connecting nodes. Note that constraints can be contradictory because of the noise on the measurements. Once a graph is constructed the algorithm will try to find a configuration of the nodes that is maximally consistent with the measurements.
 
 \section{Implementation}
+\label{sec:impl}
 
 The implementation used for this paper is written on a Linux operating system. Programming has been done using ROS and the object oriented programming language C++. The installation process for ROS, as done in this paper, can be reviewed on Maastricht's swarmlab homepage \cite{swarmlab}.
  For the coding part there exist two main packages, one of which includes the exploration and the other one the mapping part of the SLAM problem. To enable the robot with exploration capabilities, the ROS internal navigation stack for the TurtleBot has been used, making movement possible by sending a designated goal to the robot.
@@ -180,9 +182,11 @@ Figure \ref{fig:random_map} shows a partial map created by the ROS gmapping pack
 \end{figure}
 
 \section{Experiments and Results}
+\label{sec:exp}
 \subsubsection{Benchmarks}
 
 \section{Discussion}
+\label{sec:disc}
 The Wavefront Frontier detection algorithm \citep{Keidar} succeeds in finding frontiers in a fast and accurate manner.
 
 Implementing the algorithm suggested in \citep{Grisetti} turned out to be well suited for attacking the problem statement of this project. The maps created by this algorithm look accurate. Specifically the margin between the output map and the real map is negligible (FIGURE???). Maps are created in real time and loop closures are added when needed. In fact, the algorithm keeps updating the map with no noticable delay while the robot drives around steering to new goals selected by the WFD algorithm and navigated by ROS' move\_base package.
@@ -192,7 +196,7 @@ The second graph-based SLAM implementation \cite{Thrun} clearly is not suited fo
 \subsubsection{Future research}
 
 \section{Conclusion}
-
+\label{sec:conc}
 \bibliography{references}
 \nocite{*}
 \onecolumn
