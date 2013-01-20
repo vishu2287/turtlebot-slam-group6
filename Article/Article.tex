@@ -175,7 +175,8 @@ Free space is being incorporated into the map by filling the occupancy grid betw
 As time progresses and the robot explores more of its environment the map is constantly updated. This is programmed by saving laser scans for every pose of the robot, which, when traveling for a distance of $0.5$ meters is added and by that the occupancy grid is updated. Upon a loop closure the occupancy grid is optimized with its information about obstacles and free spaces.
 
 \section{Experiments and Results}
-This section demonstrates the results of the Turtlebot SLAM implementation as described above. Several outputs of the visualization tool RViz are presented and discussed. Comparisons are drawn between different variations of the implementation and the performance of the program is evaluated.
+\label{sec:exp}
+This section demonstrates the results of the Turtlebot SLAM implementation as described in section \ref{sec:impl}. Several outputs of the visualization tool RViz are presented and discussed. Comparisons are drawn between different variations of the implementation and the performance of the program is evaluated.
 
 \subsection{Visualization}
 When running the program via the launch file, RViz and Stage are automatically started. Stage shows the robot in its actual position on an accurate test map (see figure \ref{fig:stage_and_rviz} left). RViz shows the current belief of the robot about its environment, position and trajectory (see figure \ref{fig:stage_and_rviz} right). The nodes of the pose graph are visualized by green points and red arrows indicating the past orientation of the robot in this position. The constraints between the nodes are visualized by lines connecting the poses. The yellow points represent the frontier points that have been detected, the orange point being the one the robot is currently navigating to. The acquired information about the environment is displayed as an occupancy grid containing obstacles (black), free space (light gray) and unknown space (dark gray).
@@ -206,8 +207,6 @@ When running the program via the launch file, RViz and Stage are automatically s
 \end{figure}
 
 \subsection{Runtime}
-
-\label{sec:exp}
 
 \section{Discussion}
 \label{sec:disc}
