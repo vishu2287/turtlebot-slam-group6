@@ -154,9 +154,9 @@ bool isFrontier(const nav_msgs::OccupancyGrid& grid, int x, int y) {
     int numExplored = 0;
     int numUnknown = 0;
 
-    // checking neighbors
-    // if there are known and unknown neighbors
-    // the robot is at a frontiers
+    // Checking neighbors
+    // If there are known and unknown neighbors
+    // the robot is at a frontier
     bool obstacle = false;
     for (unsigned int i = 0; i < neighbors.size(); i += 2) {
         std::vector<int> current;
@@ -228,7 +228,7 @@ std::vector<int> getNeighbors(const nav_msgs::OccupancyGrid& grid, int x, int y)
 }
 
 
-// returns the value of position [x,y] from the occupancy grid
+// Returns the value of position [x,y] from the occupancy grid
 // the value represents the probability of an obstacle or frontier
 // at position [x,y]. Values are:
 // -1 = unknown
