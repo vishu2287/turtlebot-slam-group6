@@ -11,6 +11,7 @@
  <node pkg="stage" type="stageros" name="stageros" args="$(find turtlebot_graph_slam)/world/swarmlab_single_turtle.world" respawn="false" 	output="screen" />
 
  <node name="turtlebot_graph_slam" pkg="turtlebot_graph_slam" type="turtlebot_graph_slam" output="screen" /> 
+<node name="wfd_exploration" pkg="wfd_exploration" type="wfd_exploration" output="screen"/> 
 
 <arg name ="x" default = "0"/>
 <arg name ="y" default = "0"/>
@@ -28,5 +29,5 @@
     <rosparam file="$(find turtlebot_graph_slam)/config/base_local_planner_params.yaml" command="load" />
   </node>
 
-<node name="turtlebot_slam" pkg="turtlebot_slam" type="turtlebot_slam" output="screen"/> 
+
 </launch>
