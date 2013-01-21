@@ -23,7 +23,7 @@ The acquisition of these maps has been a major research focus in the robotics co
 
 Some approaches model the problem as a so called ``on-line" state estimation problem. The state of such a system consists of the current robot position and the map. New measurements incrementally refine the estimate as they become available. Due to their incremental nature these filtering approaches are commonly referred to as on-line SLAM methods. 
 
-Others estimate the full trajectory from the full set of measurements. These approaches address the so called full SLAM problem and they typically rely on least-square error minimization techniques \cite{Leastsquares}.
+Others estimate the complete trajectory from the set of measurements. These approaches address the so called full SLAM problem and they typically rely on least-square error minimization techniques \cite{Leastsquares}.
 
 An intuitive way to formulate the SLAM problem is to consider it as a pose graph optimization problem. The nodes of the graph represent robot poses or landmarks. The edges encode sensor measurements that constraint the connected poses. Once such a graph is constructed the graph-based SLAM method tries to find a configuration of the nodes that is maximally consistent with the constraints contained in the edges.
 
@@ -315,11 +315,14 @@ As mentioned in Section \ref{sec:disc} the exploration strategy evolved during t
 The Graph SLAM algorithm proposed by \citep{Grisetti} has some room for improvement as well. Considering the suggested change in the exploration algorithm, the method would need to cope with a larger number of edges and nodes.
 The current implementation uses sparse Cholesky factorization to find the most optimal spatial configuration of the trajectory. This method is inherited in the ``Eigen" library. Although sparse Cholesky factorization solves the linear system in an efficient manner, it is likely that better algorithms emerge in the future.
 
-Most room for improvement clearly is to be found in the second Graph SLAM implementation. The TurtleBot used for this research project has to rely on laser range and odometry data only. Extracting features from laser range data is out the scope of this project. Doing so could dramatically improve the performance the method. 
-A robot equipped with for instance a colour sensor is much more suited to successfully perform this Graph SLAM method. Coloured objects could serve as landmarks and large parts of the feature detection could be left out. Implementing a powerful feature-extractor for laser-range data is definitely a possible solution. Applying the method to a robot that provides different kinds of data is the preferred one, though.
+Most room for improvement clearly is to be found in the second Graph SLAM implementation. The TurtleBot used for this research project has to rely on laser range and odometry data only. Extracting features from laser range data is out of the scope of this project. Doing so could dramatically improve the performance the method, though. 
+A robot equipped with for instance a colour sensor is much more suited to successfully perform this Graph SLAM method. Coloured objects could serve as landmarks and large parts of the feature detection could be left out. Implementing a powerful feature-extractor for laser-range data is definitely a possible solution. Applying the method to a robot that provides different kinds of data is the preferred one, nevertheless.
 
+The last section draws a conclusion based on the results (Section \ref{sec:exp}) and the discussion (Section \ref{sec:disc}).
 \section{Conclusion}
 \label{sec:conc}
+In conclusion the Graph SLAM method as described by Grisetti et al. \citep{Grisetti} is able to solve the full SLAM problem in real time. Furthermore WFD succeeds in quickly detecting frontiers (Section \ref{sec:exp}). It turned out that the exploration strategy, besides frontier detection, is a crucial task. The developed evaluation function accurately assesses suitable goal locations (Section \ref{sec:disc}). These components in combination with the presented mapping method (Section \ref{sec:impl}) solve the problem specified in Section \ref{sec:intro}.
+
 \bibliography{references}
 \nocite{*}
 \onecolumn
