@@ -184,7 +184,7 @@ void vel_callback(const nav_msgs::Odometry& msg) {
 
     // If this is the first call create the first node
     if(!initialised && currentScan){
-	
+
         // Save the current position as previous
         prevX = newX;
         prevY = newY;
@@ -212,10 +212,8 @@ void vel_callback(const nav_msgs::Odometry& msg) {
 
     // If the robot has walked far enough to make the second scan
     if(distance(prevX,newX,prevY,newY)>= MATCH_DISTANCE /*|| rotation(prevZ, newZ)*/) {
-        std::cout << "Nodes = " << nodes.size();
-        std::cout << ", Constraints = " << constraints.size() << std::endl;
-        timespec beginTimeStep;
-           clock_gettime(CLOCK_REALTIME, &beginTimeStep);
+        std::cout << "Nodes: " << nodes.size() << std::endl;
+        std::cout << "Constraints: " << constraints.size() << std::endl;
 
         // Create new node for current robot pose
         Vector3d newNode;
@@ -260,12 +258,8 @@ void vel_callback(const nav_msgs::Odometry& msg) {
                 prevPointCloud = transformCloud(prevPointCloud, xX, xY, xYaw);
 
                 // Use scanmatch for both clouds
-                timespec beginScanMatch;
-                   clock_gettime(CLOCK_REALTIME, &beginScanMatch);
-                   Vector3d correction = scanmatch(prevPointCloud, currentPointCloud);
-                timespec endScanMatch;
-                   clock_gettime(CLOCK_REALTIME, &endScanMatch);
-                std::cout << "ScanMatch duration: " << (endScanMatch.tv_nsec-beginScanMatch.tv_nsec)/1000 << std::endl;
+                Vector3d correction = scanmatch(prevPointCloud, currentPointCloud);
+
                 // In order to test Graph SLAM with the actual odometry, with random noise
                 Vector3d zTransformation;
                 zTransformation(0) = xX+correction(0);
@@ -290,12 +284,7 @@ void vel_callback(const nav_msgs::Odometry& msg) {
         }
 
         // Perform Graph SLAM optimization
-        timespec beginGraphSLAM;
-           clock_gettime(CLOCK_REALTIME, &beginGraphSLAM);
         nodes = algorithm1(nodes, constraints);
-        timespec endGraphSLAM;
-           clock_gettime(CLOCK_REALTIME, &endGraphSLAM);
-        std::cout << "GraphSLAM duration: " << (endGraphSLAM.tv_nsec-beginGraphSLAM.tv_nsec)/1000 << std::endl;
 
         // Set the robot pose to the optimized pose
         robopub.robotxx = nodes[nodes.size()-1](0);
@@ -317,10 +306,6 @@ void vel_callback(const nav_msgs::Odometry& msg) {
         prevX = newX;
         prevY = newY;
         prevZ = newZ;
-
-        timespec endTimeStep;
-           clock_gettime(CLOCK_REALTIME, &endTimeStep);
-        std::cout << "TimeStep duration: " << (endTimeStep.tv_nsec-beginTimeStep.tv_nsec)/1000 << std::endl;
     }
 
     // Update robotpublisher values, only approximated odometry
@@ -332,7 +317,6 @@ void vel_callback(const nav_msgs::Odometry& msg) {
     veryLastX = newX;
     veryLastY = newY;
     veryLastYaw = newZ;
-
 }
 
 /**
@@ -343,40 +327,31 @@ bool blocked;
 void timer_callback(const ros::TimerEvent&) {
     if(!blocked && loopDetected)
     {
-
-
-
         blocked = true;
-//        std::cout << "Updating the complete occupancy grid"  << std::endl;
         occupancyGrid = updateOccupancyGridAll(occupancyGrid,scans,nodes);
         blocked = false;
         loopDetected = false;
-
-
-
     }
     publishOccupancyGrid(occupancyGrid,occupub);
 }
 
 int main(int argc, char **argv) {
-	 
-	ros::init(argc, argv, "test");
-	ros::NodeHandle n;
+
+    ros::init(argc, argv, "test");
+    ros::NodeHandle n;
     occupancyGrid = initializeOccupancyGrid(2000, 0.05);
     ros::Timer timer = n.createTimer(ros::Duration(5), timer_callback);
     ros::Subscriber laserSub = n.subscribe("base_scan", 100, callback);
     ros::Subscriber velSub = n.subscribe("odom", 1, vel_callback);
-	robotPosePublisher = n.advertise<geometry_msgs::PoseArray> ("/poses", 100, false);
-	point_cloud_publisher_ = n.advertise<sensor_msgs::PointCloud> ("/cloud", 100,false);
-	point_cloud_publisher_second = n.advertise<sensor_msgs::PointCloud> ("/cloud2", 100,false);
-	point_cloud_publisher_combined = n.advertise<sensor_msgs::PointCloud> ("/cloudcombined", 100,false);
-	marker_pub = n.advertise<visualization_msgs::Marker>("/lines", false);
-	occupub = n.advertise<nav_msgs::OccupancyGrid> ("/world", 100,false);
+    robotPosePublisher = n.advertise<geometry_msgs::PoseArray> ("/poses", 100, false);
+    point_cloud_publisher_ = n.advertise<sensor_msgs::PointCloud> ("/cloud", 100,false);
+    point_cloud_publisher_second = n.advertise<sensor_msgs::PointCloud> ("/cloud2", 100,false);
+    point_cloud_publisher_combined = n.advertise<sensor_msgs::PointCloud> ("/cloudcombined", 100,false);
+    marker_pub = n.advertise<visualization_msgs::Marker>("/lines", false);
+    occupub = n.advertise<nav_msgs::OccupancyGrid> ("/world", 100,false);
 
+    ros::spin();
 
-
-	ros::spin();
-
-	return 0;
+    return 0;
 }
 

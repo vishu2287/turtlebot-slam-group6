@@ -57,13 +57,11 @@ sensor_msgs::PointCloud lasertrans (const sensor_msgs::LaserScan::ConstPtr& msg)
     try
     {
         projector_.projectLaser(*msg,cloud);   //Transform laser cloud to world frame
-
     }
     catch (...)
     {
         sensor_msgs::PointCloud error;
         return error;
-        // std::cout << e.what();                       //TODO Fix errors, they still occur decomment to see whats happening
     }
     return cloud;
 }
