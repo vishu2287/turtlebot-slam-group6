@@ -19,7 +19,10 @@
 #include <lasertrans.hpp>
 #include <geometry_msgs/PoseArray.h>
 #include <visualization_msgs/Marker.h>
-
+#include <iostream>
+#include <ctime>
+#include <sys/time.h>
+using namespace std;
 using namespace Eigen;
 
 /**
@@ -63,7 +66,6 @@ bool loopDetected;
 
 // Distance after which a laser scan should be matched again
 double MATCH_DISTANCE = 0.5;
-
 void callback(const sensor_msgs::LaserScan::ConstPtr& msg) {
     /**
       Simply save the current scan.
@@ -210,6 +212,10 @@ void vel_callback(const nav_msgs::Odometry& msg) {
 
     // If the robot has walked far enough to make the second scan
     if(distance(prevX,newX,prevY,newY)>= MATCH_DISTANCE /*|| rotation(prevZ, newZ)*/) {
+        std::cout << "Nodes = " << nodes.size();
+        std::cout << ", Constraints = " << constraints.size() << std::endl;
+        timespec beginTimeStep;
+           clock_gettime(CLOCK_REALTIME, &beginTimeStep);
 
         // Create new node for current robot pose
         Vector3d newNode;
@@ -254,8 +260,12 @@ void vel_callback(const nav_msgs::Odometry& msg) {
                 prevPointCloud = transformCloud(prevPointCloud, xX, xY, xYaw);
 
                 // Use scanmatch for both clouds
-                Vector3d correction = scanmatch(prevPointCloud, currentPointCloud);
-
+                timespec beginScanMatch;
+                   clock_gettime(CLOCK_REALTIME, &beginScanMatch);
+                   Vector3d correction = scanmatch(prevPointCloud, currentPointCloud);
+                timespec endScanMatch;
+                   clock_gettime(CLOCK_REALTIME, &endScanMatch);
+                std::cout << "ScanMatch duration: " << (endScanMatch.tv_nsec-beginScanMatch.tv_nsec)/1000 << std::endl;
                 // In order to test Graph SLAM with the actual odometry, with random noise
                 Vector3d zTransformation;
                 zTransformation(0) = xX+correction(0);
@@ -267,18 +277,25 @@ void vel_callback(const nav_msgs::Odometry& msg) {
                 c.i = i;
                 c.j = j;
                 c.z = zTransformation;
+                double uncertainty = 0.1;
                 Matrix3d covariance = Matrix3d::Identity(3, 3); // @todo: Find correct matrix
+                covariance(0,0) = uncertainty;
+                covariance(1,1) = uncertainty;
+                covariance(2,2) = uncertainty;
                 c.omega = covariance.inverse();
 
                 // Add constraint to the graph
                 constraints.push_back(c);
             }
         }
-        std::cout << "Number of nodes in the graph = " << nodes.size() << std::endl;
-        std::cout << "Number of constraints in the graph = " << constraints.size() << std::endl;
 
         // Perform Graph SLAM optimization
+        timespec beginGraphSLAM;
+           clock_gettime(CLOCK_REALTIME, &beginGraphSLAM);
         nodes = algorithm1(nodes, constraints);
+        timespec endGraphSLAM;
+           clock_gettime(CLOCK_REALTIME, &endGraphSLAM);
+        std::cout << "GraphSLAM duration: " << (endGraphSLAM.tv_nsec-beginGraphSLAM.tv_nsec)/1000 << std::endl;
 
         // Set the robot pose to the optimized pose
         robopub.robotxx = nodes[nodes.size()-1](0);
@@ -300,6 +317,10 @@ void vel_callback(const nav_msgs::Odometry& msg) {
         prevX = newX;
         prevY = newY;
         prevZ = newZ;
+
+        timespec endTimeStep;
+           clock_gettime(CLOCK_REALTIME, &endTimeStep);
+        std::cout << "TimeStep duration: " << (endTimeStep.tv_nsec-beginTimeStep.tv_nsec)/1000 << std::endl;
     }
 
     // Update robotpublisher values, only approximated odometry
@@ -311,6 +332,7 @@ void vel_callback(const nav_msgs::Odometry& msg) {
     veryLastX = newX;
     veryLastY = newY;
     veryLastYaw = newZ;
+
 }
 
 /**
@@ -321,10 +343,17 @@ bool blocked;
 void timer_callback(const ros::TimerEvent&) {
     if(!blocked && loopDetected)
     {
+
+
+
         blocked = true;
-        std::cout << "Updating the complete occupancy grid"  << std::endl;
+//        std::cout << "Updating the complete occupancy grid"  << std::endl;
         occupancyGrid = updateOccupancyGridAll(occupancyGrid,scans,nodes);
         blocked = false;
+        loopDetected = false;
+
+
+
     }
     publishOccupancyGrid(occupancyGrid,occupub);
 }
@@ -336,13 +365,16 @@ int main(int argc, char **argv) {
     occupancyGrid = initializeOccupancyGrid(2000, 0.05);
     ros::Timer timer = n.createTimer(ros::Duration(5), timer_callback);
     ros::Subscriber laserSub = n.subscribe("base_scan", 100, callback);
-	ros::Subscriber velSub = n.subscribe("odom", 100, vel_callback);
+    ros::Subscriber velSub = n.subscribe("odom", 1, vel_callback);
 	robotPosePublisher = n.advertise<geometry_msgs::PoseArray> ("/poses", 100, false);
 	point_cloud_publisher_ = n.advertise<sensor_msgs::PointCloud> ("/cloud", 100,false);
 	point_cloud_publisher_second = n.advertise<sensor_msgs::PointCloud> ("/cloud2", 100,false);
 	point_cloud_publisher_combined = n.advertise<sensor_msgs::PointCloud> ("/cloudcombined", 100,false);
 	marker_pub = n.advertise<visualization_msgs::Marker>("/lines", false);
 	occupub = n.advertise<nav_msgs::OccupancyGrid> ("/world", 100,false);
+
+
+
 	ros::spin();
 
 	return 0;
