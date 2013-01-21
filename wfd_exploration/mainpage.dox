@@ -2,7 +2,7 @@
 \mainpage
 \htmlinclude manifest.html
 
-\b turtlebot_slam 
+\b wfd_exploration
 
 <!-- 
 Provide an overview of your package.
