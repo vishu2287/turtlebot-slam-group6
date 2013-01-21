@@ -17,7 +17,7 @@ This article accompanies the research project "TurtleBot SLAM" from the Master "
 
 \section{Introduction}
 \label{sec:intro}
-Nowadays mobile robots are able to assist humans in a diverse set of problems. Transportation, search, rescue and automated vacuum cleaning are examples from different fields. Typically, mobile robots can move through an environment using legs or wheels. In addition they are able to gather information about their environment using sensors. Some even have devices similar to the human arm or hand which allows them to interact with the environment. The vaccuum cleaning robot presented in Figure \ref{fig:vacuum_cleaner} is an example of a robot which has whells to move around. Furthermore it is equipped with a set of sensors. These sensors provide data about the location of obstacles as well as, for example, gaps in the floor the robot is moving on. To efficiently perform this task robots needs a map of its environment. For some tasks map data is available for the robot from the beginning. Provided a map the robot can locate itself using the incoming sensor data. For tasks in unknown environments, however, the robot must rely on internal sensors and make its own map of the environment.
+Nowadays mobile robots are able to assist industry and society in a diverse set of problems. Transportation, search, rescue and automated vacuum cleaning are examples from different fields. Typically, mobile robots can move through an environment using legs or wheels. In addition they are able to gather information about their environment using sensors. Some even have devices similar to the human arm or hand which allows them to interact with the environment. The vaccuum cleaning robot presented in Figure \ref{fig:vacuum_cleaner} is an example of a robot which has whells to move around. Furthermore it is equipped with a set of sensors. These sensors provide data about the location of obstacles as well as, for example, gaps in the floor the robot is moving on. To efficiently perform this task robots needs a map of its environment. For some tasks map data is available for the robot from the beginning. Provided a map the robot can locate itself using the incoming sensor data. For tasks in unknown environments, however, the robot must rely on internal sensors and make its own map of the environment.
 
 The acquisition of these maps has been a major research focus in the robotics community \cite{Grisetti} [\textbf{MORE SOURCES}]. Building or learning these maps under position uncertainty provided only sensor measurements is often referred to as the Simultaneous Localization And Mapping (SLAM) problem. A large variety of solutions is available to the SLAM problem, these approaches can be classified as either filtering or smoothing [\textbf{SOURCE}].
 
@@ -55,7 +55,7 @@ During the development process of a system running on a robot one curcial part i
 \subsection{TurtleBot}
  \label{subsec:turtle}
 
-The product of this project is designed to run on a robot called TurtleBot(Figure \ref{fig:turtlebot}). The TurtleBot is a low-cost, customizable, personal robot kit (\textbf{PARAPHRASE?}).The base of the TurtleBot is an iRobot Create (A). It holds a battery pack and 150 degrees/second Single Axis Gyro. The model shown in Figure \ref{fig:turtlebot} uses a Microsoft Kinect sensor (B), the one used in this paper uses a laser range sensor, and a laptop (C) to run all the processes. The robot can also be customized using the mounting hardware (D). The robot runs on an open-source SDK based on ROS which integrates all the software needed to get the TurtleBot running. Already included are some advanced capabilities like mapping and navigation.
+The product of this project is designed to run on a robot called TurtleBot (Figure \ref{fig:turtlebot}). The TurtleBot is a low-cost, customizable, personal robot kit (\textbf{PARAPHRASE?}).The base of the TurtleBot is an iRobot Create (A). It holds a battery pack and 150 degrees/second Single Axis Gyro. The model shown in Figure \ref{fig:turtlebot} uses a Microsoft Kinect sensor (B), the one used in this paper uses a laser range sensor, and a laptop (C) to run all the processes. The robot can also be customized using the mounting hardware (D). The robot runs on an open-source SDK based on ROS which integrates all the software needed to get the TurtleBot running. Already included are some advanced capabilities like mapping and navigation.
 \begin{figure}[h]
 	\centering
 		\includegraphics[width=0.50\textwidth]{figures/turtlebot.png}
@@ -67,52 +67,62 @@ The product of this project is designed to run on a robot called TurtleBot(Figur
 \label{subsec:sotaExplore}
 Usually robots localize themselves and navigate through environments using a map which is provided by an external source. In this case navigating from one location to another is an easy problem. If, however, the robot does not have access to a map, navigating through an environment is problematic. The problem treated in this paper (Subsection \ref{sec:problem}) assumes an unknown environment and, hence, no map. The robot needs to be able to explore its environment without any knowledge about it. It needs to rely on the incoming laser and odometry data only. In addition to the creation of the map and the localization of itself (the SLAM problem) the robot needs to explore the environment as efficient as possible. We define a good exploration strategy as one that generates an accurate map in the shortest amount of time.
 
-Ideally the robot updates its internal map of the environment constantly while moving. One idea to efficiently explore the environment is to move to locations which maximize the robots information gain. This target location needs to be extracted from the limited information the robot has collected with its sensors.
-To achieve this the robot makes use of the idea of frontier-based exploration, first introduced by Yamauchi \cite{Yamauchi} in 1998 (\textbf{REALLY?}). Frontiers are defined to be the boundaries between free and unexplored space. Intuitively, when a robot moves to a frontier it is likely that it makes measurements in previously unexplored space. Assuming that the new data is immediately added to its map, the explored region grows once the robot reaches a frontier. Moreover an extended map results in new frontiers. By constantly moving to frontiers the robot expands its knowledge about the environment.
+Ideally the robot updates its internal map of the environment constantly while moving. One idea to efficiently explore the world is to move to locations which maximize the robots information gain. This target location needs to be extracted from the limited information the robot has collected with its sensors.
+To achieve this the robot makes use of the idea of frontier-based exploration, first introduced by Yamauchi \cite{Yamauchi} in 1998. Frontiers are defined to be the boundaries between free and unexplored space. Intuitively, when a robot moves to a frontier it is likely that it makes measurements in previously unexplored space. Assuming that the new data is immediately added to its map, the explored region grows once the robot reaches a frontier. Moreover an extended map results in new frontiers. By constantly moving to frontiers the robot expands its knowledge about the environment.
 
 \subsection{SLAM}
 \label{subsec:sotaSlam}
 As mentioned in Section \ref{sec:intro} Simultaneous Localization And Mapping (SLAM) is the process of building a map based on sensor data while simultaneously localizing yourself in an unknown environment.
 
-SLAM is a problem because, generally, localization requires a map and mapping requires the loacation of a device or a robot that wants to create a map. There are quite a few approaches that successfully solve the SLAM problem. Mostly, filtering techniques like Kalman filters Particle filters and Information filters are used to estimate the state of the system. FastSlam \citep{Montemerlo02} is an example of a SLAM implementation using a particle filter to approximate the robots trajecotry and positions of landmarks on the map. 
+SLAM is a problem because, generally, localization requires a map and mapping requires the location of the device or robot that wants to create a map. There are quite a few approaches that successfully solve the SLAM problem. In general there are two interpretations of SLAM. On-line SLAM methods estimate the current robot position along with the map. The core of a system solving the on-line SLAM problem is a filtering technique. FastSlam \citep{Montemerlo02} is an example of an on-line SLAM implementation using a Particle filter to approximate the robots position and the landmark positions on the map. Other methods have the goal to find the trajectory of the robot and the map. They solve the full SLAM problem.   
+An example of such a an approach is graph-based SLAM of graphSLAM.
 
-Conversely, the smoothing approaches keep using all measurements to estimate the entire trajectory the robot has traveled.
-\textbf{TODO: CONNECTION}
 \subsubsection{GraphSLAM}
-An intuitive way to formulate the SLAM problem is to view it as a pose graph optimization problem. A graph will be constructed where the nodes represent robot poses or landmarks and where edges correspond to measurements that constraint the connecting nodes. Note that constraints can be contradictory because of the noise on the measurements. Once a graph is constructed the algorithm will try to find a configuration of the nodes that is maximally consistent with the measurements.
+An intuitive way to formulate the SLAM problem is to view it as a pose graph optimization problem. Each position along the trajectory of the robot is represented by one node. Edges are labelled with relative spatial information between the connecting nodes. This graph is build incrementally. While the robot is in motion, new nodes are added to the graph. While the graph building is a straight forward procedure the essence of the graphSLAM method is the optimization step. In this step the algorithm looks for a configuration of the trajectory which is maximally consistent with a system of constraints obtained from the edges. This problem is commonly solved using least-square error minimization techniques \citep{Grisetti}.
+
+The next section presents the algorithms implemented for this research project.
 
 \section{Implementation}
 \label{sec:impl}
 
-The implementation used for this paper is written on a Linux operating system. Programming has been done using ROS and the object oriented programming language C++. The installation process for ROS, as done in this paper, can be reviewed on Maastricht's swarmlab homepage \cite{swarmlab}.
- For the coding part there exist two main packages, one of which includes the exploration and the other one the mapping part of the SLAM problem. To enable the robot with exploration capabilities, the ROS internal navigation stack for the TurtleBot has been used, making movement possible, by sending a designated goal to the robot.
+The algorithms explained in this sections are implemented in the object-oriented programming language C++. The code is specifically designed for the ROS environment (see Subsection \ref{subsec:ros}). The installation process for ROS, as performed for this paper, can be reviewed on \cite{swarmlab}.\\
+(\textbf{TODO:})
+For the coding part there exist two main packages, one of which includes the exploration and the other one the mapping part of the SLAM problem. To enable the robot with exploration capabilities, the ROS internal navigation stack for the TurtleBot has been used, making movement possible, by sending a designated goal to the robot.
 
 \subsection{Wavefront frontier detection}
 
-As a part of the assignment the robot has to drive autonomously through an unknown map. This feature is implemented using Wavefront frontier detection (WFD).
+One part of the assignment is autonomous exploration. The robot has to drive autonomously through an unknown world. This feature is implemented using Wavefront frontier detection (WFD) \citep{Keidar}.
 
-WFD is using frontiers for its exploration purposes. Creation of frontiers requires the robot to know about the current environment in form of a map. In this example an Occupancy grid is used \ref{sec:mapping}. The general algorithm is then applied to acquire four different data structures that store map and frontier information. These four data structures are :
+WFD is a frontier-based exploration algorithm. The WFD algorithm uses four different data structures. These store map and frontier information during the search process. They are :
 \begin{enumerate}
 \item{Map-Open-List}
 \item{Map-Close-List}
 \item{Frontier-Open-List}
 \item{Frontier-Close-List}
 \end{enumerate}
-To understand the need of these four structures it is necessary to know that WFD is using a breadth first search (BFS), starting at the current robot position that has to be passed into the algorithm. WFD also requires a current map representation, which is acquired by the mapping package in this program.
-Upon launching the algorithm it first searches for unoccupied space around the current robot location, which is then saved into the Map-Open-List. 
-Frontiers are found by making use of the occupancy grid's structure. A criterion for a point to be a frontier is that it has to have unknown space and known unoccupied space around it. If a frontier point is found a new BFS is performed, to extract all adjacent frontier points and connect them to one consistent frontier into the Frontier-Open-List. The benefit of using WFD is that by maintaining these lists, rescans only need to incorporate points that have not been scanned yet, as the algorithm saves detected open space and frontiers into its adjacent close lists, if a point is rescanned. For up following scans these points are no longer considered and by that the algorithm does not need to be rerun all over again.
+To understand the need of these four structures it is necessary to know that WFD is using a breadth first search (BFS), starting at the current robot position. Moreover frontier detection requires the robot to have an internal representation of the current environment. In this implementation an Occupancy grid (Subsection \ref{sec:mapping}) is used.
+Upon launching the algorithm it first searches for unoccupied space around the current robot location. This grid cells are then saved in the Map-Open-List. 
+Frontiers are found by making use of the occupancy grid's structure. The criterion for a map-point to be a frontier is the existence of both, unknown space and known unoccupied space, in adjacent map-points. When a frontier point is found a new BFS is performed. Starting at the current point it extracts all adjacent frontier points and connects them to one frontier. It is saved in the Frontier-Open-List. The benefit of using WFD is that by maintaining these lists, rescans only need to incorporate points that have not been iterated yet. In fact, the algorithm keeps track of detected open space and frontiers. Following iterations make use of this information because they do not need to consider previously known regions any more.
  
- Detecting frontiers and navigating towards them directly is not possible due to ROS's navigation stack. Instead of sending the robot the goal to a frontier point, an algorithm has to be performed to find a point next to the frontier cell with as much free space around it as possible. For detection purposes an evaluation function for the frontiers has been written, which incorporates three features that are used to send a goal to the robot's navigation stack. The three features are :
+Exploration does not only consist of finding frontiers. Based on the frontiers a target location for the robot needs to be selected. Navigating to frontier points directly is the simplest frontier-based exploration strategy. For this project, however, a more sophisticated implementation is chosen. Instead of sending the robot directly to a frontier point, a small search is performed to find suitable destinations. Generally, a small region around the frontier cell is searched. The goal is to have a cell with as much free space around it as possible. For this purposes an evaluation function has been created. It incorporates three features that are used to send a goal to the robot's navigation stack. The three features are :
 \begin{enumerate}
-\item{distance of frontier to the robot location}
-\item{number of obstacles around the designated} \item{distance to the previous goal}
+\item{Distance of frontier to the robot location}
+\item{Number of obstacles around the designated} \item{Distance to the previous goal}
 \end{enumerate}
-  The features are added up and the sum is used for the final goal for the navigation stack. By applying these three features the robot can always access the next point and is by that able to drive throughout the whole map and perform the algorithm and exploration perfectly.
+ The features have equal weight. Their sum is used to find the final goal to be sent to the navigation stack. This evaluation function enables the algorithm to select a reachable destination for the robot in almost every case. Additionally the information gain is still next to optimal since the selected goal is preferred to be close to frontier points. At last the third feature makes sure that the robots path is smooth. Selecting a goal near the previous one makes the robot avoid to many loops in the emerging graph.
 \subsection{GraphSLAM}
+\label{sec:implSLAM}
 Two different approaches of graph-based SLAM are implemented for this project. They differ in complexity and thereby applicability to the problem. Both algorithms create an occupancy grid map. 
+\begin{figure}[h]
+	\centering
+		\includegraphics[width=0.50\textwidth]{figures/graph.png}
+	\caption{An example of a simple graph (based on \citep{Grisetti}).}
+	\label{fig:turtlebot}
+\end{figure}
+First, an algorithm as suggested by \citep{Grisetti} is implemented. Here the graph consists of nodes representing positions along the robot trajectory. Odometry and sensor measurements are incorporated into the constraints contained in the edges. Similar to the graphSLAM procedure explained in Section \ref{subsec:sotaSlam}, an edge connects two adjacent poses of the robot. This implementation optimizes the pose graph according to the constraints. This ``optimized" trajectory then determines the positions of obstacles on the map by refining the laser scan data according to the poses they were obtained at. Each edge thus is labelled with the spatial difference between two poses \(x_i\) and \(x_j\). Let this error be denoted by \(e_{ij}(x_i, x_j)\). This information is obtained from a combination of odometry data and laser range sensor data. The odometry is corrected using a laser scan matcher (see Subsection \ref{sec:scan}). 
 
-First, an algorithm as suggested by \citep{Grisetti} is implemented. Here the graph consists of nodes representing positions along the robot trajectory. Odometry and sensor measurements are incorporated into the constraints contained in the edges. Again, an edge connects two adjacent poses of the robot. This graph-based SLAM approach optimizes the pose graph according to the constraints. This ``optimized" trajectory then determines the positions of obstacles on the map by refining the laser scan data according to the poses they were obtained at. Each edge thus is labelled with the spatial difference between two poses \(x_i\) and \(x_j\). Let this error be denoted by \(e_{ij}(x_i, x_j)\). This graph-based SLAM approach calculates the most likely path as follows:
-First it calculates the Jacobians \(A\) and \(B\) of every two estimated positions connected by an edge.
+This graph-based SLAM approach calculates the most likely path as follows:
+First it finds the Jacobians \(A\) and \(B\) of every two estimated positions connected by an edge.
 \begin{equation}
 \label{eq:jacobi_a}
 	A_{ij} = \frac{\partial e_{ij}(x)}{\partial x_i}\uplus
@@ -121,7 +131,7 @@ First it calculates the Jacobians \(A\) and \(B\) of every two estimated positio
 \label{eq:jacobi_b}
 	B_{ij} = \frac{\partial e_{ij}(x)}{\partial x_j}
 \end{equation}
-Note that in Equations \ref{eq:jacobi_a} and \ref{eq:jacobi_b} the x represents the current guess of the concerning robot position. These Jacobians are then added to an information matrix \(H\) (see Equation \ref{eq:H}).
+Note that in Equations \ref{eq:jacobi_a} and \ref{eq:jacobi_b} the x represents the current guess of the concerning robot position. As explained above, \(e_{ij}(x_i, x_j)\) is the error between the two poses \(x_i\) and \(x_j\). The Jacobians \(A\) and \(B\) are then added to an information matrix \(H\) (Equation \ref{eq:H}).
 \begin{equation}
 \label{eq:H}
 \begin{aligned}
@@ -131,6 +141,8 @@ Note that in Equations \ref{eq:jacobi_a} and \ref{eq:jacobi_b} the x represents 
 	H_{[jj]} += B^{T}_{ij} \Omega_{ij} B_{ij} \\
 \end{aligned}
 \end{equation}
+In this equation $\Omega_{ij}$ is the information matrix of a measurement between \(x_i\) and \(x_j\).
+\\
 Furthermore a coefficient vector \(b\) is always updated as shown in Equation \ref{eq:b}. This vector in combination with the \(H\) matrix form a set of linear constraints.
 \begin{equation}
 \label{eq:b}
@@ -139,44 +151,49 @@ Furthermore a coefficient vector \(b\) is always updated as shown in Equation \r
 	b_{[j]} += B^{T}_{ij} \Omega_{ij} e_{ij} 
 \end{aligned}
 \end{equation}
-Optimizing the vector \(x = (x_1, ..., x_n)^T \) according to the constraints specified in \(H\) and \(b\) is the core of this approach. This step is performed using sparse Cholesky factorization. 
-A new node is added to the graph once the robot moved 0.5 meters. The algorithm optimizes the trajectory like explained when a new node is added. In one special case the algorithm adds and edge connecting to non-adjacent nodes to the graph. This happens when the distance between the two connected robot positions is smaller than a margin. In fact, this special case enables the algorithm to create loops in the graph and more accurately estimate the robots trajectory and the map. This procedure is referred to as ``loop closing". 
+The optimization of the vector \(x = (x_1, ..., x_n)^T \) according to the constraints specified in \(H\) and \(b\) is the core of this approach. This step is performed using sparse Cholesky factorization. 
+A new node is added to the graph once the robot moves 0.5 meters. The algorithm optimizes the trajectory like explained once a new node is added.\\
+In one special case the algorithm adds an extra edge, connecting to non-adjacent nodes, to the graph. This happens when the distance between the two connected robot positions is smaller than a margin. In fact, this special case enables the algorithm to create loops in the graph and more accurately estimate the robots trajectory and the map. This procedure is referred to as ``loop closing". 
 \\
 \\
-The second implementation is based on \cite{Thrun}. It creates nodes for each odometry measurement of the robot as well as for each feature in the map spotted by the laser sensor. Each occupancy grid cell containing an obstacle is considered a map feature. Edges are labelled with spatial constraints of the two nodes they are connecting. The output of this implementation is a vector containing the positions of the land marks as well as the trajectory of the robot. Here the constraints labelling the edges ar created using Jacobians similar to the previous approach. The major difference lies in the node creation. Here nodes are added for landmarks while the previous implementation considered the robots' trajectory only. Since no obstacle in the final occupancy grid must be missed all obstacle points are treated as landmarks for this implementation. 
-\subsubsection{Scan matching}
+The second implementation is based on \cite{Thrun}. It creates nodes for each odometry measurement of the robot as well as for each feature in the map spotted by the laser sensor. Each occupancy grid cell containing an obstacle is considered a map feature. This is because the map features are all that is added to the occupancy grid in the end. Edges are labelled with spatial constraints of the two nodes they are connecting. The output of this implementation is a vector containing the positions of the land marks as well as the trajectory of the robot. Here the constraints labelling the edges are created using Jacobians similar to the previous approach. The major difference lies in the node creation. Here nodes are added for landmarks while the previous implementation considered the robots' trajectory only. An additional difference lies in the fact that this implementation uses features to characterize the map. The algorithm needs to align each new observed feature with the set of features already seen. This matching step has to be performed and repeated along with the complete optimization procedure until convergence.
 
-The scan matcher, used by this program, is necessary to acquire an optimized movement vector between two robot positions, which is needed by the GraphSLAM algorithm. The programming of the scan matcher used requires two steps. For the first step the two scans are matched together by making use of raw odometry data, retrieved by the robot's motion sensor. The improvement done by the scan matcher is then to run an iteration of the iterative closest point algorithm (ICP), to incorporate its perception with the movement. 
+\subsection{Scan matching}
+\label{sec:scan}
+The scan matcher, used by this program, is necessary to acquire an optimized movement vector between two robot positions. This is needed by the GraphSLAM algorithm (see Subsection \ref{sec:implSLAM}). The scan matcher realized for this project can be divided into two steps. First, the two scans are matched making use of raw odometry data, retrieved by the robot's motion sensor. This is improved upon by running an iteration of the iterative closest point algorithm (ICP). It tries to align the two scans minimizing the total distance of each point in the first scan to its nearest neighbour in the second. 
 
-The general procedure of the algorithm is to first find corresponding neighbors. These are found by using the nearest neighbor search, through which adjacent points are found by calculating two points from different sets according to their euclidean distance to one another. Points in this implementation can have multiple correspondences to neighbors. To avoid incorporating outlying points, a fixed distance has been set. Outliers would otherwise impact further calculations negatively.
-The next step in the process is to calculate center points for both clouds, which are needed to normalize them in respect ot each other. After performing the calculation the center points for each cloud are subtracted from every point belonging to that cloud. The calculated points are then added to two separate matrices, both representing one point cloud as a $2xn$ Matrix, where n is the number of neighbor pairs. The first cloud's matrix is then multiplied by the transposition of the second cloud matrix, so that a new matrix is created for which we calculate the Singular Value Decomposition (SVD) values to retrieve a rotational matrix, responsible for rotating the second point cloud to the first one. The next step is to translate the second point cloud to the first one with the use of a translation vector. Both rotation matrix and translation vector are then passed to a matrix containing both of them as well as a third line with the values $0 0 1$, for symmetry purposes. That matrix is then used to adjust the second point cloud to the first one. It is also used to correct the robot position.
+The general procedure of the algorithm is to first find the nearest neighbouring point in the second scan for all point in the first. To achieve this nearest neighbour search is used.
+In this implementation multiple points can have the same corresponding neighbour-point. If there is no point from the other scan within a specified radius of one point, it is excluded. These outliers would influence further calculations negatively.
+The next step in the process is to calculate the centroid of both clouds. These are subtracted from every point in the concerning cloud. In that way the clouds are centred at the origin. The calculated points are then added to two separate $2xn$ matrices, where $n$ is the number of neighbour pairs. Next the rotation matrix which transforms one cloud to the other is needed. The Singular Value Decomposition (SVD) of the product of the two previously mentioned matrices returns three new matrices $U$, $\Sigma$ and $V$. The required rotation matrix R can be obtained as described in formula \ref{eq:RVUT}.
+\begin{equation}
+\label{eq:RVUT}
+ R = V * U^T
+\end{equation}
+The translation vector $t$ is the difference between the two centroids. $R$ and $t$ together form a rigid transformation. This transformation matches the two scans. Moreover it is used to correct the robot's odometry data.
 
 \subsection{Mapping}\label{sec:mapping}
 
-For Mapping purposes an Occupancy grid is created on which information about obstacles, free/- and unknown space is saved. Using ROS's visualization program, RVIZ, the map can be visualized entirely.
+The map is internally represented as an occupancy grid. It consists of cells which hold information about obstacles, free/- and unknown space. Using ROS's visualization program, RViz, the map can be visualized on the screen.
 
-The occupancy grid is a structure that can be represented by a single dimensional array. Its size is responsible for the size of the grid and is often problem specific, especially for the purpose of Slam. Making the grid too large can lead to performance problems and by that the grid's size gets to be a tunable parameter that has to be chosen carefully for each problem, although making the grid large prevents the robot from going ``out of space''.
- This program converts the array into a two dimensional representation, so that navigating to either side gets more intuitive. Each value of the array is an integer and represents the current status of the cell. The value ranges for ROS's occupancy grid lie between $-1$ and $100$ \cite{occupancy}. Each value has its own meaning :
-
+The occupancy grid is a structure that is represented by a one-dimensional array. The size of an occupancy grid has to be tuned problem specific. A too large grid can lead to performance problems. If the grid is too small, however, the map will be inaccurate. Fitting a map on a smaller grid results in a low resolution.
+Internally the program represents the grid as a two dimensional array. This makes navigating to either side more intuitive. Each grid cell contains an integer value. Different values represent the states a cell can be in. The value-range for ROS's occupancy grid lies between $-1$ and $100$ \cite{occupancy}. Each value has a specific meaning:
 \begin{description}
-\item{$-1$} : unknown space, not yet covered by robot's perception sensors
-\item{$ 0$} : known free space, robot can drive on it safely
-\item{$1-100$} : probability of being an obstacle, $1$ being a low probability and $100$ being a definite obstacle
+\item{$-1$} : Unknown space, not yet covered by robot's perception sensors
+\item{$0$} : Known free space, robot can drive on it safely
+\item{$1-100$} : Probability of being an obstacle, $1$ being a low probability and $100$ being a definite obstacle.
 \end{description}
-
 \begin{figure}[htbp]
 	\centering
-		\includegraphics[width=0.50\textwidth,height = 44mm]{figures/Occup.png}
-	\caption{Occupancy Grid visualized}
+		\includegraphics[width=0.45\textwidth]{figures/Occup.png}
+	\caption{A visualized occupancy grid.}
 	\label{fig:Occupancy}
 \end{figure}
+Figure \ref{fig:Occupancy} shows an example occupancy grid. The robot is standing in the middle. It senses the state of all cells within a distance of one. The border cells are marked with a $-1$, which means that they are still unexplored. The remaining cells are explored being either an obstacle or free space.
+The occupancy grid is created using laser scan data. Each laser scan contains information about whether or not an obstacle has been detected at a certain bearing. Maximum range readings occur when the robot senses only free space in a certain direction. All laser scans are transformed into point clouds. The absolute locations of the points are dependent on the position at which the laser scan was recorded.
+In the occupancy grid detected obstacle points are indicated by value 100.
+Free space is being incorporated into the map by filling regions between detected points and the concerning robot position. This is achieved with the help of a linear function. 
 
-Fig.\ref{fig:Occupancy} shows these three occurrences visualized, with a robot in the middle performing a sample scan of its environment.
-The occupancy grid is using laser scan data for this implementation. Each laser scan has information about whether an obstacle has been detected, or whether the maximum range of the scan has been reached. The scan is then transformed into a point cloud to extract its coordinate information and by that, obstacles can be found.
-
-Free space is being incorporated into the map by filling the occupancy grid between a detected obstacle, or detected maximum range point and the current robot position with $0$ values. This is achieved with the help of a linear function. If a point is not the scanner's maximum range away, the point is saved as an obstacle with value $100$.
-
-As time progresses and the robot explores more of its environment the map is constantly updated. This is programmed by saving laser scans for every pose of the robot, which, when traveling for a distance of $0.5$ meters is added and by that the occupancy grid is updated. Upon a loop closure the occupancy grid is optimized with its information about obstacles and free spaces.
+As time progresses, the robot explores more of its environment. As explained above, the locations of the observed obstacles need to be extracted from the laser-scan data. The program keeps track of the scan-data for every robot position saved in the trajectory \(x = (x_1, ..., x_n)^T \). Since the laser-scan data is relative to the position of recording, new information is added to the map once the robot's trajectory is adjusted by the graphSLAM module. When a new scan is made, it is added to the occupancy grid after the trajectory has been updated. When a loop closure is detected, the complete occupancy grid is updated. All previous scan points are refined relative to their corresponding recording positions and the grid is regenerated.
 
 \section{Experiments and Results}
 \label{sec:exp}
