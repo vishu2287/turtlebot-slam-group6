@@ -19,10 +19,7 @@
 #include <vector>
 #include <wfd.hpp>
 #include <math.h>
-// Include for Ocupancy Grid
 #include <nav_msgs/OccupancyGrid.h>
-
-//includes for navigation stack
 #include <move_base_msgs/MoveBaseAction.h>
 #include <actionlib/client/simple_action_client.h>
 #include <tf/transform_broadcaster.h>
@@ -82,7 +79,7 @@ public:
         // Get the current position of the robot
         robotX = msg.pose.pose.position.x;
         robotY = msg.pose.pose.position.y;
-//        ROS_INFO_STREAM("Robot position : ("<< robotX <<", "<<robotY<<").");
+        //        ROS_INFO_STREAM("Robot position : ("<< robotX <<", "<<robotY<<").");
     }
 
     // get the grid from gmapping by listener
@@ -93,7 +90,7 @@ public:
 
     bool isBlocked(double x, double y)
     {
-        for(int i = 0; i<blocked.size(); i++)
+        for(unsigned int i = 0; i<blocked.size(); i++)
         {
             if(blocked[i][0] == x && blocked[i][1] == y)
                 return true;
@@ -117,13 +114,9 @@ public:
                 double x = transform.getOrigin().x();
                 double y = transform.getOrigin().y();
 
-//                ROS_INFO_STREAM("STARTPOSITION X: " <<x<<" STARTPOSITION Y: " <<y);
                 robot_pos[0] = (int) ((x / resolution) + (int)(occupancyGrid.info.width/2));
                 robot_pos[1] = (int) ((y / resolution) + (int)(occupancyGrid.info.height/2));
-//                ROS_INFO("X = %i , Y = %i", robot_pos[0], robot_pos[1]);
-//                ROS_INFO("LETS GET THE FRONTIERS");
                 std::vector<std::vector<int> > frontiersList = frontierDetection(occupancyGrid, robot_pos[0], robot_pos[1]);
-//                ROS_INFO("FRONIERS SERVED!");
 
                 x = robotX;
                 y = robotY;
@@ -136,86 +129,66 @@ public:
                     }
                 }
 
-//                ROS_INFO("%i frontier cells found",num_frontier_cells);
                 double goalX = 0;
                 double goalY = 0;
                 frontier_cloud.points.resize(0);
                 frontier_cloud.points.resize(num_frontier_cells);
                 int frontierIndex = 0;
-                //arbitrary value which is always higher than any distance found
-                double minDist = 40000.0;
-                //represents the closest frontier
-                std::vector <int> closestFrontier;
 
-                int fewestObstacles = 999999;
+                int minScore = 999999;
 
-//                std::vector<std::vector<int> > blocked;
-
-                //fill frontier cloud for publishing and calculate frontier closest to robot base
+                //fill frontier cloud for publishing and save frontier with the lowest evaluation value
                 for(unsigned int i = 0 ; i < frontiersList.size() ; i++ ) {
                     for(unsigned int j = 0 ; j < frontiersList[i].size() ; j++) {
                         double fX = (frontiersList[i][j] - (int)(occupancyGrid.info.width/2)) * occupancyGrid.info.resolution;
                         frontier_cloud.points[frontierIndex].x = fX;
                         double fY = (frontiersList[i][j+1] - (int)(occupancyGrid.info.height/2)) * occupancyGrid.info.resolution;
 
-
                         frontier_cloud.points[frontierIndex].y = fY;
                         frontier_cloud.points[frontierIndex].z = 0;
                         frontierIndex++;
                         j++;
 
-
-
                         if(!isBlocked(fX, fY))
                         {
-                        double gridX = (fX / occupancyGrid.info.resolution) + (int)(occupancyGrid.info.width/2);
-                        double gridY = (fY / occupancyGrid.info.resolution) + (int)(occupancyGrid.info.height/2);
+                            double gridX = (fX / occupancyGrid.info.resolution) + (int)(occupancyGrid.info.width/2);
+                            double gridY = (fY / occupancyGrid.info.resolution) + (int)(occupancyGrid.info.height/2);
 
-                        // Get neighbors
-                        std::vector<int> neighbors = getSurrounding(occupancyGrid, gridX, gridY, 20);
+                            // Get neighbors
+                            std::vector<int> neighbors = getSurrounding(occupancyGrid, gridX, gridY, 20);
 
-                        // Count obstacles
-                        int obstacles = 0;
-                        double minObstacleDist = 9999;
-                        for (int a = 0; a < neighbors.size(); a += 2) {
-                            std::vector<int> current;
-                            current.push_back(neighbors[a]);
-                            current.push_back(neighbors[a + 1]);
-                            if (getMapValue(occupancyGrid, current[0], current[1]) > 0) {
-                                obstacles++;
-                                double obstacleDist = sqrt((fX-current[0])*(fX-current[0])+(fY-current[1])*(fY-current[1]));
-                                if(obstacleDist < minObstacleDist)
-                                    minObstacleDist = obstacleDist;
+                            // Count obstacles and the distance to the closest obstacle
+                            int obstacles = 0;
+                            double minObstacleDist = 9999;
+                            for (unsigned int a = 0; a < neighbors.size(); a += 2) {
+                                std::vector<int> current;
+                                current.push_back(neighbors[a]);
+                                current.push_back(neighbors[a + 1]);
+                                if (getMapValue(occupancyGrid, current[0], current[1]) > 0) {
+                                    obstacles++;
+                                    double obstacleDist = sqrt((fX-current[0])*(fX-current[0])+(fY-current[1])*(fY-current[1]));
+                                    if(obstacleDist < minObstacleDist)
+                                        minObstacleDist = obstacleDist;
+                                }
                             }
-                        }
 
-                        double distanceToRobot = sqrt((fX-x)*(fX-x)+(fY-y)*(fY-y));
-                        double distanceToLastGoal = sqrt((fX-prevGoalX)*(fX-prevGoalX)+(fY-prevGoalY)*(fY-prevGoalY));
+                            // Get the distance to the robot
+                            double distanceToRobot = sqrt((fX-x)*(fX-x)+(fY-y)*(fY-y));
 
+                            // Get the distance to the last goal
+                            double distanceToLastGoal = sqrt((fX-prevGoalX)*(fX-prevGoalX)+(fY-prevGoalY)*(fY-prevGoalY));
 
+                            // Calculate score for this frontier point
+                            double evaluationScore = obstacles + 5*distanceToLastGoal + distanceToRobot;
 
-                        obstacles += 5*distanceToLastGoal+distanceToRobot;
+                            // Save if the lowest score and point
+                            if(evaluationScore < minScore && minObstacleDist > 0.2)
+                            {
+                                minScore = evaluationScore;
+                                goalX = fX;
+                                goalY = fY;
+                            }
 
-                        if(obstacles < fewestObstacles && minObstacleDist > 0.2)
-                        {
-                            fewestObstacles = obstacles;
-                            double randomX = 1./(rand() % 100 + 1);
-                            double randomY = 1./(rand() % 100 + 1);
-                            double randomRange = 1;
-                            goalX = fX;//-randomRange/2+randomRange*randomX;
-                            goalY = fY;//-randomRange/2+randomRange*randomY;
-
-//                            std::cout << "distanceToRobot = " << distanceToRobot << std::endl;
-//                            std::cout << "distanceToLastGoal = " << distanceToLastGoal << std::endl;
-//                            std::cout << "obstacles = " << obstacles << std::endl;
-                        }
-
-//                        if(distance < minDist && distance > 2) {
-//                            closestFrontier = frontiersList[i];
-//                            minDist = distance;
-//                            goalX = fX;
-//                            goalY = fY;
-//                        }
                         }
                     }
                 }
@@ -232,25 +205,25 @@ public:
                 }
                 prevGoalX = goalX;
                 prevGoalY = goalY;
-//                ROS_INFO_STREAM();
+                //                ROS_INFO_STREAM();
                 // find a reachable goal position
                 // select a target cell surrounded by free space only
-//                double gridX = (goalX / occupancyGrid.info.resolution) + (int)(occupancyGrid.info.width/2);
-//                double gridY = (goalY / occupancyGrid.info.resolution) + (int)(occupancyGrid.info.height/2);
-//                std::vector<int> neighbors = getSurrounding(occupancyGrid, gridX, gridY, 50);
-//                if(!isFree(neighbors, occupancyGrid)) {
-//                    for (int i = 0; i < neighbors.size(); i += 2) {
-//                        std::vector<int> current;
-//                        current.push_back(neighbors[i]);
-//                        current.push_back(neighbors[i + 1]);
-//                        std::vector<int> currentNeighbors = getSurrounding(occupancyGrid, current[0], current[1], 10);
-//                        if(isFree(currentNeighbors, occupancyGrid)) {
-//                            goalX = (current[0] - (int)(occupancyGrid.info.width/2)) * occupancyGrid.info.resolution;
-//                            goalY = (current[1] - (int)(occupancyGrid.info.width/2)) * occupancyGrid.info.resolution;
-//                            break;
-//                        }
-//                    }
-//                }
+                //                double gridX = (goalX / occupancyGrid.info.resolution) + (int)(occupancyGrid.info.width/2);
+                //                double gridY = (goalY / occupancyGrid.info.resolution) + (int)(occupancyGrid.info.height/2);
+                //                std::vector<int> neighbors = getSurrounding(occupancyGrid, gridX, gridY, 50);
+                //                if(!isFree(neighbors, occupancyGrid)) {
+                //                    for (int i = 0; i < neighbors.size(); i += 2) {
+                //                        std::vector<int> current;
+                //                        current.push_back(neighbors[i]);
+                //                        current.push_back(neighbors[i + 1]);
+                //                        std::vector<int> currentNeighbors = getSurrounding(occupancyGrid, current[0], current[1], 10);
+                //                        if(isFree(currentNeighbors, occupancyGrid)) {
+                //                            goalX = (current[0] - (int)(occupancyGrid.info.width/2)) * occupancyGrid.info.resolution;
+                //                            goalY = (current[1] - (int)(occupancyGrid.info.width/2)) * occupancyGrid.info.resolution;
+                //                            break;
+                //                        }
+                //                    }
+                //                }
 
                 next_frontier.points.resize(1);
                 next_frontier.points[0].x = goalX;
@@ -259,7 +232,7 @@ public:
 
                 frontier_publisher.publish(frontier_cloud);
                 next_frontier_publisher.publish(next_frontier);
-//                ROS_INFO("published cloud!");
+                //                ROS_INFO("published cloud!");
                 run(goalX,goalY);
 
             } catch (tf::TransformException& ex) {
@@ -271,7 +244,7 @@ public:
     }
 
     bool isFree(std::vector<int> cells, const nav_msgs::OccupancyGrid& occupancyGrid) {
-        for (int i = 0; i < cells.size(); i += 2) {
+        for (unsigned int i = 0; i < cells.size(); i += 2) {
             std::vector<int> current;
             current.push_back(cells[i]);
             current.push_back(cells[i + 1]);
