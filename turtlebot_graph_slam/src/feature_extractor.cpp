@@ -10,8 +10,7 @@
 #include <laser_geometry/laser_geometry.h>
 #include "nav_msgs/OccupancyGrid.h"
 using namespace Eigen;
-//https://gt-ros-pkg.googlecode.com/svn-history/r2368/trunk/hrl/simple_occupancy_grid/src/occupancy_grid.cpp
-//http://cs225turtle.googlecode.com/svn/trunk/project2/local_obstacles/src/local_obstacles.cpp
+
 int laserscancount = 0;
 double PI = 3.14;
 const static double MIN_SCAN_ANGLE_RAD = -2.0 / 180 * M_PI; //@TODO: Set the range
@@ -40,7 +39,6 @@ MatrixXd feature_extractor(const sensor_msgs::LaserScan::ConstPtr& msg,
 			(MIN_SCAN_ANGLE_RAD - msg->angle_min) / msg->angle_increment);
 	unsigned int maxIndex = ceil(
 			(MAX_SCAN_ANGLE_RAD - msg->angle_min) / msg->angle_increment);
-	float closestRange = msg->ranges[minIndex];
 	std::vector<int> laserpose;
 	int lasercount = maxIndex - minIndex;
 
