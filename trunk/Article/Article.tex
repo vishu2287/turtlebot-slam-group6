@@ -19,9 +19,11 @@ This article accompanies the research project "TurtleBot SLAM" from the Master "
 \label{sec:intro}
 Nowadays mobile robots are able to assist industry and society in a diverse set of problems. Transportation, search, rescue and automated vacuum cleaning are examples from different fields. Typically, mobile robots can move through an environment using legs or wheels. In addition they are able to gather information about their environment using sensors. Some even have devices similar to the human arm or hand which allows them to interact with the environment. The vacuum cleaning robot presented in Figure \ref{fig:vacuum_cleaner} is an example of a robot which has wheels to move around. Furthermore it is equipped with a set of sensors. These sensors provide data about the location of obstacles as well as, for example, gaps in the floor the robot is moving on. To efficiently perform this task robots needs a map of its environment. For some tasks map data is available for the robot from the beginning. Provided a map the robot can locate itself using the incoming sensor data. For tasks in unknown environments, however, the robot must rely on internal sensors and make its own map of the environment.
 
-The acquisition of these maps has been a major research focus in the robotics community \cite{Thrun,Grisetti,Montemerlo02,Montemerlo}. Building or learning these maps under position uncertainty provided only sensor measurements is often referred to as the Simultaneous Localization And Mapping (SLAM) problem. A large variety of solutions is available to the SLAM problem, these approaches can be classified as either filtering or smoothing.
+The acquisition of these maps has been a major research focus in the robotics community \cite{Thrun, Grisetti, Montemerlo02, Montemerlo}. Building or learning these maps under position uncertainty provided only sensor measurements is often referred to as the Simultaneous Localization And Mapping (SLAM) problem. A large variety of solutions is available to the SLAM problem.
 
-Filtering approaches model the problem as a so called ``on-line" state estimation problem. The state of such a system consists of the current robot position and the map. New measurements augment and refine the estimate as they become available. Due to their incremental nature these filtering approaches are commonly referred to as on-line SLAM methods. The other type of approach estimates the full trajectory from the full set of measurements. These approaches address the so called full SLAM problem and they typically rely on least-square error minimization techniques \cite{Leastsquares}.
+Some approaches model the problem as a so called ``on-line" state estimation problem. The state of such a system consists of the current robot position and the map. New measurements incrementally refine the estimate as they become available. Due to their incremental nature these filtering approaches are commonly referred to as on-line SLAM methods. 
+
+Others estimate the full trajectory from the full set of measurements. These approaches address the so called full SLAM problem and they typically rely on least-square error minimization techniques \cite{Leastsquares}.
 
 An intuitive way to formulate the SLAM problem is to consider it as a pose graph optimization problem. The nodes of the graph represent robot poses or landmarks. The edges encode sensor measurements that constraint the connected poses. Once such a graph is constructed the graph-based SLAM method tries to find a configuration of the nodes that is maximally consistent with the constraints contained in the edges.
 
@@ -77,7 +79,7 @@ As mentioned in Section \ref{sec:intro} Simultaneous Localization And Mapping (S
 SLAM is a problem because, generally, localization requires a map and mapping requires the location of the device or robot that wants to create a map. There are quite a few approaches that successfully solve the SLAM problem. In general there are two interpretations of SLAM. On-line SLAM methods estimate the current robot position along with the map. The core of a system solving the on-line SLAM problem is a filtering technique. FastSlam \citep{Montemerlo02} is an example of an on-line SLAM implementation using a Particle filter to approximate the robots position and the landmark positions on the map. Other methods have the goal to find the trajectory of the robot and the map. They solve the full SLAM problem.   
 An example of such a an approach is graph-based SLAM of graphSLAM.
 
-\subsubsection{GraphSLAM}
+\subsubsection{Graph SLAM}
 An intuitive way to formulate the SLAM problem is to view it as a pose graph optimization problem. Each position along the trajectory of the robot is represented by one node. Edges are labelled with relative spatial information between the connecting nodes. This graph is build incrementally. While the robot is in motion, new nodes are added to the graph. While the graph building is a straight forward procedure the essence of the graphSLAM method is the optimization step. In this step the algorithm looks for a configuration of the trajectory which is maximally consistent with a system of constraints obtained from the edges. This problem is commonly solved using least-square error minimization techniques \citep{Grisetti}.
 
 The next section presents the algorithms implemented for this research project.
@@ -86,7 +88,9 @@ The next section presents the algorithms implemented for this research project.
 \label{sec:impl}
 
 The algorithms explained in this sections are implemented in the object-oriented programming language C++. The code is specifically designed for the ROS environment (see Subsection \ref{subsec:ros}). The installation process for ROS, as performed for this paper, can be reviewed on \cite{swarmlab}.\\
-(\textbf{TODO:})
+
+(\textbf{TODO: Rewrite + Eigen})
+
 For the coding part there exist two main packages, one of which includes the exploration and the other one the mapping part of the SLAM problem. To enable the robot with exploration capabilities, the ROS internal navigation stack for the TurtleBot has been used, making movement possible, by sending a designated goal to the robot.
 
 \subsection{Wavefront frontier detection}
@@ -109,7 +113,7 @@ Exploration does not only consist of finding frontiers. Based on the frontiers a
 \item{Distance of frontier to the robot location}
 \item{Number of obstacles around the designated} \item{Distance to the previous goal}
 \end{enumerate}
- The features have equal weight. Their sum is used to find the final goal to be sent to the navigation stack. This evaluation function enables the algorithm to select a reachable destination for the robot in almost every case. Additionally the information gain is still next to optimal since the selected goal is preferred to be close to frontier points. At last the third feature makes sure that the robots path is smooth. Selecting a goal near the previous one makes the robot avoid to many loops in the emerging graph.
+ The first two features have equal weights, whereas the third gets a weight of 5. This configuration turned out to create the best results (see Section \ref{sec:exp}) Their weighted sum is used to find the final goal to be sent to the navigation stack. This evaluation function enables the algorithm to select a reachable destination for the robot in almost every case. Additionally the information gain is still next to optimal since the selected goal is preferred to be close to frontier points. At last the third feature makes sure that the robots path is smooth. Selecting a goal near the previous one makes the robot avoid to many loops in the emerging graph.
 \subsection{GraphSLAM}
 \label{sec:implSLAM}
 Two different approaches of graph-based SLAM are implemented for this project. They differ in complexity and thereby applicability to the problem. Both algorithms create an occupancy grid map. 
@@ -117,7 +121,7 @@ Two different approaches of graph-based SLAM are implemented for this project. T
 	\centering
 		\includegraphics[width=0.50\textwidth]{figures/graph.png}
 	\caption{An example of a simple graph (based on \citep{Grisetti}).}
-	\label{fig:example_graph}
+	\label{fig:turtlebotexample_graph}
 \end{figure}
 First, an algorithm as suggested by \citep{Grisetti} is implemented. Here the graph consists of nodes representing positions along the robot trajectory. Odometry and sensor measurements are incorporated into the constraints contained in the edges. Similar to the graphSLAM procedure explained in Section \ref{subsec:sotaSlam}, an edge connects two adjacent poses of the robot. This implementation optimizes the pose graph according to the constraints. This ``optimized" trajectory then determines the positions of obstacles on the map by refining the laser scan data according to the poses they were obtained at. Each edge thus is labelled with the spatial difference between two poses \(x_i\) and \(x_j\). Let this error be denoted by \(e_{ij}(x_i, x_j)\). This information is obtained from a combination of odometry data and laser range sensor data. The odometry is corrected using a laser scan matcher (see Subsection \ref{sec:scan}). 
 
@@ -156,7 +160,7 @@ A new node is added to the graph once the robot moves 0.5 meters. The algorithm 
 In one special case the algorithm adds an extra edge, connecting to non-adjacent nodes, to the graph. This happens when the distance between the two connected robot positions is smaller than a margin. In fact, this special case enables the algorithm to create loops in the graph and more accurately estimate the robots trajectory and the map. This procedure is referred to as ``loop closing". 
 \\
 \\
-The second implementation is based on \cite{Thrun}. It creates nodes for each odometry measurement of the robot as well as for each feature in the map spotted by the laser sensor. Each occupancy grid cell containing an obstacle is considered a map feature. This is because the map features are all that is added to the occupancy grid in the end. Edges are labelled with spatial constraints of the two nodes they are connecting. The output of this implementation is a vector containing the positions of the land marks as well as the trajectory of the robot. Here the constraints labelling the edges are created using Jacobians similar to the previous approach. The major difference lies in the node creation. Here nodes are added for landmarks while the previous implementation considered the robots' trajectory only. An additional difference lies in the fact that this implementation uses features to characterize the map. The algorithm needs to align each new observed feature with the set of features already seen. This matching step has to be performed and repeated along with the complete optimization procedure until convergence.
+The second implementation is based on \cite{Thrun}. It creates nodes for each odometry measurement of the robot as well as for each feature in the map spotted by the laser sensor. Each occupancy grid cell containing an obstacle is considered a map feature. This is because the map features are all that is added to the occupancy grid in the end. Edges are labelled with spatial constraints of the two nodes they are connecting. The output of this implementation is a vector containing the positions of the land marks as well as the trajectory of the robot. Here the constraints labelling the edges are created using Jacobians similar to the previous approach. The major difference lies in the node creation. Here nodes are added for landmarks while the previous implementation considered the robot's trajectory only. An additional difference lies in the fact that this implementation uses features to characterize the map. The algorithm needs to align each new observed feature with the set of features already seen. This matching step has to be performed and repeated along with the complete optimization procedure until convergence.
 
 \subsection{Scan matching}
 \label{sec:scan}
@@ -173,10 +177,10 @@ The translation vector $t$ is the difference between the two centroids. $R$ and 
 
 \subsection{Mapping}\label{sec:mapping}
 
-The map is internally represented as an occupancy grid. It consists of cells which hold information about obstacles, free/- and unknown space. Using ROS's visualization program, RViz, the map can be visualized on the screen.
+The map is internally represented as an occupancy grid. It consists of cells which hold information about obstacles, free/- and unknown space. Using ROS' visualization program, RViz, the map can be visualized on the screen.
 
 The occupancy grid is a structure that is represented by a one-dimensional array. The size of an occupancy grid has to be tuned problem specific. A too large grid can lead to performance problems. If the grid is too small, however, the map will be inaccurate. Fitting a map on a smaller grid results in a low resolution.
-Internally the program represents the grid as a two dimensional array. This makes navigating to either side more intuitive. Each grid cell contains an integer value. Different values represent the states a cell can be in. The value-range for ROS's occupancy grid lies between $-1$ and $100$ \cite{occupancy}. Each value has a specific meaning:
+Internally the program represents the grid as a two dimensional array. This makes navigating to either side more intuitive. Each grid cell contains an integer value. Different values represent the states a cell can be in. The value-range for ROS' occupancy grid lies between $-1$ and $100$ \cite{occupancy}. Each value has a specific meaning:
 \begin{description}
 \item{$-1$} : Unknown space, not yet covered by robot's perception sensors
 \item{$0$} : Known free space, robot can drive on it safely
@@ -197,39 +201,39 @@ As time progresses, the robot explores more of its environment. As explained abo
 
 \section{Experiments and Results}
 \label{sec:exp}
-This section demonstrates the results of the Turtlebot SLAM implementation as described in section \ref{sec:impl}. Several outputs of the visualization tool RViz are presented and discussed. Comparisons are drawn between different variations of the implementation and the performance of the program is evaluated.
+This section presents the results of the Turtlebot SLAM implementation as described in Section \ref{sec:impl}. Several outputs of the visualization tool RViz are presented and discussed. Comparisons are drawn between different variations of the implementation. Finally, the performance of the program is evaluated.
 
 \subsection{Visualization}
-When running the program via the launch file, RViz and Stage are automatically started. Stage shows the robot in its actual position on an accurate test map (see figure \ref{fig:stage_and_rviz} left). RViz shows the current belief of the robot about its environment, position and trajectory (see figure \ref{fig:stage_and_rviz} right).
+When running the program via the launch file, RViz and Stage are automatically started. Stage shows the robot in its actual position on an accurate test map (see Figure \ref{fig:stage_and_rviz} left). RViz shows the current belief of the robot about its environment, position and trajectory (see figure \ref{fig:stage_and_rviz} right).
 
 The components of the pose graph and the environment are highlighted by the following labels:
 
 \begin{description}
-\item[green dots: ]past positions of the robot, saved as nodes of the pose graph
-\item[red arrows: ]past orientations of the robot, included in the nodes of the pose graph
-\item[blue lines: ]measurement constraints between the connected poses
-\item[yellow dots: ]frontier points detected by the wavefront frontier detection algorithm
-\item[orange dot: ] next navigation goal
-\item[black area: ] detected obstacles
-\item[light gray area: ] detected free space
-\item[dark gray area: ] unexplored space
+\item[Green dots:]Past positions of the robot, saved as nodes of the pose graph
+\item[Red arrows:]Past orientations of the robot, included in the nodes of the pose graph
+\item[Blue lines:]Measurement constraints between the connected poses
+\item[Yellow dots:]Frontier points detected by the wavefront frontier detection algorithm
+\item[Orange dot:]Next navigation goal
+\item[Black area:]Detected obstacles
+\item[Light gray area:]Detected free space
+\item[Dark gray area:]Unexplored space
 \end{description}
 
 \begin{figure}[htbp]
 	\centering
 		\includegraphics[width=0.50\textwidth]{figures/Stage_and_rviz.jpg}
-	\caption{Robot and environment visualization with Stage (left) and RViz (right)}
+	\caption{Robot and environment visualization with Stage (Left) and RViz (Right).}
 	\label{fig:stage_and_rviz}
 \end{figure}
 
 \subsection{Loop closing effect}
-One of the core properties of the Graph SLAM algorithm is the correction of the pose graph and the map whenever a loop closing is detected. This means that when the robot has been exploring an unknown area and then reenters an explored area, the transformation between the current pose and the past re-detected pose gives essential information on the complete pose graph, correcting the current belief about the environment and position.
+One of the core properties of the Graph SLAM algorithm is the correction of the pose graph and the map whenever a loop closing is detected. This means that when the robot has been exploring an unknown area and then re-enters an explored area, the transformation between the current pose and the past, re-detected, pose gives essential information about the complete pose graph. It corrects the current belief about the environment and position.
 
-The effect of loop closing detection is illustrated in figure \ref{fig:loop_closing_comparison}. The transparent red lines indicate the accurate map, while the underlying black areas indicate the belief of the robot about the obstacles of the environment.
+The effect of loop closing detection is illustrated in figure \ref{fig:loop_closing_comparison}. The transparent red lines indicate the real map data, while the underlying black areas indicate the belief of the robot about obstacles in the environment.
 
-The left part of figure \ref{fig:loop_closing_comparison} shows the explored map when walking an eight-shaped path through the map without applying loop detection. It can be seen that the belief about the map differs from the actual map in many areas, especially in the lower half of the map because this half has been explored last, exposing it to most of the measurement uncertainties.
+The left part of figure \ref{fig:loop_closing_comparison} shows the explored map when walking an eight-shaped path through the map without applying loop detection. The belief about the map differs from the actual map in many areas. Especially in the lower half the map is inaccurate. This is because this half has been explored last, exposing it to most of the measurement uncertainties.
 
-The right part of figure \ref{fig:loop_closing_comparison} depicts the exploration when walking the same path as before but applying loop closing. This results in a pose graph with 7 more constrains, providing more information for correcting the poses and corresponding measurements. One can now see that the lower half of the belief about the map is much more accurate since the area in the center has been re-detected by the algorithm.
+The right part of figure \ref{fig:loop_closing_comparison} depicts the exploration when walking the same path as before. This time loop closing is enabled during the process of exploration. The outcome is a pose graph with 7 more constrains as in the previous experiment. More constraints provide more information for correcting the poses and corresponding measurements. One can now see that the lower half of the belief about the map is much more accurate, since the area in the centre has been re-detected by the algorithm.
 
 \begin{figure}[htbp]
 	\centering
@@ -237,15 +241,15 @@ The right part of figure \ref{fig:loop_closing_comparison} depicts the explorati
 	\caption{Observed environment without (left) and with (right) loop closing of the pose graph}
 	\label{fig:loop_closing_comparison}
 \end{figure}
-
+The next section explains which experiments have been conducted in order to find an optimal exploration strategy. It presents results for different goal selection methods.
 \subsection{Navigation evaluation}
-An important aspect which has a high impact on the exploration behavior of the robot is the strategy by which the next navigation goal is determined. When facing the decision for the next goal, the given information are the detected frontiers, which can be spread all over the current map. The most obvious first implementation idea was to select the frontier which lies closest to the robot as the next navigation goal. This is definitely desirable because the robot can then explore this closest point very quickly and find out about the next frontiers.
+An important aspect which has a high impact on the exploration behaviour of the robot is the strategy by which the next navigation goal is determined. When facing the decision for the next goal, the robot needs to rely on the information it has access to. Frontiers can be spread all over the current map. The most obvious first implementation idea was to select the frontier which lies closest to the robot as the next navigation goal. This is desirable because the time the robot needs to reach the goal is low. In addition the robot gathers new information when the frontier point is reached.
 
-Figure \ref{fig:navigation_comparison}(a) shows the resulting exploration path of the robot and the explored map after 300 seconds when applying this simple strategy. 10 nodes and 14 constraints have been created in the pose graph during this time which is very little information. Also the nodes are limited a small area of the map. This little degree of exploration is due to the fact that when only considering the closest frontier point there is a high risk that points are selected which are very close to obstacles. When the navigation algorithm tries to find a way to this point, it is inflating the obstacles first, making very close points unreachable. After a point has been discovered to be unreachable, the next closest point to the robot is chosen, which will likely be unreachable as well.
+Figure \ref{fig:navigation_comparison} shows three resulting exploration paths of the robot as well as the explored maps after 300 seconds. In Figure \ref{fig:navigation_comparison}(a) the simple strategy, as explained above, was applied. 10 nodes and 14 constraints have been created in the pose graph. Compared to other tests this is very little information. Also the nodes are limited to a small area of the map. Applying the simple strategy results in a low degree of exploration. This is due to the fact that when only considering the closest frontier point there is a high risk that points are selected which are very close to obstacles. When the navigation algorithm tries to find a path to this point, it inflates the obstacles first. This causes goals which are very close to any kind of obstacle to be unreachable. When a point has been discovered to be unreachable, the next closest point to the robot is chosen. This, however, is likely to be unreachable as well.
 
-So it can be concluded that the number of close obstacles have to be taken into account in order to select reachable points as next goals. In the upcoming strategy, the sum of obstacles within a radius of 50 grid cells is added to the distance to the robot for every frontier point. The point with the smallest sum is then selected as the next goal. The application of this strategy is shown in figure \ref{fig:navigation_comparison}(b). The robot managed to explore the map within 300 seconds, creating a pose graph with 104 nodes and 150 constraints. However, one can see that the robot did not take a very exploration-efficient route through the map. There are a lot of unreasonable turns in areas that are already explored, while unexplored areas get left out for the time being.
+In order to overcome the above explained problems another exploration strategy is considered. Obstacles have to be taken into account to be able to select reachable points as the next goal. In this new strategy obstacles within a radius of 50 grid cells of the frontier point are counted. This number is added to the distance between the robot and the concerning frontier point. The point with the smallest sum is selected as the next goal. The application of this strategy is shown in figure \ref{fig:navigation_comparison}(b). The robot managed to explore the map within 300 seconds, creating a pose graph with 104 nodes and 150 constraints. However, one can see that the robot did not take a very exploration-efficient route through the map. There are a lot of unreasonable turns in areas that are already explored, while unexplored areas are omitted for the time being.
 
-Another aspect is to be added to the evaluation of every frontier point. That is the distance between the currently evaluated frontier point and the previous navigation goal. When this distance is minimized additionally to the distance to the robot and the number of close obstacles, the algorithm will select the next goals in a chain-like fashion, creating a rather intuitive exploration path through the map (figure \ref{fig:navigation_comparison}(c)). The robot was able to explore the map within only 150 seconds, creating a much smaller pose graph of 64 nodes and 66 constraints. This evaluation feature has been given a weight factor of 5 to increase the effect on the goal selection.
+To avoid counter-intuitive routes another aspect is to be added to the evaluation of every frontier point. The distance between the currently evaluated point and the previous navigation goal. When this distance is minimized in addition to the previous evaluation features, the algorithm will select the next goals in a chain-like fashion, creating a rather intuitive exploration path through the map (Figure \ref{fig:navigation_comparison}(c)). The robot was able to explore the map within only 150 seconds, creating a much smaller pose graph of 64 nodes and 66 constraints. This evaluation feature has been given a weight factor of 5 to increase the effect on the goal selection.
 
 \begin{figure}[htbp]
 	\centering
@@ -255,7 +259,7 @@ Another aspect is to be added to the evaluation of every frontier point. That is
 \end{figure}
 
 \subsection{Runtime analysis}
-The implemented Graph SLAM algorithm has been tested on its feasibility. Navigating the robot manually, the complete test map has been explored, building up a pose graph of 123 nodes and 150 constraints. While doing that, the runtime of the complete update function was measured in microseconds. The update function is executed whenever a new node in the graph is created. It contains the algorithms for scan matching and Graph SLAM correction, which have been measured separately.
+The implemented Graph SLAM algorithm has bee updateen tested on its feasibility. Navigating the robot manually, the complete test map has been explored, building up a pose graph of 123 nodes and 150 constraints. While doing so, the runtime of the complete update- function was measured in microseconds. This function is executed whenever a new node is added to the graph. It contains the algorithms for scan matching and Graph SLAM correction, which have also been assessed separately.
 
 Figure \ref{fig:runtime} shows the outcome of this runtime measurement. Naturally the runtime increases with increasing graph size, especially due to the growing matrices in the Graph SLAM algorithm.
 
@@ -266,17 +270,53 @@ Figure \ref{fig:runtime} shows the outcome of this runtime measurement. Naturall
 	\label{fig:runtime}
 \end{figure}
 
-Even with a graph size of over 100 nodes, the runtime of the function stays in a very feasible range between 60 and 80 milliseconds. The robot can be moved without any delay. Taking only the Graph SLAM update into account, the runtime even stays below 20 milliseconds. In contrast the scan matching is executed outstandingly quickly since it is independent of the size of the pose graph. Most of the time is occupied by updating the occupancy grid because every single grid cell has to redrawn for every pose. In order to compromise this, the update of the complete occupancy grid is only executed every third second and only if a loop closing is detected.
+Even with a graph size of over 100 nodes, the runtime of the function stays in a very feasible range between 60 and 80 milliseconds. The robot can be moved without any delay. Taking only the Graph SLAM update into account, the runtime even stays below 20 milliseconds. In contrast the scan matching is executed outstandingly quickly since it is independent of the size of the pose graph. Most of the time is occupied by updating the occupancy grid because every single grid cell has to be redrawn for every pose. In order to compromise this, the update of the complete occupancy grid is only executed every third second and only if a loop closing is detected.
+
 \section{Discussion}
 \label{sec:disc}
-The Wavefront Frontier detection algorithm \citep{Keidar} succeeds in finding frontiers in a fast and accurate manner.
+The Wavefront Frontier detection algorithm \citep{Keidar} succeeds in finding frontiers in a fast and accurate manner (see Section \ref{sec:exp}). It turned out, however, that finding the frontiers is only part of autonomous exploration. Sections \ref{sec:impl} and \ref{sec:exp} explain the various possibilities there are for selecting a feasible goal for the robot. Adding features to the evaluation of possible destinations showed to make selection more successful. During the process of implementation this evaluation function evolved to a prosperous and accurate goal chooser.
 
-Implementing the algorithm suggested in \citep{Grisetti} turned out to be well suited for attacking the problem statement of this project. The maps created by this algorithm look accurate. Specifically the margin between the output map and the real map is negligible (FIGURE???). Maps are created in real time and loop closures are added when needed. In fact, the algorithm keeps updating the map with no noticable delay while the robot drives around steering to new goals selected by the WFD algorithm and navigated by ROS' move\_base package.
+Implementing the algorithm suggested in \citep{Grisetti} (Subsection \ref{sec:implSLAM}) turned out to be well suited for attacking the problem statement of this project. The maps created by this algorithm are accurate. The difference between the output map and the real map is negligible (see Figure \ref{fig:loop_closing_comparison}). Maps are created in real time and loop closures are added when needed. In fact, the algorithm is able to keep updating the map with no noticeable delay (see Section \ref{sec:exp}). Even when the robot is controlled by the exploration module and navigated by ROS' move\_base package the program runs smoothly.
 
-The second graph-based SLAM implementation \cite{Thrun} clearly is not suited for robots equipped with laser scanners only. Extensive feature extraction methods are required to create occupancy grid maps with the used TurtleBot. Furthermore the algorithm is expected to work best with a robot which is able to detect distinct landmarks as well as a simple environment. A number of unique landmarks can then serve as orientation points to build the map. Additionally the algorithm is able to assess map and trajectory more quickly if there are fewer nodes and constraints in the graph.
+The second graph-based SLAM implementation \cite{Thrun} (Subsection \ref{sec:implSLAM}) is not suited for the problem specified in Section \ref{sec:intro}.
+It turned out that the algorithm time complexity is too high. Even with a reduced number of laser beams the map update takes an infeasible amount of time after a few steps only. 
 
-\subsubsection{Future research}
+\begin{table}[h]
+\begin{center}
+\scalebox{1}{
+\begin{tabular}{|l||c|c|c|l}
+\hline
+\# steps & 2 beams & 10 beams & 30 beams\\
+\hline \hline
+2	& 1 ms & 2 ms	&  22 ms	\\
+4	& 2	ms & 11 ms	&  269 ms	\\
+6	& 3 ms & 24 ms	&  1069 ms	\\
+8	& 4 ms & 56 ms	&  2682 ms	\\
+10	& 5 ms & 126 ms	&  5250 ms	\\
+12	& 6 ms & 273 ms	&  9170 ms	\\
+14	& 7 ms & 485 ms	&  15895 ms	\\
+\hline
+\end{tabular}
+}
+\end{center}
+\caption{The time the Graph SLAM implementation proposed by \citep{Thrun} needed using the specified number of laser beams after the specified number of steps.}
+\label{tab:graphResults}
+\end{table}
 
+Note that the number of beams used for the other implementation greatly exceeds the ones in Table \ref{tab:graphResults}. (\textbf{EXACT NUMBER})
+This, again, points out that this implementation is unable to create a map for the specified setting (see Section \ref{sec:intro}).
+
+Extensive feature extraction methods are required to transform the data into a form which the proposed algorithm is able to cope with. But then, if the features are extracted, how can they be displayed in an occupancy grid? Furthermore the algorithm is expected to work best with a robot that is able to detect distinct landmarks in the map. A number of unique ones could then serve as orientation points to build the map. Applying this procedure would result in fewer nodes to be iterated. The algorithm would be able to assess map and trajectory more quickly.
+
+The next subsection suggests a few ideas about how this research could be continued. In doing so proposes are made for each part of this project.
+
+\subsection{Future research}
+As mentioned in Section \ref{sec:disc} the exploration strategy evolved during the process of testing. This does not mean that it is near perfection. Other features like for instance loop closings can be taken into account still. This leads to more constraints to be added to the graph. More constraints could then result in an even more accurate assessment of the robot trajectory. This new feature would require to be tuned well, since more constraints also lead to higher space and time complexities. 
+The Graph SLAM algorithm proposed by \citep{Grisetti} has some room for improvement as well. Considering the suggested change in the exploration algorithm, the method would need to cope with a larger number of edges and nodes.
+The current implementation uses sparse Cholesky factorization to find the most optimal spatial configuration of the trajectory. This method is inherited in the ``Eigen" library. Although sparse Cholesky factorization solves the linear system in an efficient manner, it is likely that better algorithms emerge in the future.
+
+Most room for improvement clearly is to be found in the second Graph SLAM implementation. The TurtleBot used for this research project has to rely on laser range and odometry data only. To extract features
+A robot equipped with for instance a colour sensor is much more suited to successfully perform this Graph SLAM method. Coloured objects could serve as landmarks and large parts of the feature detection can be left out.
 \section{Conclusion}
 \label{sec:conc}
 \bibliography{references}
