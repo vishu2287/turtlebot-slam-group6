@@ -211,7 +211,7 @@ void vel_callback(const nav_msgs::Odometry& msg) {
     }
 
     // If the robot has walked far enough to make the second scan
-    if(distance(prevX,newX,prevY,newY)>= MATCH_DISTANCE /*|| rotation(prevZ, newZ)*/) {
+    if(distance(prevX,newX,prevY,newY)>= MATCH_DISTANCE) {
         std::cout << "Nodes: " << nodes.size() << std::endl;
         std::cout << "Constraints: " << constraints.size() << std::endl;
 
