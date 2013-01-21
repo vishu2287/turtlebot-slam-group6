@@ -50,7 +50,7 @@ public:
         MoveBaseClient ac("move_base", true);
 
         while(!ac.waitForServer(ros::Duration(5.0))){
-            ROS_INFO("Waiting for the move_base action server to come up");
+            ROS_INFO("Waiting for the move_base action server...");
         }
 
         move_base_msgs::MoveBaseGoal goal;
@@ -62,15 +62,12 @@ public:
         goal.target_pose.pose.position.y = y;
         goal.target_pose.pose.orientation.w = 1;
 
-        ROS_INFO_STREAM("Moving to position x:"<<goal.target_pose.pose.position.x<<" y:"<<goal.target_pose.pose.position.y);
         ac.sendGoal(goal);
 
+        // Wait for either a result or for 3 seconds
+        // This way the robot is constantly heading for a new goal, avoiding unreachable points
         ac.waitForResult(ros::Duration(3));
 
-        if(ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
-            ROS_INFO_STREAM("Robot moved to position x:"<< goal.target_pose.pose.position.x<<" y:"<<goal.target_pose.pose.position.y);
-        else
-            ROS_INFO_STREAM("The base failed to move to position x:"<< goal.target_pose.pose.position.x<<" y:"<<goal.target_pose.pose.position.y);
         onTheMove = false;
     }
 
@@ -79,10 +76,8 @@ public:
         // Get the current position of the robot
         robotX = msg.pose.pose.position.x;
         robotY = msg.pose.pose.position.y;
-        //        ROS_INFO_STREAM("Robot position : ("<< robotX <<", "<<robotY<<").");
     }
 
-    // get the grid from gmapping by listener
     double prevGoalX;
     double prevGoalY;
     std::vector<std::vector<double> > blocked;
@@ -104,11 +99,11 @@ public:
             grid = occupancyGrid;
             float resolution = occupancyGrid.info.resolution;
             tf::TransformListener listener(ros::Duration(10));
-            //transform object storing our robot's position
+
+            // Transform object storing the robots position
             tf::StampedTransform transform;
             try {
                 ros::Time now = ros::Time::now();
-                geometry_msgs::PointStamped base_point;
                 listener.waitForTransform("/world", "/base_link", now, ros::Duration(0.5));
                 listener.lookupTransform("/world", "/base_link", ros::Time(0), transform);
                 double x = transform.getOrigin().x();
@@ -135,9 +130,9 @@ public:
                 frontier_cloud.points.resize(num_frontier_cells);
                 int frontierIndex = 0;
 
-                int minScore = 999999;
 
-                //fill frontier cloud for publishing and save frontier with the lowest evaluation value
+                // Fill frontier cloud for publishing and save frontier with the lowest evaluation value
+                int minScore = 999999;
                 for(unsigned int i = 0 ; i < frontiersList.size() ; i++ ) {
                     for(unsigned int j = 0 ; j < frontiersList[i].size() ; j++) {
                         double fX = (frontiersList[i][j] - (int)(occupancyGrid.info.width/2)) * occupancyGrid.info.resolution;
@@ -205,25 +200,6 @@ public:
                 }
                 prevGoalX = goalX;
                 prevGoalY = goalY;
-                //                ROS_INFO_STREAM();
-                // find a reachable goal position
-                // select a target cell surrounded by free space only
-                //                double gridX = (goalX / occupancyGrid.info.resolution) + (int)(occupancyGrid.info.width/2);
-                //                double gridY = (goalY / occupancyGrid.info.resolution) + (int)(occupancyGrid.info.height/2);
-                //                std::vector<int> neighbors = getSurrounding(occupancyGrid, gridX, gridY, 50);
-                //                if(!isFree(neighbors, occupancyGrid)) {
-                //                    for (int i = 0; i < neighbors.size(); i += 2) {
-                //                        std::vector<int> current;
-                //                        current.push_back(neighbors[i]);
-                //                        current.push_back(neighbors[i + 1]);
-                //                        std::vector<int> currentNeighbors = getSurrounding(occupancyGrid, current[0], current[1], 10);
-                //                        if(isFree(currentNeighbors, occupancyGrid)) {
-                //                            goalX = (current[0] - (int)(occupancyGrid.info.width/2)) * occupancyGrid.info.resolution;
-                //                            goalY = (current[1] - (int)(occupancyGrid.info.width/2)) * occupancyGrid.info.resolution;
-                //                            break;
-                //                        }
-                //                    }
-                //                }
 
                 next_frontier.points.resize(1);
                 next_frontier.points[0].x = goalX;
@@ -232,7 +208,7 @@ public:
 
                 frontier_publisher.publish(frontier_cloud);
                 next_frontier_publisher.publish(next_frontier);
-                //                ROS_INFO("published cloud!");
+
                 run(goalX,goalY);
 
             } catch (tf::TransformException& ex) {
@@ -272,15 +248,12 @@ public:
             rate.sleep(); // Sleep for the rest of the cycle, to enforce the FSM loop rate
         }
     }
-    ;
-
-
 
 protected:
     ros::Publisher commandPub; // Publisher to the simulated robot's velocity command topic
     ros::Subscriber laserSub; // Subscriber to the simulated robot's laser scan topic
     ros::Subscriber mapSub; // Subscriber to the map
-    ros::Subscriber velSub; // get the position of the robot.
+    ros::Subscriber velSub; // Get the position of the robot.
     bool onTheMove;
     double robotX;
     double robotY;
@@ -289,12 +262,7 @@ protected:
     sensor_msgs::PointCloud next_frontier;
     ros::Publisher frontier_publisher;
     ros::Publisher next_frontier_publisher;
-
-    // ---global values
-    // grid from gmapping
     nav_msgs::OccupancyGrid grid;
-    // Saved newFrontier
-
 };
 
 int main(int argc, char **argv) {
