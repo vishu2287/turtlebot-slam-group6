@@ -315,8 +315,9 @@ As mentioned in Section \ref{sec:disc} the exploration strategy evolved during t
 The Graph SLAM algorithm proposed by \citep{Grisetti} has some room for improvement as well. Considering the suggested change in the exploration algorithm, the method would need to cope with a larger number of edges and nodes.
 The current implementation uses sparse Cholesky factorization to find the most optimal spatial configuration of the trajectory. This method is inherited in the ``Eigen" library. Although sparse Cholesky factorization solves the linear system in an efficient manner, it is likely that better algorithms emerge in the future.
 
-Most room for improvement clearly is to be found in the second Graph SLAM implementation. The TurtleBot used for this research project has to rely on laser range and odometry data only. To extract features
-A robot equipped with for instance a colour sensor is much more suited to successfully perform this Graph SLAM method. Coloured objects could serve as landmarks and large parts of the feature detection can be left out.
+Most room for improvement clearly is to be found in the second Graph SLAM implementation. The TurtleBot used for this research project has to rely on laser range and odometry data only. Extracting features from laser range data is out the scope of this project. Doing so could dramatically improve the performance the method. 
+A robot equipped with for instance a colour sensor is much more suited to successfully perform this Graph SLAM method. Coloured objects could serve as landmarks and large parts of the feature detection could be left out. Implementing a powerful feature-extractor for laser-range data is definitely a possible solution. Applying the method to a robot that provides different kinds of data is the preferred one, though.
+
 \section{Conclusion}
 \label{sec:conc}
 \bibliography{references}
