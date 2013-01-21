@@ -1,0 +1,25 @@
+<package>
+  <description brief="wfd_exploration">
+
+     wfd_exploration
+
+  </description>
+  <author>Maurice</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/wfd_exploration</url>
+  <depend package="roscpp"/>
+  <depend package="geometry_msgs"/>
+  <depend package="sensor_msgs"/>
+  <depend package="gmapping"/>
+  <depend package="stage"/>
+  <depend package="rviz"/>
+  <depend package="move_base_msgs"/>
+  <depend package="actionlib"/>
+  <depend package="move_base"/>
+  <depend package="nav_msgs"/>
+
+
+</package>
+
+
