@@ -1,6 +1,11 @@
 \newcommand{\etalchar}[1]{{\noexpand\em ~et~al.}}
 \begin{thebibliography}{[100]}
 
+\bibitem{Leastsquares}
+Bj\"{o}rck, \r{A}ke (1996).
+\newblock {\sl {Numerical methods for least squares problems}}.
+\newblock SIAM.
+
 \bibitem{Grisetti}
 Grisetti, G., Kümmerle, R., Stachniss, C., and Burgard, W. (2010).
 \newblock A tutorial on graph-based slam.
@@ -37,6 +42,13 @@ Montemerlo, Michael, Thrun, Sebastian, Koller, Daphne, and Wegbreit, Ben
   Intelligence and Fourteenth Conference on Innovative Applications of
   Artificial Intelligence, July 28 - August 1, 2002, Edmonton, Alberta,
   Canada}, pp. 593--598, AAAI Press / The MIT Press.
+
+\bibitem{Montemerlo}
+Montemerlo, M., Thrun, S., Koller, D., and Wegbreit, B. (2003).
+\newblock {FastSLAM} 2.0: An improved particle filtering algorithm for
+  simultaneous localization and mapping that provably converges.
+\newblock {\sl Proceedings of the Sixteenth International Joint Conference on
+  Artificial Intelligence (IJCAI)}, IJCAI, Acapulco, Mexico.
 
 \bibitem{Quigley}
 Quigley, Morgan, Conley, Ken, Gerkey, Brian~P., Faust, Josh, Foote, Tully,
