@@ -49,7 +49,7 @@ To deal with the above mentioned problems robotics researchers have created a wi
 
 The ROS framework used in this paper is the product of trade-offs and prioritizations. The emphasis of this framework lies on large-scale integrative robotics research, making it useful in a wide variety of situations. The difference between ROS and the above mentioned frameworks, is ROS' applicability to a wide range of hardware set-ups. It provides several so called stacks. Each is an assembly of code made to solve one specific problem. To run a stack or your own code on any robot it is necessary to configure the robot and the ROS framework in a way that they can communicate with each other. For most robots the configuration is straight forward thanks to the on-line documentation of ROS \citep{Roswiki}.  An example for a stack is the multi-robot simulation environment ``Stage". It is explained in the following paragraph.
 
-\subsubsection{ROS' simulator: ``Stage"}
+\subsubsection{Stage}
 During the development process of a system running on a robot one crucial part is testing. A ROS stack called Stage enables the developers to test code on a simulated robot. Stage allows the simulated robot to move around in virtual environments. It visualizes sensor data and other robot data when required. The user can load her own maps into stage and specify the kind of noise to be applied to measurements. A second important stack needed especially for validation is RViz. It visualizes all requested data. In Figure \ref{fig:stage_and_rviz} Stage and RViz are presented next to each other. While Stage (Left) shows the real map, RViz (Right) presents the map data as seen by the robot.
 
 \subsection{TurtleBot}
