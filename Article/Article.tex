@@ -20,13 +20,6 @@ This article accompanies the research project "TurtleBot SLAM" from the Master "
 Nowadays mobile robots succeed to assist industry and society in a diverse set of problems. Transportation, search, rescue and, more specifically, automated vacuum cleaning are examples from different fields. Typically, mobile robots can move through an environment using legs or wheels. In addition they are able to gather information about their surrounding using sensors. Some even have devices similar to the human arm or hand which allows them to interact with the environment. The vacuum cleaning robot depicted in Figure \ref{fig:vacuum_cleaner} is an example of a robot which has wheels to move around. Furthermore it is equipped with a set of sensors. These sensors provide data about the location of obstacles as well as, for example, gaps in the floor the robot is moving on. To efficiently perform this task robots needs a map of its environment. For some tasks map data is available for the robot from the beginning. Provided a map the robot can locate itself using the incoming sensor data or, if available, GPS data. For tasks in unknown environments, however, the robot must make its own map of the environment.
 
 The acquisition of these maps has been a major research focus in the robotics community \cite{ Grisetti, Montemerlo02, Montemerlo, Thrun}. Building or learning these maps under position uncertainty provided only sensor measurements is often referred to as the Simultaneous Localization And Mapping (SLAM) problem. A large variety of solutions is available to it.
-
-Some approaches model the problem as a so called ``on-line" state estimation problem. The state of such a system consists of the current robot pose and the map. New measurements augment and refine the estimate as they become available. Due to their incremental nature these filtering approaches are commonly referred to as on-line SLAM methods. 
-
-Other approaches estimate the complete trajectory from the set of measurements. These approaches address the so called full SLAM problem and they typically rely on least-square error minimization techniques \cite{Leastsquares}.
-
-An intuitive way to formulate the SLAM problem is to consider it as a pose graph optimization problem. The nodes of the graph represent robot poses or landmarks. The edges encode sensor measurements that constraint the connected poses. Once such a graph is constructed the graph-based SLAM, or Graph SLAM, method tries to find a configuration of the nodes that is maximally consistent with the constraints contained in the edges.\\
-
 \begin{figure}[h]
 	\centering
 		\includegraphics[width=0.50\textwidth]{figures/vacuum_cleaner.jpg}
@@ -78,7 +71,12 @@ To achieve this the robot makes use of the idea of frontier-based exploration, f
 \label{subsec:sotaSlam}
 As mentioned in Section \ref{sec:intro} Simultaneous Localization And Mapping (SLAM) is the process of building a map based on sensor data while simultaneously localizing yourself in an unknown environment.
 
-SLAM is a problem because localization requires a map and mapping requires the location of the device or robot that wants to create a map. There are quite a few approaches that successfully solve the SLAM problem. In general there are two interpretations of SLAM. On-line SLAM methods estimate the current robot pose along with the map. The core of a system solving the on-line SLAM problem is a filtering technique. FastSlam \citep{Montemerlo02} is an example of an on-line SLAM implementation using a Particle Filter to approximate the robots pose and the landmark positions on the map. Other methods have the goal to find the trajectory of the robot and the map. They solve the full SLAM problem.   
+Other approaches estimate the complete trajectory from the set of measurements. These approaches address the so called full SLAM problem and they typically rely on least-square error minimization techniques \cite{Leastsquares}.
+
+An intuitive way to formulate the SLAM problem is to consider it as a pose graph optimization problem. The nodes of the graph represent robot poses or landmarks. The edges encode sensor measurements that constraint the connected poses. Once such a graph is constructed the graph-based SLAM, or Graph SLAM, method tries to find a configuration of the nodes that is maximally consistent with the constraints contained in the edges.\\
+
+SLAM is a problem because localization requires a map and mapping requires the location of the device or robot that wants to create a map. There are quite a few approaches that successfully solve the SLAM problem. 
+In general there are two interpretations it. The first estimates the current robot pose along with the map. The core of such a system is a filtering technique. New measurements augment and refine the estimate as they become available. Due to their incremental nature these filtering approaches are commonly referred to as on-line SLAM methods. FastSlam \citep{Montemerlo02} is an example of an on-line SLAM implementation. It uses a Particle Filter to approximate the robots pose and the landmark positions on the map. Other methods have the goal to find the trajectory of the robot and the map. These solve the full SLAM problem and typically rely on least-square error minimization techniques \cite{Leastsquares} to find adequate estimates.  
 An example of such a an approach is graph-based SLAM or Graph SLAM.
 
 \subsubsection{Graph SLAM}
