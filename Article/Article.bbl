@@ -12,6 +12,12 @@ Grisetti, G., Kümmerle, R., Stachniss, C., and Burgard, W. (2010).
 \newblock {\sl Intelligent Transportation Systems Magazine, IEEE}, Vol.~2,
   No.~4, pp. 31 --43.
 
+\bibitem{eigen}
+Jacob, B. and Guennebaud, G. et~al. (2013).
+\newblock Eigen.
+\newblock \url{http://eigen.tuxfamily.org/index.php?title=Main_Page}.
+\newblock Accessed January 22 2013.
+
 \bibitem{Keidar}
 Keidar, M. and Kaminka, G.~A. (2012).
 \newblock Robot exploration with fast frontier detection: {T}heory and
@@ -24,7 +30,15 @@ Keidar, M. and Kaminka, G.~A. (2012).
 \bibitem{Kramer}
 Kramer, J. and Scheutz, M. (2007).
 \newblock Development environments for autonomous mobile robots: A survey.
-\newblock {\sl Auton. Robots}, Vol.~22, No.~2, pp. 101--132.
+\newblock {\sl Autonomous Robots}, Vol.~22, No.~2, pp. 101--132.
+
+\bibitem{VacuumRobot}
+{Made-in-China.com} (2012).
+\newblock Robot vacuum cleaner (m-788).
+\newblock
+  \url{http://szmegatek.en.made-in-china.com/product/xqQnAzDLWrYH/China-Robot-%
+Vacuum-Cleaner-M-788-.html}.
+\newblock Accessed January 22 2013.
 
 \bibitem{Montemerlo02}
 Montemerlo, M., Thrun, S., Koller, D., and Wegbreit, B. (2002).
@@ -53,14 +67,14 @@ ROS (2012).
 \newblock Ros occupancy grid documentation.
 \newblock
   \url{http://www.ros.org/doc/api/nav_msgs/html/msg/OccupancyGrid.html}.
-\newblock [Accessed December 15 2012].
+\newblock Accessed December 15 2012.
 
 \bibitem{swarmlab}
-Swarmlab, Faculty of~Humanities, Department of Knowledge~Engineering and
-  Science, Maastricht~University (2012).
+{Swarmlab, Department of Knowledge Engineering, {Faculty of Humanities and
+  Sciences}, Maastricht University} (2012).
 \newblock Ros installation instructions.
 \newblock \url{http://swarmlab.unimaas.nl/autonomous-systems/installation/}.
-\newblock [Accessed September 10 2012].
+\newblock Accessed September 10 2012.
 
 \bibitem{Thrun}
 Thrun, S., Burgard, W., and Fox, D. (2005).
@@ -72,7 +86,7 @@ Thrun, S., Burgard, W., and Fox, D. (2005).
 Willow~Garage, Online~Community (2012).
 \newblock {ROS Wiki}.
 \newblock \url{http://www.ros.org/wiki/}.
-\newblock [Accessed January 20 2013].
+\newblock Accessed January 20 2013.
 
 \bibitem{Yamauchi}
 Yamauchi, B. (1998).
