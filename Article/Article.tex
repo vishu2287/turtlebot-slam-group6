@@ -125,14 +125,15 @@ Exploration does not only consist of finding frontiers. Based on the frontiers a
 The first two features have a weight one, whereas the third is assigned a weight of five. This configuration turned out to create the best results (see Subsection \ref{sec:navEval}) The weighted sum of the features is used to find the goal to be sent to the navigation stack. This evaluation function enables the algorithm to select a reachable destination for the robot in almost every case. The frontier cells are sent to the move\_base in the order of the rating. When the navigation stack fails to steer the robot to a designated goal within a time constraint, the next best goal replaces the previous. The information gain is still next to optimal since the selected goal is preferred to be close to frontier points. At last the second feature makes sure that the robots path is smooth. Selecting a goal near the previous one makes the robot avoid too many loops in the emerging graph.
 \subsection{Graph SLAM}
 \label{sec:implSLAM}
-Two different approaches of graph-based SLAM are implemented for this project. They differ in complexity and thereby applicability to the problem. Both algorithms create an occupancy grid map. 
+The implemented Graph SLAM algorithm is based on \citep{Grisetti}. The graph consists of nodes representing poses along the robot trajectory. Odometry and sensor measurements are incorporated into the constraints contained in the edges. Similar to the Graph SLAM procedure explained in Section \ref{subsec:sotaSlam}, an edge connects two adjacent poses of the robot. 
 \begin{figure}[h]
 	\centering
 		\includegraphics[width=0.50\textwidth]{figures/graph.png}
 	\caption{An example of a simple graph (based on \citep{Grisetti}).}
 	\label{fig:turtlebotexample_graph}
 \end{figure}
-First, an algorithm as suggested in \citep{Grisetti} is implemented. Here the graph consists of nodes representing poses along the robot trajectory. Odometry and sensor measurements are incorporated into the constraints contained in the edges. Similar to the Graph SLAM procedure explained in Section \ref{subsec:sotaSlam}, an edge connects two adjacent poses of the robot. This implementation optimizes the pose graph according to the constraints. This ``optimized" trajectory then determines the positions of obstacles on the map by refining the laser scan data according to the poses they were obtained at. Each edge thus is labeled with the spatial difference between two poses \(x_i\) and \(x_j\). Let this error be denoted by \(e_{ij}(x_i, x_j)\). This information is obtained from a combination of odometry data and laser range sensor data. In fact, the odometry is corrected using a laser scan matcher (see Subsection \ref{sec:scan}). 
+When the graph is created the pose graph is optimized according to the constraints. This ``optimized" trajectory then determines the positions of obstacles on the map. The laser scan data are refined according to the poses they were obtained at. Each edge, thus, is labeled with the spatial difference between two poses \(x_i\) and \(x_j\). Let this error be denoted by \(e_{ij}(x_i, x_j)\). This information is obtained from a combination of odometry data and laser range sensor data. In fact, the raw odometry data is corrected using a laser scan matcher (see Subsection \ref{sec:scan}). 
+Figure \ref{fig:turtlebotexample_graph} shows a sketch of a graph created by the algorithm. Two poses \(x_i\) and \(x_j\) are connected by an edge (Solid arrow). The ellipse at the top illustrates the label of the edge.
 
 This graph-based SLAM approach calculates the most likely path as follows:
 First it finds the Jacobians \(A\) and \(B\) of every two estimated poses connected by an edge.
@@ -144,7 +145,7 @@ First it finds the Jacobians \(A\) and \(B\) of every two estimated poses connec
 \label{eq:jacobi_b}
 	B_{ij} = \frac{\partial e_{ij}(x)}{\partial x_j}
 \end{equation}
-Note that in Equations \ref{eq:jacobi_a} and \ref{eq:jacobi_b} the x represents the current guess of the concerning robot pose. As explained above, \(e_{ij}(x_i, x_j)\) is the error between the two poses \(x_i\) and \(x_j\). The Jacobians \(A\) and \(B\) are then added to an information matrix \(H\) (Equation \ref{eq:H}).
+Note that in Equations \ref{eq:jacobi_a} and \ref{eq:jacobi_b} the x represents the current guess of the concerning robot pose. As explained above, \(e_{ij}(x_i, x_j)\) is the error between the two poses \(x_i\) and \(x_j\). The Jacobians \(A\) and \(B\) are then added to a matrix \(H\) (Equation \ref{eq:H}).
 \begin{equation}
 \label{eq:H}
 \begin{aligned}
@@ -154,9 +155,13 @@ Note that in Equations \ref{eq:jacobi_a} and \ref{eq:jacobi_b} the x represents 
 	H_{[jj]} += B^{T}_{ij} \Omega_{ij} B_{ij} \\
 \end{aligned}
 \end{equation}
-In this equation $\Omega_{ij}$ is the information matrix of a measurement between \(x_i\) and \(x_j\).
-\\
-Furthermore a coefficient vector \(b\) is always updated as shown in Equation \ref{eq:b}. This vector in combination with the \(H\) matrix form a set of linear constraints.
+In this equation $\Omega_{ij}$ is the information matrix of a measurement between \(x_i\) and \(x_j\). It is defined as shown in Equation \ref{eq:omega}.
+Sigma is the $3 \times 3$ covariance matrix of the measurements. In our implementation the diagonal of $\Sigma$ is filled with arbitrary values.
+\begin{equation}
+\label{eq:omega}
+\Omega = \Sigma^{-1}
+\end{equation}
+In addition to the matrix $H$ a coefficient vector \(b\) is kept up to date as shown in Equation \ref{eq:b}. This vector together with the \(H\) form a set of linear constraints.
 \begin{equation}
 \label{eq:b}
 \begin{aligned}
@@ -168,13 +173,9 @@ The optimization of the vector \(x = (x_1, ..., x_n)^T \) according to the const
 
 A new node is added to the graph once the robot moves 0.5 meters. The algorithm optimizes the trajectory like explained once a new node is added.\\
 In one special case the algorithm adds an extra edge, connecting to non-adjacent nodes, to the graph. This happens when the distance between the two connected robot poses is smaller than a margin. In fact, this special case enables the algorithm to create loops in the graph and more accurately estimate the robots trajectory and the map. This procedure is referred to as ``loop closing" (see Subsection \ref{sec:loopClosing}). 
-\\
-\\
-The second implementation is based on \cite{Thrun}. It creates nodes for each odometry measurement of the robot as well as for each feature in the map. Each occupancy grid cell containing an obstacle is considered a map feature. This is because all information for the occupancy-grid map is inherited in these features. Edges are labeled with spatial constraints of the two nodes they are connecting. The output of this implementation is a vector containing the positions of the landmarks as well as the trajectory of the robot. Here the constraints labeling the edges are created using Jacobians similar to the previous approach. The major difference lies in the node creation. Here nodes are added for landmarks while the previous implementation considered the robot's trajectory only. An additional difference lies in the fact that this implementation uses features to characterize the map. The algorithm needs to align each new observed feature with the set of features already seen. This matching step has to be performed and repeated along with the complete optimization procedure until convergence.
-
 \subsection{Scan matching}
 \label{sec:scan}
-The scan matcher, used by this program, is necessary to acquire an optimized movement vector between two robot poses. This is needed by the Graph SLAM algorithm (see Subsection \ref{sec:implSLAM}). The scan-matcher realized for this project can be divided into two steps. First, the two scans are matched making use of raw odometry data, retrieved by the robot's motion sensor. This is improved upon by running an iteration of the iterative closest point algorithm (ICP). It tries to align the two scans minimizing the total distance of each point in the first scan to its nearest neighbor in the second. 
+The scan matcher, used by this program, is necessary to acquire an optimized movement vector between two robot poses. This is needed by the Graph SLAM algorithm (see Subsection \ref{sec:implSLAM}). The scan-matcher realized for this project can be divided into two steps. At the beginning, the two scans are matched making use of raw odometry data, retrieved by the robot's motion sensor. This is improved upon by running an iteration of the iterative closest point algorithm (ICP). It tries to align the two scans minimizing the total distance of each point in the first scan to its nearest neighbor in the second. 
 
 The general procedure of the algorithm is to first find the nearest neighboring point in the second scan for all point in the first. To achieve this nearest neighbor search is used.
 In this implementation multiple points can have the same corresponding neighbor-point. If there is no point from the other scan within a specified radius of one point, it is excluded. These outliers would influence further calculations negatively.
@@ -185,8 +186,8 @@ The next step in the process is to calculate the centroids of both clouds. These
 \end{equation}
 The translation vector $t$ is the difference between the two centroids. $R$ and $t$ together form a rigid transformation. This transformation matches the two scans. Moreover it is used to correct the robot's odometry data.
 
-\subsection{Mapping}\label{sec:mapping}
-
+\subsection{Mapping}
+\label{sec:mapping}
 The map is internally represented as an occupancy grid. It consists of cells which hold information about obstacles, free/- and unknown space. 
 
 The occupancy grid is a structure that is represented by a one-dimensional array. The size of an occupancy grid has to be tuned problem specific. A too large grid can lead to performance problems. If the grid is too small, however, the map will be inaccurate. Fitting a map on a smaller grid results in a low resolution.
@@ -282,17 +283,23 @@ Figure \ref{fig:runtime} shows the outcome of this runtime measurement. Naturall
 	\label{fig:runtime}
 \end{figure}
 
-Even with a graph size of over 100 nodes, the runtime of the function stays in a feasible range between 60 and 80 milliseconds. The robot can be moved without delay. Taking only the Graph SLAM update into account, the runtime even stays below 20 milliseconds. In contrast the scan matching is executed outstandingly quickly since it is independent of the size of the pose graph. Most of the time is occupied by updating the occupancy grid because every single grid cell has to be redrawn for every pose. In order to compromise this, the update of the complete occupancy grid is only executed every three seconds and only if a loop closing is detected.
+Even with a graph size of more than 100 nodes, the runtime of the function stays in a feasible range between 60 and 80 milliseconds. The robot can be moved without delay. Taking only the Graph SLAM update into account, the runtime even stays below 20 milliseconds. In contrast the scan matching is executed outstandingly quickly since it is independent of the size of the pose graph. Most of the time is occupied by updating the occupancy grid because every single grid cell has to be redrawn for every pose. In order to compromise this, the update of the complete occupancy grid is only executed every three seconds and only if a loop closing is detected.
 
 \section{Discussion}
 \label{sec:disc}
+In this section the results of the implemented methods are evaluated and discussed. 
+Subsection [Exploration] deals with the exploration strategy. Subsection [Graph SLAM] presents the evolution of the Graph SLAM implementation. Different stages of it are evaluated.
+\subsection{Exploration strategy}
+\label{disc:expl}
 The Wavefront Frontier detection algorithm \citep{Keidar} succeeds in finding frontiers in a fast and accurate manner (see Section \ref{sec:exp}). It turned out, however, that finding the frontiers is only part of autonomous exploration. Sections \ref{sec:impl} and \ref{sec:exp} explain the various possibilities there are for selecting a feasible goal for the robot. Adding features to the evaluation of possible destinations showed to make selection more successful. During the process of implementation this evaluation function evolved to a prosperous and accurate goal chooser.
+\\
+\subsection{Graph SLAM}
+\label{disc:grSlam}
+Developing a feasible Graph SLAM algorithm showed to be a challenging task. In earlier stages of the project another Graph SLAM algorithm was implemented.
+It is based on \cite{Thrun}. 
+Nodes are created for each odometry measurement as well as for every map feature detected by the robot. All occupancy grid cells containing an obstacle are considered map features. This is necessary because all information for the occupancy-grid map is inherited in these features. The output of this implementation is a vector containing the positions of the landmarks as well as the trajectory of the robot. Here the constraints labeling the edges are created using Jacobians similar to the final approach (see Subsection \ref{sec:implSLAM}). The major difference lies in the node creation. Here, additional nodes are added for landmarks while the previous implementation considered the robot's trajectory only. An additional difference lies in the fact that this implementation uses features to characterize the map. The algorithm needs to compare every feature from the new scan has to the ones detected earlier. This ``correspondence test" has to be performed and repeated along with the complete optimization procedure until convergence. 
 
-Implementing the algorithm suggested in \citep{Grisetti} (Subsection \ref{sec:implSLAM}) turned out to be well suited for attacking the problem statement of this project. The maps created by the algorithm are accurate (see Subsection \ref{sec:visual}). The difference between the output map and the real map is negligible (see Figure \ref{fig:loop_closing_comparison}). Maps are created in real time and loop closures are added when needed. In fact, the algorithm is able to keep updating the map with no noticeable delay (see Section \ref{sec:exp}). Even when the robot is controlled by the exploration module and navigated by ROS' move\_base package the program runs smoothly.
-
-The second Graph SLAM implementation \cite{Thrun} (Subsection \ref{sec:implSLAM}) is not suited for the problem specified in Section \ref{sec:intro}.
-It turned out that the algorithm time complexity is too high. Even with a reduced number of laser beams the map update takes an infeasible amount of time after a few steps only. 
-
+While testing it turned out that the algorithm's time complexity is too high for real time observations. Even with a reduced number of laser beams the map update takes an infeasible amount of time after a few steps only. 
 \begin{table}[h]
 \begin{center}
 \scalebox{1}{
@@ -314,11 +321,10 @@ It turned out that the algorithm time complexity is too high. Even with a reduce
 \caption{The time the Graph SLAM implementation proposed by \citep{Thrun} needed using the specified number of laser beams after the specified number of steps.}
 \label{tab:graphResults}
 \end{table}
-
 Note that the number of beams used for the other implementation greatly exceeds the ones in Table \ref{tab:graphResults}. While the working Graph SLAM method deals with roughly 390 laser beams, this one has major difficulties with not more than 30.
-This, again, points out that this implementation is unable to create a map for the specified setting (see Section \ref{sec:intro}).
+This points out that this implementation is unable to create a map in reasonable time.
 
-Extensive feature extraction methods are required to transform the data into a form which the proposed algorithm is able to cope with. But then, if the features are extracted, how can they be displayed in an occupancy grid? Furthermore the algorithm is expected to work best with a robot that is able to detect distinct landmarks in the map. A number of unique ones could then serve as orientation points to build the map. Applying this procedure would result in fewer nodes to be iterated. The algorithm would be able to assess map and trajectory more quickly.
+Implementing the algorithm suggested in \citep{Grisetti} (Subsection \ref{sec:implSLAM}) showed to be well suited for attacking the problem statement of this project. The maps created by the algorithm are accurate (see Subsection \ref{sec:visual}). The difference between the output map and the real map is negligible (see Figure \ref{fig:loop_closing_comparison}). Maps are created in real time and loop closures are added when needed. In fact, the algorithm is able to keep updating the map with no noticeable delay (see Section \ref{sec:exp}). Even when the robot is controlled by the exploration module and navigated by ROS' move\_base package the program runs smoothly.
 
 The next subsection suggests a few ideas about how this research could be continued. In doing so proposes are made for each part of this project.
 
