@@ -88,15 +88,11 @@ An intuitive way to formulate the SLAM problem is to view it as a pose graph opt
 \section{Implementation}
 \label{sec:impl}
 
-The methods explained in this section are implemented in the object-oriented programming language C++. The code is specifically designed for the ROS environment (see Subsection \ref{subsec:ros}). The installation process for ROS, as performed for this paper, can be reviewed on \cite{swarmlab}.
-
-%This is the new part
-In the product there exist two main packages. One deals with the autonomous exploration of the robot. The other one is responsible for map creation using Graph SLAM. Part of the autonomous exploration is performed by ROS' navigation stack move\_base. It takes care of finding a path from the current location to a specified destination. It is also capable of controlling the robot along this path. In addition to the move\_base package another external source is used by the program. The ``Eigen" library \citep{eigen} provides the user with extensive linear algebra operations. Included are simple matrix operations as well as advanced techniques. Two techniques which are used in this project are Singular Value Decomposition and sparse Cholesky factorization. Both are implemented in ``Eigen".
-
-This section is structured as follows. Subsection \ref{sec:wfd} describes the implemented exploration strategy. Next, Subsection \ref{sec:implSLAM} deals with the SLAM method. This is followed by a subsection about scan matching. The section is concluded with a part about the mapping process. 
-%End of the new part
+The software explained in this section are implemented in the object-oriented programming language C++. The code is specifically designed for the ROS environment (see Subsection \ref{subsec:ros}). The installation process for ROS, as performed for this paper, can be reviewed on \cite{swarmlab}.
 
 \subsection{Program structure}
+An overview of the relevant components of the final software product is given in Figure \ref{fig:program_structure}. The top two boxes represent the implemented packages. The left one performs the Graph SLAM algorithm (Subsection \ref{sec:implSLAM}), including the initialization and optimization of the pose graph and the correction by scan matching (Subsection \ref{sec:scan}). It also creates a map of the explored environment by maintaining an occupancy grid (Subsection \ref{sec:mapping}). The right package is responsible for autonomous exploration (Subsection \ref{sec:wfd}). This includes an algorithm for efficiently navigating through unknown space to gather as much information about the environment as possible.
+
 \begin{figure}[htbp]
 	\centering
 		\includegraphics[width=0.45\textwidth]{figures/Program_structure.png}
@@ -104,7 +100,11 @@ This section is structured as follows. Subsection \ref{sec:wfd} describes the im
 	\label{fig:program_structure}
 \end{figure}
 
-\subsection{Wavefront frontier detection}
+Both packages publish data to the shared environment of ROS. This data is then used by the other packages to create an interdependent but modular program structure.
+
+The implemented packages are making use of the external library ``Eigen" \citep{eigen}. It provides extensive linear algebra operations. Included are simple matrix operations as well as advanced techniques. Two techniques which are used in this project are Singular Value Decomposition and sparse Cholesky factorization.
+
+\subsection{Exploration}
 \label{sec:wfd}
 One part of the assignment is autonomous exploration. The robot has to drive autonomously through an unknown world. This feature is implemented using Wavefront frontier detection (WFD).
 
