@@ -104,28 +104,7 @@ Both packages publish data to the shared environment of ROS. This data is then u
 
 The implemented packages are making use of the external library ``Eigen" \citep{eigen}. It provides extensive linear algebra operations. Included are simple matrix operations as well as advanced techniques. Two techniques which are used in this project are Singular Value Decomposition and sparse Cholesky factorization.
 
-\subsection{Exploration}
-\label{sec:wfd}
-One part of the assignment is autonomous exploration. The robot has to drive autonomously through an unknown world. This feature is implemented using Wavefront frontier detection (WFD).
 
-WFD is a frontier-based exploration algorithm \citep{Keidar}. It uses four different data structures. These store map and frontier information during the search process. They are:
-\begin{enumerate}
-\item{Map-Open-List}
-\item{Map-Close-List}
-\item{Frontier-Open-List}
-\item{Frontier-Close-List}
-\end{enumerate}
-To understand the need of these four structures it is necessary to know that WFD is using a breadth first search (BFS), starting at the current robot position. Moreover frontier detection requires the robot to have an internal representation of the current environment. In this implementation an occupancy grid (Subsection \ref{sec:mapping}) is used.
-Upon launching the algorithm it first searches for unoccupied space around the current robot location. These grid cells are saved in the Map-Open-List. 
-Frontiers are found by making use of the occupancy grid's structure. The criterion for a map-point to be a frontier is the existence of both, unknown space and known unoccupied space, in adjacent map-points. When a frontier point is found a new BFS is performed. Starting at the current point it extracts all adjacent frontier points and connects them to one frontier. It is saved in the Frontier-Open-List. The benefit of using WFD is that by maintaining these lists, the algorithm only needs to incorporate points that have not been iterated yet. In fact, the algorithm keeps track of detected open space and frontiers using the above mentioned list. Following iterations make use of this information because they do not need to consider previously known regions any more.
- 
-Exploration does not only consist of finding frontiers. Based on the frontiers a target location for the robot needs to be selected. Navigating to the closest frontier points is the simplest frontier-based exploration strategy. For this project, however, a more sophisticated implementation is chosen. Instead of sending the robot to the closest frontier point, a small search is performed to find suitable destinations. Generally, a small region around each frontier cell is searched. The goal is to give each frontier point a rating on how well it is suited as a destination. For this purposes an evaluation function has been implemented. It incorporates three features that are used to evaluate goals to be sent to the navigation stack. They are :
-\begin{enumerate}
-\item{Number of obstacles in the area}
-\item{Distance to the previous goal}
-\item{Distance between frontier and robot location}
-\end{enumerate}
-The first two features have a weight one, whereas the third is assigned a weight of five. This configuration turned out to create the best results (see Subsection \ref{sec:navEval}) The weighted sum of the features is used to find the goal to be sent to the navigation stack. This evaluation function enables the algorithm to select a reachable destination for the robot in almost every case. The frontier cells are sent to the move\_base in the order of the rating. When the navigation stack fails to steer the robot to a designated goal within a time constraint, the next best goal replaces the previous. The information gain is still next to optimal since the selected goal is preferred to be close to frontier points. At last the second feature makes sure that the robots path is smooth. Selecting a goal near the previous one makes the robot avoid too many loops in the emerging graph.
 \subsection{Graph SLAM}
 \label{sec:implSLAM}
 The implemented Graph SLAM algorithm is based on \citep{Grisetti}. The graph consists of nodes representing poses along the robot trajectory. Odometry and sensor measurements are incorporated into the constraints contained in the edges. Similar to the Graph SLAM procedure explained in Section \ref{subsec:sotaSlam}, an edge connects two adjacent poses of the robot. 
@@ -209,6 +188,29 @@ Internally the program represents the grid as a two dimensional array. This make
 Figure \ref{fig:Occupancy} shows an example occupancy grid. The robot stands in the center of it and makes one measurement consisting of several laser scans. Each scan returns the range it was able to reach. The returned range is either the maximally possible range of the laser or a lower value, indicating an obstacle (value of 100). The range is transformed into global coordinates with respect to the robot's location, orientation and the bearing of the laser beam. The resulting point is then transferred into the occupancy grid as an obstacle if the maximum range was not reached. The cells lying in a straight line between the transformed range and the robot are considered free space (value of 0), since the laser was able to pass through this area. All the cells that are not affected by any of the previous steps remain unexplored (value of -1). Naturally, this is the case for cells behind obstacles, out of range and directly behind the robot.
 
 As time progresses, the robot explores more of its environment. As explained above, the locations of the observed obstacles need to be extracted from the laser-scan data. The program keeps track of the scan-data for every robot pose saved in the trajectory \(x = (x_1, ..., x_n)^T \). Since the laser-scan data is relative to the pose of recording, new information is added to the map once the robot's trajectory is adjusted by the Graph SLAM module. When a new scan is made, it is added to the occupancy grid after the trajectory has been updated. When a loop closure is detected, the complete occupancy grid is updated. All previous scan points are refined relative to their corresponding recording poses and the grid is regenerated.
+
+\subsection{Exploration}
+\label{sec:wfd}
+One part of the assignment is autonomous exploration. The robot has to drive autonomously through an unknown world. This feature is implemented using Wavefront frontier detection (WFD).
+
+WFD is a frontier-based exploration algorithm \citep{Keidar}. It uses four different data structures. These store map and frontier information during the search process. They are:
+\begin{enumerate}
+\item{Map-Open-List}
+\item{Map-Close-List}
+\item{Frontier-Open-List}
+\item{Frontier-Close-List}
+\end{enumerate}
+To understand the need of these four structures it is necessary to know that WFD is using a breadth first search (BFS), starting at the current robot position. Moreover frontier detection requires the robot to have an internal representation of the current environment. In this implementation an occupancy grid (Subsection \ref{sec:mapping}) is used.
+Upon launching the algorithm it first searches for unoccupied space around the current robot location. These grid cells are saved in the Map-Open-List. 
+Frontiers are found by making use of the occupancy grid's structure. The criterion for a map-point to be a frontier is the existence of both, unknown space and known unoccupied space, in adjacent map-points. When a frontier point is found a new BFS is performed. Starting at the current point it extracts all adjacent frontier points and connects them to one frontier. It is saved in the Frontier-Open-List. The benefit of using WFD is that by maintaining these lists, the algorithm only needs to incorporate points that have not been iterated yet. In fact, the algorithm keeps track of detected open space and frontiers using the above mentioned list. Following iterations make use of this information because they do not need to consider previously known regions any more.
+ 
+Exploration does not only consist of finding frontiers. Based on the frontiers a target location for the robot needs to be selected. Navigating to the closest frontier points is the simplest frontier-based exploration strategy. For this project, however, a more sophisticated implementation is chosen. Instead of sending the robot to the closest frontier point, a small search is performed to find suitable destinations. Generally, a small region around each frontier cell is searched. The goal is to give each frontier point a rating on how well it is suited as a destination. For this purposes an evaluation function has been implemented. It incorporates three features that are used to evaluate goals to be sent to the navigation stack. They are :
+\begin{enumerate}
+\item{Number of obstacles in the area}
+\item{Distance to the previous goal}
+\item{Distance between frontier and robot location}
+\end{enumerate}
+The first two features have a weight one, whereas the third is assigned a weight of five. This configuration turned out to create the best results (see Subsection \ref{sec:navEval}) The weighted sum of the features is used to find the goal to be sent to the navigation stack. This evaluation function enables the algorithm to select a reachable destination for the robot in almost every case. The frontier cells are sent to the move\_base in the order of the rating. When the navigation stack fails to steer the robot to a designated goal within a time constraint, the next best goal replaces the previous. The information gain is still next to optimal since the selected goal is preferred to be close to frontier points. At last the second feature makes sure that the robots path is smooth. Selecting a goal near the previous one makes the robot avoid too many loops in the emerging graph.
 
 \section{Experiments and results}
 \label{sec:exp}
