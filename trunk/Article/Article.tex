@@ -55,7 +55,7 @@ During the development process of a system running on a robot one crucial part i
 
 \subsection{TurtleBot}
 \label{subsec:turtle}
-The product of this project is designed to run on a mobile robot called TurtleBot (Figure \ref{fig:turtlebot}). It is a low-cost, customizable, personal robot kit. The base of the TurtleBot is an iRobot Create (A). It holds a battery pack and a 150 degrees/second Single Axis Gyro. The model shown in Figure \ref{fig:turtlebot} uses a Microsoft Kinect sensor (B), the one used in this paper uses a laser range sensor and a laptop (C) to run all the processes. The robot can also be customized using the mounting hardware (D). The robot runs on an open-source SDK based on ROS which integrates all the software needed to get the TurtleBot running. Some capabilities are included in ROS and can be used in the TurtleBot after minor configurations. These include mapping and navigation, for example. 
+The product of this project is designed to run on a mobile robot called TurtleBot (Figure \ref{fig:turtlebot}) \citep{turtlebot}. It is a low-cost, customizable, personal robot kit. The base of the TurtleBot is an iRobot Create (A). It holds a battery pack and a 150 degrees/second Single Axis Gyro. The model shown in Figure \ref{fig:turtlebot} uses a Microsoft Kinect sensor (B), the one used in this paper uses a laser range sensor and a laptop (C) to run all the processes. The robot can also be customized using the mounting hardware (D). The robot runs on an open-source SDK based on ROS which integrates all the software needed to get the TurtleBot running. Some capabilities are included in ROS and can be used in the TurtleBot after minor configurations. These include mapping and navigation, for example. 
 \begin{figure}[h]
 	\centering
 		\includegraphics[width=0.50\textwidth]{figures/turtlebot.png}
@@ -291,10 +291,10 @@ Even with a graph size of more than 100 nodes, the runtime of the function stays
 \section{Discussion}
 \label{sec:disc}
 In this section the results of the implemented methods are evaluated and discussed. 
-Subsection [Exploration] deals with the exploration strategy. Subsection [Graph SLAM] presents the evolution of the Graph SLAM implementation. Different stages of it are evaluated.
+Subsection \ref{disc:expl} deals with the exploration strategy. Subsection \ref{disc:grSlam} presents the evolution of the Graph SLAM implementation. Different stages of it are evaluated.
 \subsection{Exploration strategy}
 \label{disc:expl}
-The Wavefront Frontier detection algorithm \citep{Keidar} succeeds in finding frontiers in a fast and accurate manner (see Section \ref{sec:exp}). It turned out, however, that finding the frontiers is only part of autonomous exploration. Sections \ref{sec:impl} and \ref{sec:exp} explain the various possibilities there are for selecting a feasible goal for the robot. Adding features to the evaluation of possible destinations showed to make selection more successful. During the process of implementation this evaluation function evolved to a prosperous and accurate goal chooser.
+The Wavefront Frontier detection algorithm \citep{Keidar} succeeds in finding frontiers in a fast and accurate manner (see Subsection \ref{sec:visual}). It turned out, however, that finding the frontiers is only part of autonomous exploration. Subsections \ref{sec:wfd} and \ref{sec:visual} explain the various possibilities there are for selecting a feasible goal for the robot. Adding features to the evaluation of possible destinations showed to make selection more successful. During the process of implementation this evaluation function evolved to a prosperous and accurate goal chooser.
 \\
 \subsection{Graph SLAM}
 \label{disc:grSlam}
@@ -332,17 +332,19 @@ Implementing the algorithm suggested in \citep{Grisetti} (Subsection \ref{sec:im
 The next subsection suggests a few ideas about how this research could be continued. In doing so proposes are made for each part of this project.
 
 \subsection{Future research}
-As mentioned in Section \ref{sec:disc} the exploration strategy evolved during the process of testing. This does not mean that it is near perfection. Other features like for instance loop closings can be taken into account still. This would lead to more constraints to be added to the graph. More constraints could then result in an even more accurate assessment of the robot trajectory. This new feature would require to be tuned well, since more constraints also lead to higher space and time complexities. 
-The Graph SLAM algorithm proposed by \citep{Grisetti} has some room for improvement as well. Considering the suggested change in the exploration algorithm, the method would need to cope with a larger number of edges and nodes.
-The current implementation uses sparse Cholesky factorization to find the most optimal spatial configuration of the trajectory. This method is inherited in the ``Eigen" library. Although sparse Cholesky factorization solves the linear system in an efficient manner, it is likely that better algorithms emerge in the future.
+As mentioned in Section \ref{disc:expl} the exploration strategy evolved during the process of testing. This does not mean that it cannot be improved upon. More features like, for instance, loop closings can be taken into account. This would lead to more constraints to be added to the graph. More constraints could then result in an even more accurate assessment of the robot trajectory. This new feature would require to be tuned well, since more constraints also lead to higher space and time complexities. 
+\\
 
-Most room for improvement clearly is to be found in the second Graph SLAM implementation. The TurtleBot used for this research project has to rely on laser range and odometry data only. Extracting features from laser range data is out of the scope of this project. Doing so could dramatically improve the performance of the method, though. 
-A robot equipped with for instance a color sensor is much more suited to successfully perform this Graph SLAM method. Colored objects could serve as landmarks and large parts of the feature detection could be left out. Implementing a powerful feature-extractor for laser-range data is definitely a possible solution. Applying the method to a robot that provides different kinds of data is the preferred one, nevertheless.
+The Graph SLAM algorithm proposed by \citep{Grisetti} can be improved as well. Considering the suggested change in the exploration algorithm, the method would need to cope with a larger number of edges and nodes.
+The current implementation uses sparse Cholesky factorization to find the most optimal spatial configuration of the trajectory. This method is inherited in the ``Eigen" library \ref{sec:impl}. Although sparse Cholesky factorization solves the linear system in an efficient manner, it is likely that even better algorithms emerge in the future. Since the time complexity of the Graph SLAM method depends almost entirely on the technique used, new methods would directly improve upon the running time of the algorithm.
+
+The deprecated Graph SLAM implementation clearly has most room for improvement. The TurtleBot used for this research project has to rely on laser and odometry data only. Extracting features from laser data is out of scope of this project. Doing so could dramatically improve the performance of the method, though. 
+A robot equipped with for instance a color sensor is much more suited to successfully perform this Graph SLAM method. Colored objects could serve as landmarks and large parts of the feature detection could be left out. Implementing a powerful feature-extractor for laser data is definitely a possible solution. Applying the method to a robot that provides different kinds of data is the preferred one, nevertheless.
 
 The last section draws a conclusion based on the results (Section \ref{sec:exp}) and the discussion (Section \ref{sec:disc}).
 \section{Conclusion}
 \label{sec:conc}
-In conclusion the Graph SLAM method as described by Grisetti et al. \citep{Grisetti} is able to solve the full SLAM problem in real time. Furthermore WFD succeeds in quickly detecting frontiers (Section \ref{sec:exp}). It turned out that the exploration strategy, besides frontier detection, is a crucial task. The developed evaluation function accurately assesses suitable goal locations (Section \ref{sec:disc}). These components in combination with the presented mapping method (Section \ref{sec:impl}) solve the problem specified in Section \ref{sec:intro}.
+In conclusion Graph SLAM is an algorithm with a variety of implementations. Incorporating the map into the graph showed to lead to an infeasible time complexity (Section \ref{sec:disc}). The Graph SLAM method as described by Grisetti et al. \citep{Grisetti} is able to solve the full SLAM problem in real time (Subsection \ref{sec:runtime}). The created maps are accurate (Subsection \ref{sec:navEval}). Furthermore WFD succeeds in quickly detecting frontiers (Subsection \ref{sec:runtime} and Figure \ref{fig:runtime}). It turned out that the exploration strategy, besides frontier detection, is a crucial task. The developed evaluation function accurately assesses suitable goal locations (Subsection \ref{disc:expl}). It allows the robot to drive smooth, intuitive paths (Figure \ref{fig:navigation_comparison}). The program containing these components solves the problem specified in Subsection \ref{sec:problem}.
 
 \bibliography{references}
 \nocite{*}
