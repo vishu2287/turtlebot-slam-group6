@@ -6,14 +6,22 @@ Bj\"{o}rck, \r{A} (1996).
 \newblock {\sl Numerical methods for least squares problems}.
 \newblock SIAM.
 
+\bibitem{scanmatch}
+Cai, Z. and Chao, S.-Y. (2010).
+\newblock Implementation of a 3{D} {I}{C}{P}-based scan matcher.
+\newblock
+  \url{http://ais.informatik.uni-freiburg.de/teaching/ws09/robotics2/projects/%
+mr2-p7-paper.pdf}.
+\newblock Accessed January 22 2013.
+
 \bibitem{Grisetti}
 Grisetti, G., Kümmerle, R., Stachniss, C., and Burgard, W. (2010).
-\newblock A tutorial on graph-based slam.
+\newblock A tutorial on graph-based {S}{L}{A}{M}.
 \newblock {\sl Intelligent Transportation Systems Magazine, IEEE}, Vol.~2,
   No.~4, pp. 31 --43.
 
 \bibitem{eigen}
-Jacob, B. and Guennebaud, G. et~al. (2013).
+Jacob, B. and Guennebaud, G. (2013).
 \newblock Eigen.
 \newblock \url{http://eigen.tuxfamily.org/index.php?title=Main_Page}.
 \newblock Accessed January 22 2013.
