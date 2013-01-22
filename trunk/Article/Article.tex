@@ -85,7 +85,7 @@ An intuitive way to formulate the SLAM problem is to view it as a pose graph opt
 \section{Implementation}
 \label{sec:impl}
 
-The methods explained in this sections are implemented in the object-oriented programming language C++. The code is specifically designed for the ROS environment (see Subsection \ref{subsec:ros}). The installation process for ROS, as performed for this paper, can be reviewed on \cite{swarmlab}.
+The methods explained in this section are implemented in the object-oriented programming language C++. The code is specifically designed for the ROS environment (see Subsection \ref{subsec:ros}). The installation process for ROS, as performed for this paper, can be reviewed on \cite{swarmlab}.
 
 %This is the new part
 In the product there exist two main packages. One deals with the autonomous exploration of the robot. The other one is responsible for map creation using Graph SLAM. Part of the autonomous exploration is performed by ROS' navigation stack move\_base. It takes care of finding a path from the current location to a specified destination. It is also capable of controlling the robot along this path. In addition to the move\_base package another external source is used by the program. The ``Eigen" library \citep{eigen} provides the user with extensive linear algebra operations. Included are simple matrix operations as well as advanced techniques. Two techniques which are used in this project are Singular Value Decomposition and sparse Cholesky factorization. Both are implemented in ``Eigen".
