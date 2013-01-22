@@ -271,8 +271,8 @@ void vel_callback(const nav_msgs::Odometry& msg) {
                 c.i = i;
                 c.j = j;
                 c.z = zTransformation;
-                double uncertainty = 0.1;
-                Matrix3d covariance = Matrix3d::Identity(3, 3); // @todo: Find correct matrix
+                double uncertainty = 100;
+                Matrix3d covariance = Matrix3d::Identity(3, 3);
                 covariance(0,0) = uncertainty;
                 covariance(1,1) = uncertainty;
                 covariance(2,2) = uncertainty;
