@@ -165,6 +165,15 @@ The next step in the process is to calculate the centroids of both clouds. These
 \end{equation}
 The translation vector $t$ is the difference between the two centroids. $R$ and $t$ together form a rigid transformation. This transformation matches the two scans. Moreover it is used to correct the robot's odometry data.
 
+Figure \ref{fig:scanmatcher} shows the robot in its current position (left) and the result of matching the previous scan to the current scan (right). The robot rotated slightly clockwise. The red point cloud represents the detected obstacles before the rotation when the robot was still standing parallel to the wall. The green point cloud represents the current laser scan. The scan matching algorithm then calculates the most likely transformation between these two point clouds and applies this transformation to the previous scan, resulting in the purple point cloud.
+
+\begin{figure}[htbp]
+	\centering
+		\includegraphics[width=0.45\textwidth]{figures/Scanmatch.jpg}
+	\caption{Previous scan matched with the current scan}
+	\label{fig:scanmatcher}
+\end{figure}
+
 \subsection{Mapping}
 \label{sec:mapping}
 The map is internally represented as an occupancy grid. It consists of cells which hold information about obstacles, free/- and unknown space. 
