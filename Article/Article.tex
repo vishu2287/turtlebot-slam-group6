@@ -12,7 +12,7 @@
 \maketitle
 
 \begin{abstract}
-To perform an assignment a robot needs a map of the environment, an added difficulty could be that the robot needs to build this map on his own. The task of mapping an environment can be split into two main components, namely exploration and SLAM which stands for Simultaneous Localization And Mapping. Exploration is based on the idea of frontiers, these are regions which separate unexplored space from free explored space, and a strategy determines to which frontier the robot moves next. SLAM incorporates the new data as it becomes available. One intuitive way is to represent all the data as a graph and then try to find a configuration of nodes which is maximally consistent with the constraints. This article will describe an implementation of this so called Graph SLAM with frontier exploration. All the implemented code is first tested and validated in a simulator and later run on a real robot, a TurtleBot.
+ This article describes an implementation of Graph SLAM with frontier-based exploration. Simultaneous localization and mapping (SLAM) requires knowledge of the map and the robot's location at the same time. Achieving this is hard, as the robot's location needs knowledge of the map and vice-versa. To explore the map autonomously the robot has to use an algorithm to efficiently achieve knowledge of its region of operation. For the implementation in this article a Graph SLAM algorithm and a Wavefront frontier detection algorithm have been used to achieve both. All the implemented code is first tested and validated in a simulator and later run on a real robot, a TurtleBot. The result is a quickly built map of a sample region.
 \end{abstract}
 
 \section{Introduction}
