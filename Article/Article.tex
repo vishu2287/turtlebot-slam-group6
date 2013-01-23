@@ -50,7 +50,7 @@ During the development process of a system running on a robot one crucial part i
 
 \subsection{TurtleBot}
 \label{subsec:turtle}
-The product of this project is designed to run on a mobile robot called TurtleBot (Figure \ref{fig:turtlebot}) \citep{turtlebot}. It is a low-cost, customizable, personal robot kit. The base of the TurtleBot is an iRobot Create (A). It holds a battery pack and a 150 $degrees/second$ Single Axis Gyro. The model shown in Figure \ref{fig:turtlebot} uses a Microsoft Kinect sensor (B), the one used in this paper uses a laser range sensor, and a laptop (C) to run all the processes. The robot can also be customized using the mounting hardware (D). The robot runs on an open-source SDK based on ROS which integrates all the software needed to get the TurtleBot running. Some capabilities are included in ROS and can be used on the TurtleBot after minor configurations. These include mapping and navigation, for example. 
+The product of this project is designed to run on a mobile robot called TurtleBot (Figure \ref{fig:turtlebot}) \citep{turtlebot}. It is a low-cost, customizable, personal robot. The base of the TurtleBot is an iRobot Create (A). It holds a battery pack and a 150 $degrees/second$ Single Axis Gyro. The model shown in Figure \ref{fig:turtlebot} uses a Microsoft Kinect sensor (B), the one used in this paper uses a laser range sensor, and a laptop (C) to run all the processes. The robot can also be customized using the mounting hardware (D). The robot runs on an open-source SDK based on ROS which integrates all the software needed to get the TurtleBot running. Some capabilities are included in ROS and can be used on the TurtleBot after minor configurations. These include mapping and navigation, for example. 
 \begin{figure}[h]
 	\centering
 		\includegraphics[width=0.50\textwidth]{figures/turtlebot.png}
@@ -74,7 +74,7 @@ In general there are two interpretations it. The first estimates the current rob
 An example of such a an approach is Graph SLAM.
 
 \subsubsection{Graph SLAM}
-An intuitive way to formulate the SLAM problem is to view it as a pose graph optimization problem. Each pose along the trajectory of the robot is represented by a node. Edges are labeled with relative spatial information between the connecting nodes. This graph is built incrementally. While the robot is in motion, new nodes are added to the graph. Building up the graph, as explained above, is a straight forward procedure. The essence of the Graph SLAM method, however, is the optimization step. In this step the algorithm tries to find a spatial configuration of the trajectory which is maximally consistent with a system of constraints obtained from the edges. This problem is commonly solved using least-square error minimization techniques \citep{Grisetti}.
+An intuitive way to formulate the SLAM problem is to view it as a pose graph optimization problem \citep{Grisetti}. Each pose along the trajectory of the robot is represented by a node. Edges are labeled with relative spatial information between the connecting nodes. This graph is built incrementally. While the robot is in motion, new nodes are added to the graph. Building up the graph, as explained above, is a straight forward procedure. The essence of the Graph SLAM method, however, is the optimization step. In this step the algorithm tries to find a spatial configuration of the trajectory which is maximally consistent with the system of constraints obtained from the edges. This problem is commonly solved using least-square error minimization techniques \citep{Leastsquares}.
 
 \section{Implementation}
 \label{sec:impl}
@@ -82,6 +82,7 @@ An intuitive way to formulate the SLAM problem is to view it as a pose graph opt
 The software explained in this section are implemented in the object-oriented programming language C++. The code is specifically designed for the ROS environment (see Subsection \ref{subsec:ros}). The installation process for ROS, as performed for this paper, can be reviewed on \cite{swarmlab}.
 
 \subsection{Program structure}
+\label{sec:struct}
 An overview of the relevant components of the final software product is given in Figure \ref{fig:program_structure}. The top two boxes represent the implemented packages. The left one performs the Graph SLAM algorithm (Subsection \ref{sec:implSLAM}), including the initialization and optimization of the pose graph and the correction by scan matching (Subsection \ref{sec:scan}). It also creates a map of the explored environment by maintaining an occupancy grid (Subsection \ref{sec:mapping}). The right package is responsible for autonomous exploration (Subsection \ref{sec:wfd}). This includes an algorithm for efficiently navigating through unknown space to gather as much information about the environment as possible.
 
 \begin{figure}[htbp]
@@ -93,12 +94,12 @@ An overview of the relevant components of the final software product is given in
 
 Both packages publish data to the shared environment of ROS. This data is then used by the other packages to create an interdependent but modular program structure.
 
-The implemented packages are making use of the external library ``Eigen" \citep{eigen}. It provides extensive linear algebra operations. Included are simple matrix operations as well as advanced techniques. Two techniques which are used in this project are Singular Value Decomposition and sparse Cholesky factorization.
+The implemented packages make use of the external library ``Eigen" \citep{eigen}. It provides extensive linear algebra operations. Included are simple matrix operations as well as advanced techniques. Two techniques which are used in this project are Singular Value Decomposition and sparse Cholesky factorization.
 
 
 \subsection{Graph SLAM}
 \label{sec:implSLAM}
-The implemented Graph SLAM algorithm is based on \citep{Grisetti}. The graph consists of nodes representing poses along the robot trajectory. Odometry and sensor measurements are incorporated into the constraints contained in the edges. Similar to the Graph SLAM procedure explained in Section \ref{subsec:sotaSlam}, an edge connects two adjacent poses of the robot. 
+The implemented Graph SLAM algorithm is based on Grisetti et al.\citep{Grisetti}. The graph consists of nodes representing poses along the robot trajectory. Odometry and sensor measurements are incorporated into the constraints contained in the edges. Similar to the Graph SLAM procedure explained in Section \ref{subsec:sotaSlam}, an edge connects two adjacent poses of the robot. 
 \begin{figure}[h]
 	\centering
 		\includegraphics[width=0.50\textwidth]{figures/graph.png}
@@ -118,7 +119,7 @@ First it finds the Jacobians \(A\) and \(B\) of every two estimated poses connec
 \label{eq:jacobi_b}
 	B_{ij} = \frac{\partial e_{ij}(x)}{\partial x_j}
 \end{equation}
-Note that in Equations \ref{eq:jacobi_a} and \ref{eq:jacobi_b} the x represents the current guess of the concerning robot pose. As explained above, \(e_{ij}(x_i, x_j)\) is the error between the two poses \(x_i\) and \(x_j\). The Jacobians \(A\) and \(B\) are then added to a matrix \(H\) (Equation \ref{eq:H}).
+Note that in Equations \ref{eq:jacobi_a} and \ref{eq:jacobi_b} the x represents the current guess of the concerning robot pose. As explained above, \(e_{ij}(x)\) is the error between the two poses \(x_i\) and \(x_j\). The Jacobians \(A\) and \(B\) are then added to a matrix \(H\) (Equation \ref{eq:H}).
 \begin{equation}
 \label{eq:H}
 \begin{aligned}
@@ -145,14 +146,14 @@ In addition to the matrix $H$ a coefficient vector \(b\) is kept up to date as s
 The optimization of the vector \(x = (x_1, ..., x_n)^T \) according to the constraints specified in \(H\) and \(b\) is the core of this approach. This step is performed using sparse Cholesky factorization. 
 
 A new node is added to the graph once the robot moves 0.5 meters. The algorithm optimizes the trajectory like explained once a new node is added.\\
-In one special case the algorithm adds an extra edge, connecting to non-adjacent nodes, to the graph. This happens when the distance between the two connected robot poses is smaller than a margin. In fact, this special case enables the algorithm to create loops in the graph and more accurately estimate the robots trajectory and the map. This procedure is referred to as ``loop closing" (see Subsection \ref{sec:loopClosing}). 
+In one special case the algorithm adds an extra edge, connecting to non-adjacent nodes, to the graph. This happens when the distance between the two connected robot poses is smaller than a margin. In fact, this special case enables the algorithm to create loops in the graph and more accurately estimate the robot's trajectory and the map. This procedure is referred to as ``loop closing" (see Subsection \ref{sec:loopClosing}). 
 \subsection{Scan matching}
 \label{sec:scan}
 The scan matcher, used by this program, is necessary to acquire an optimized movement vector between two robot poses. This is needed by the Graph SLAM algorithm (see Subsection \ref{sec:implSLAM}). The scan-matcher realized for this project can be divided into two steps. At the beginning, the two scans are matched making use of raw odometry data, retrieved by the robot's motion sensor. This is improved upon by running an iteration of the iterative closest point algorithm (ICP) \citep{scanmatch}. It tries to align the two scans minimizing the total distance of each point in the first scan to its nearest neighbor in the second. 
 
 The general procedure of the algorithm \citep{scanmatch} is to first find the nearest neighboring point in the second scan for all point in the first. To achieve this nearest neighbor search is used.
 In this implementation multiple points can have the same corresponding neighbor-point. If there is no point from the other scan within a specified radius of one point, it is excluded. These outliers would influence further calculations negatively.
-The next step in the process is to calculate the centroids of both clouds. These are subtracted from every point in the concerning cloud. In that way the clouds are centered at the origin. The calculated points are then added to two separate $2 \times n$ matrices, where $n$ is the number of neighbor pairs. Next the rotation matrix which transforms one cloud to the other is needed. The Singular Value Decomposition (SVD) of the product of the two previously mentioned matrices returns three new matrices $U$, $\Sigma$ and $V$. The required rotation matrix R can be obtained as described in Equation \ref{eq:RVUT}.
+The next step in the process is to calculate the centroids of both clouds. These are subtracted from every point in the concerning cloud. In that way the clouds are centered at the origin. The coordinates to the calculated points are then added to two separate $2 \times n$ matrices, where $n$ is the number of neighbor pairs. Next the rotation matrix which transforms one cloud to the other is needed. The Singular Value Decomposition (SVD) of the product of the two previously mentioned matrices returns three new matrices $U$, $\Sigma$ and $V$. The required rotation matrix R can be obtained as described in Equation \ref{eq:RVUT}.
 \begin{equation}
 \label{eq:RVUT}
  R = V * U^T
@@ -170,10 +171,10 @@ Figure \ref{fig:scanmatcher} shows the robot in its current position (left) and 
 
 \subsection{Mapping}
 \label{sec:mapping}
-The map is internally represented as an occupancy grid. It consists of cells which hold information about obstacles, free/- and unknown space. 
+The map is internally represented as an occupancy grid. It consists of cells which hold information about obstacles, free and unknown space. 
 
 The occupancy grid is a structure that is represented by a one-dimensional array. The size of an occupancy grid has to be tuned problem specific. A too large grid can lead to performance problems. If the grid is too small, however, the map will be inaccurate. Fitting a map on a smaller grid results in a low resolution.
-Internally the program represents the grid as a two dimensional array. This makes navigating to either side more intuitive. Each grid cell contains an integer value. The value-range for ROS' occupancy grid lies between $-1$ and $100$ \cite{occupancy}. The values indicate the state as follows:
+The program treats the grid as a two dimensional array. This makes navigating to either side more intuitive. Each grid cell contains an integer value. The value-range for ROS' occupancy grid lies between $-1$ and $100$ \cite{occupancy}. The values indicate the state as follows:
 \begin{description}
 \item{$-1$} : Unknown space, not yet covered by robot's perception sensors
 \item{$0$} : Known free space, robot can drive on it safely
@@ -191,9 +192,9 @@ As time progresses, the robot explores more of its environment. As explained abo
 
 \subsection{Exploration}
 \label{sec:wfd}
-One part of the assignment is autonomous exploration. The robot has to drive autonomously through an unknown world. This feature is implemented using Wavefront frontier detection (WFD).
+One part of the assignment is autonomous exploration. The robot has to drive autonomously through an unknown world. This feature is implemented using Wavefront Frontier Detection (WFD \citep{Keidar}).
 
-WFD is a frontier-based exploration algorithm \citep{Keidar}. It uses four different data structures. These store map and frontier information during the search process. They are:
+WFD is a frontier-based exploration algorithm. It uses four different data structures. These store map and frontier information during the search process. They are:
 \begin{enumerate}
 \item{Map-Open-List}
 \item{Map-Close-List}
@@ -210,7 +211,7 @@ Exploration does not only consist of finding frontiers. Based on the frontiers a
 \item{Distance to the previous goal}
 \item{Distance between frontier and robot location}
 \end{enumerate}
-The first two features have a weight one, whereas the third is assigned a weight of five. This configuration turned out to create the best results (see Subsection \ref{sec:navEval}) The weighted sum of the features is used to find the goal to be sent to the navigation stack. This evaluation function enables the algorithm to select a reachable destination for the robot in almost every case. The frontier cells are sent to the move\_base in the order of the rating. When the navigation stack fails to steer the robot to a designated goal within a time constraint, the next best goal replaces the previous. The information gain is still next to optimal since the selected goal is preferred to be close to frontier points. At last the second feature makes sure that the robots path is smooth. Selecting a goal near the previous one makes the robot avoid too many loops in the emerging graph.
+The first two features have a weight one, whereas the third is assigned a weight of five. This configuration turned out to create the best results (see Subsection \ref{sec:navEval}) The weighted sum of the features is used to find the goal to be sent to the navigation stack. This evaluation function enables the algorithm to select a reachable destination for the robot in almost every case. The frontier cells are sent to the navigation stack in the order of the rating. When the navigation stack fails to steer the robot to a designated goal within a time constraint, the next best goal replaces the previous. The information gain is still next to optimal since the selected goal is preferred to be close to frontier points. At last the second feature makes sure that the robot's path is smooth. Selecting a goal near the previous one makes the robot avoid too many loops in the emerging graph.
 
 \section{Experiments and results}
 \label{sec:exp}
@@ -256,7 +257,6 @@ The right part of Figure \ref{fig:loop_closing_comparison} depicts the explorati
 	\caption{Observed environment without (left) and with (right) loop closing of the pose graph}
 	\label{fig:loop_closing_comparison}
 \end{figure}
-The next section explains which experiments have been conducted in order to find an optimal exploration strategy. It presents results for different goal selection methods.
 
 \subsection{Navigation evaluation}
 \label{sec:navEval}
@@ -293,7 +293,7 @@ Even with a graph size of more than 100 nodes, the runtime of the function stays
 \section{Discussion}
 \label{sec:disc}
 In this section the results of the implemented methods are evaluated and discussed. 
-Subsection \ref{disc:expl} deals with the exploration strategy. Subsection \ref{disc:grSlam} presents the evolution of the Graph SLAM implementation. Different stages of it are evaluated.
+Subsection \ref{disc:expl} deals with the exploration strategy. Subsection \ref{disc:grSlam} presents the evolution of the Graph SLAM implementation. Different stages of it are evaluated. Finally, Subsection \ref{sec:future} suggests future research.
 \subsection{Exploration strategy}
 \label{disc:expl}
 The Wavefront Frontier detection algorithm \citep{Keidar} succeeds in finding frontiers in a fast and accurate manner (see Subsection \ref{sec:visual}). It turned out, however, that finding the frontiers is only part of autonomous exploration. Subsections \ref{sec:wfd} and \ref{sec:visual} explain the various possibilities there are for selecting a feasible goal for the robot. Adding features to the evaluation of possible destinations showed to make selection more successful. During the process of implementation this evaluation function evolved to a prosperous and accurate goal chooser.
@@ -302,7 +302,7 @@ The Wavefront Frontier detection algorithm \citep{Keidar} succeeds in finding fr
 \label{disc:grSlam}
 Developing a feasible Graph SLAM algorithm showed to be a challenging task. In earlier stages of the project another Graph SLAM algorithm was implemented.
 It is based on \cite{Thrun}. 
-Nodes are created for each odometry measurement as well as for every map feature detected by the robot. All occupancy grid cells containing an obstacle are considered map features. This is necessary because all information for the occupancy-grid map is inherited in these features. The output of this implementation is a vector containing the positions of the landmarks as well as the trajectory of the robot. Here the constraints labeling the edges are created using Jacobians similar to the final approach (see Subsection \ref{sec:implSLAM}). The major difference lies in the node creation. Here, additional nodes are added for landmarks while the previous implementation considered the robot's trajectory only. An additional difference lies in the fact that this implementation uses features to characterize the map. The algorithm needs to compare every feature from the new scan has to the ones detected earlier. This ``correspondence test" has to be performed and repeated along with the complete optimization procedure until convergence. 
+Nodes are created for each odometry measurement as well as for every map feature detected by the robot. All occupancy grid cells containing an obstacle are considered map features. This is necessary because all information for the occupancy-grid map is inherited in these features. The output of this implementation is a vector containing the positions of the landmarks as well as the trajectory of the robot. Here the constraints labeling the edges are created using Jacobians similar to the final approach (see Subsection \ref{sec:implSLAM}). The major difference lies in the node creation. Here, additional nodes are added for features while the previous implementation considered the robot's trajectory only. An additional difference lies in the fact that this implementation uses only the features to characterize the map. The algorithm needs to compare every feature from the new scan to the ones detected earlier. This ``correspondence test" has to be performed and repeated along with the complete optimization procedure until convergence. 
 
 While testing it turned out that the algorithm's time complexity is too high for real time observations. Even with a reduced number of laser beams the map update takes an infeasible amount of time after a few steps only. 
 \begin{table}[h]
@@ -329,16 +329,17 @@ While testing it turned out that the algorithm's time complexity is too high for
 Note that the number of beams used for the other implementation greatly exceeds the ones in Table \ref{tab:graphResults}. While the working Graph SLAM method deals with roughly 390 laser beams, this one has major difficulties with not more than 30.
 This points out that this implementation is unable to create a map in reasonable time.
 
-Implementing the algorithm suggested in \citep{Grisetti} (Subsection \ref{sec:implSLAM}) showed to be well suited for attacking the problem statement of this project. The maps created by the algorithm are accurate (see Subsection \ref{sec:visual}). The difference between the output map and the real map is negligible (see Figure \ref{fig:loop_closing_comparison}). Maps are created in real time and loop closures are added when needed. In fact, the algorithm is able to keep updating the map with no noticeable delay (see Section \ref{sec:exp}). Even when the robot is controlled by the exploration module and navigated by ROS' move\_base package the program runs smoothly.
+Implementing the algorithm suggested in \citep{Grisetti} (Subsection \ref{sec:implSLAM}) showed to be well suited for approaching the problem statement of this project. The maps created by the algorithm are accurate (see Subsection \ref{sec:visual}). The difference between the output map and the real map is negligible (see Figure \ref{fig:loop_closing_comparison}). Maps are created in real time and loop closures are added when needed. In fact, the algorithm is able to keep updating the map with no noticeable delay (see Section \ref{sec:exp}). Even when the robot is controlled by the exploration module and navigated by ROS' navigation stack the program runs smoothly.
 
 The next subsection suggests a few ideas about how this research could be continued. In doing so proposes are made for each part of this project.
 
 \subsection{Future research}
+\label{sec:future}
 As mentioned in Section \ref{disc:expl} the exploration strategy evolved during the process of testing. This does not mean that it cannot be improved upon. More features like, for instance, loop closings can be taken into account. This would lead to more constraints to be added to the graph. More constraints could then result in an even more accurate assessment of the robot trajectory. This new feature would require to be tuned well, since more constraints also lead to higher space and time complexities. 
 \\
 
 The Graph SLAM algorithm proposed by \citep{Grisetti} can be improved as well. Considering the suggested change in the exploration algorithm, the method would need to cope with a larger number of edges and nodes.
-The current implementation uses sparse Cholesky factorization to find the most optimal spatial configuration of the trajectory. This method is inherited in the ``Eigen" library \ref{sec:impl}. Although sparse Cholesky factorization solves the linear system in an efficient manner, it is likely that even better algorithms emerge in the future. Since the time complexity of the Graph SLAM method depends almost entirely on the technique used, new methods would directly improve upon the running time of the algorithm.
+The current implementation uses sparse Cholesky factorization to find the most optimal spatial configuration of the trajectory. This method is inherited in the ``Eigen" library (Subsection \ref{sec:struct}). Although sparse Cholesky factorization solves the linear system in an efficient manner, it is likely that even better algorithms emerge in the future. Since the time complexity of the Graph SLAM method depends almost entirely on the technique used, new methods would directly improve upon the running time of the algorithm.
 
 The deprecated Graph SLAM implementation clearly has most room for improvement. The TurtleBot used for this research project has to rely on laser and odometry data only. Extracting features from laser data is out of scope of this project. Doing so could dramatically improve the performance of the method, though. 
 A robot equipped with for instance a color sensor is much more suited to successfully perform this Graph SLAM method. Colored objects could serve as landmarks and large parts of the feature detection could be left out. Implementing a powerful feature-extractor for laser data is definitely a possible solution. Applying the method to a robot that provides different kinds of data is the preferred one, nevertheless.
