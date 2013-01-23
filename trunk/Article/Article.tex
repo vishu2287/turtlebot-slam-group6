@@ -83,7 +83,7 @@ The software explained in this section are implemented in the object-oriented pr
 
 \subsection{Program structure}
 \label{sec:struct}
-An overview of the relevant components of the final software product is given in Figure \ref{fig:program_structure}. The top two boxes represent the implemented packages. The left one performs the Graph SLAM algorithm (Subsection \ref{sec:implSLAM}), including the initialization and optimization of the pose graph and the correction by scan matching (Subsection \ref{sec:scan}). It also creates a map of the explored environment by maintaining an occupancy grid (Subsection \ref{sec:mapping}). The right package is responsible for autonomous exploration (Subsection \ref{sec:wfd}). This includes an algorithm for efficiently navigating through unknown space to gather as much information about the environment as possible.
+An overview of the relevant components of the final software product is given in Figure \ref{fig:program_structure}.
 
 \begin{figure}[htbp]
 	\centering
@@ -91,6 +91,8 @@ An overview of the relevant components of the final software product is given in
 	\caption{Overview of the structure and functionalities of the relevant software components}
 	\label{fig:program_structure}
 \end{figure}
+
+The top two boxes represent the implemented packages. The left one performs the Graph SLAM algorithm (Subsection \ref{sec:implSLAM}), including the initialization and optimization of the pose graph and the correction by scan matching (Subsection \ref{sec:scan}). It also creates a map of the explored environment by maintaining an occupancy grid (Subsection \ref{sec:mapping}). The right package is responsible for autonomous exploration (Subsection \ref{sec:wfd}). This includes an algorithm for efficiently navigating through unknown space to gather as much information about the environment as possible.
 
 Both packages publish data to the shared environment of ROS. This data is then used by the other packages to create an interdependent but modular program structure.
 
@@ -264,16 +266,16 @@ An important aspect which has a high impact on the exploration behavior of the r
 
 Figure \ref{fig:navigation_comparison} shows three resulting exploration paths of the robot as well as the explored maps after 300 seconds. In Figure \ref{fig:navigation_comparison}(a) the simple strategy, as explained above, was applied. 10 nodes and 14 constraints have been created in the pose graph. Compared to other tests this is very little information. Also the nodes are limited to a small area of the map. Applying the simple strategy results in a low degree of exploration. This is due to the fact that when only considering the closest frontier point there is a high risk that points are selected which are very close to obstacles. When the navigation stack tries to find a path to this point, it inflates the obstacles first. This causes goals which are very close to any kind of obstacle to be unreachable. When a point has been discovered to be unreachable, the next closest point to the robot is chosen. This, however, is likely to be unreachable as well.
 
-In order to overcome the above explained problems another exploration strategy is considered. Obstacles have to be taken into account to be able to select reachable points as the next goal. In this new strategy obstacles within a radius of 50 grid cells of the frontier point are counted. This number is added to the distance between the robot and the concerning frontier point. The point with the smallest sum is selected as the next goal. The application of this strategy is shown in figure \ref{fig:navigation_comparison}(b). The robot managed to explore the map within 300 seconds, creating a pose graph containing 104 nodes and 150 constraints. However, one can see that the robot did not take a very exploration-efficient route through the map. There are a lot of unreasonable turns in areas that are already explored, while unexplored areas are omitted for the time being.
-
-To avoid counter-intuitive routes another aspect is to be added to the evaluation of every frontier point. The distance between the currently evaluated point and the previous navigation goal. When this distance is minimized in addition to the previous evaluation features, the algorithm will select the next goals in a chain-like fashion. This creates an intuitive exploration path through the map (Figure \ref{fig:navigation_comparison}(c)). The robot was able to explore the map within only 150 seconds, creating a much smaller pose graph of 64 nodes and 66 constraints. This evaluation feature has been given a weight factor of $5$ to increase the effect on the goal selection.
-
 \begin{figure}[htbp]
 	\centering
 		\includegraphics[width=0.50\textwidth]{figures/Navigation_comparison.jpg}
 	\caption{Resulting robot trajectory when applying different strategies for selecting the next navigation goal}
 	\label{fig:navigation_comparison}
 \end{figure}
+
+In order to overcome the above explained problems another exploration strategy is considered. Obstacles have to be taken into account to be able to select reachable points as the next goal. In this new strategy obstacles within a radius of 50 grid cells of the frontier point are counted. This number is added to the distance between the robot and the concerning frontier point. The point with the smallest sum is selected as the next goal. The application of this strategy is shown in figure \ref{fig:navigation_comparison}(b). The robot managed to explore the map within 300 seconds, creating a pose graph containing 104 nodes and 150 constraints. However, one can see that the robot did not take a very exploration-efficient route through the map. There are a lot of unreasonable turns in areas that are already explored, while unexplored areas are omitted for the time being.
+
+To avoid counter-intuitive routes another aspect is to be added to the evaluation of every frontier point. The distance between the currently evaluated point and the previous navigation goal. When this distance is minimized in addition to the previous evaluation features, the algorithm will select the next goals in a chain-like fashion. This creates an intuitive exploration path through the map (Figure \ref{fig:navigation_comparison}(c)). The robot was able to explore the map within only 150 seconds, creating a much smaller pose graph of 64 nodes and 66 constraints. This evaluation feature has been given a weight factor of $5$ to increase the effect on the goal selection.
 
 \subsection{Runtime analysis}
 \label{sec:runtime}
