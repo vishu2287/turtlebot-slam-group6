@@ -3,7 +3,7 @@
 \usepackage[numbers]{natbib}
 \usepackage{amssymb,amsmath}
 
-\title{Turtlebot SLAM }
+\title{TurtleBot SLAM }
 
 \author{Maurice Hermans, Lukas Kang, Michael Norget, Thomas Nowicki, Oliver Trinnes}
 
@@ -12,7 +12,7 @@
 \maketitle
 
 \begin{abstract}
-To perform an assignment a robot needs a map of the environment, an added difficulty could be that the robot needs to build this map on his own. The task of mapping an environment can be split into two main components, namely exploration and SLAM which stands for Simultaneous Localization And Mapping. Exploration is based on the idea of frontiers, these are regions which separate unexplored space from free explored space, and a strategy determines to which frontier the robot moves next. SLAM incorporates the new data as it becomes available. One intuitive way is to represent all the data as a graph and then try to find a configuration of nodes which is maximally consistent with the constraints. This article will describe an implementation of this so called GraphSLAM with frontier exploration. All the implemented code is first tested and validated in a simulator and later run on a real robot, a TurtleBot.
+To perform an assignment a robot needs a map of the environment, an added difficulty could be that the robot needs to build this map on his own. The task of mapping an environment can be split into two main components, namely exploration and SLAM which stands for Simultaneous Localization And Mapping. Exploration is based on the idea of frontiers, these are regions which separate unexplored space from free explored space, and a strategy determines to which frontier the robot moves next. SLAM incorporates the new data as it becomes available. One intuitive way is to represent all the data as a graph and then try to find a configuration of nodes which is maximally consistent with the constraints. This article will describe an implementation of this so called Graph SLAM with frontier exploration. All the implemented code is first tested and validated in a simulator and later run on a real robot, a TurtleBot.
 \end{abstract}
 
 \section{Introduction}
@@ -108,7 +108,7 @@ The implemented Graph SLAM algorithm is based on \citep{Grisetti}. The graph con
 When the graph is created the pose graph is optimized according to the constraints. This ``optimized" trajectory then determines the positions of obstacles on the map. The laser scan data are refined according to the poses they were obtained at. Each edge, thus, is labeled with the spatial difference between two poses \(x_i\) and \(x_j\). Let this error be denoted by \(e_{ij}(x_i, x_j)\). This information is obtained from a combination of odometry data and laser range sensor data. In fact, the raw odometry data is corrected using a laser scan matcher (see Subsection \ref{sec:scan}). 
 Figure \ref{fig:turtlebotexample_graph} shows a sketch of a graph created by the algorithm. Two poses \(x_i\) and \(x_j\) are connected by an edge (Solid arrow). The ellipse at the top illustrates the label of the edge.
 
-This graph-based SLAM approach calculates the most likely path as follows:
+This Graph SLAM approach calculates the most likely path as follows:
 First it finds the Jacobians \(A\) and \(B\) of every two estimated poses connected by an edge.
 \begin{equation}
 \label{eq:jacobi_a}
