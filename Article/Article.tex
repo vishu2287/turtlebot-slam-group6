@@ -17,24 +17,22 @@ To perform an assignment a robot needs a map of the environment, an added diffic
 
 \section{Introduction}
 \label{sec:intro}
-Nowadays mobile robots assist industry and society in a diverse set of problems. Transportation, search, rescue and, more specifically, automated vacuum cleaning are examples of such tasks. Typically, mobile robots can move through an environment using legs or wheels. In addition, they are able to gather information about their surrounding using sensors. Some even have devices similar to the human arm or hand which allow them to interact with the environment. The vacuum cleaning robot depicted in Figure \ref{fig:vacuum_cleaner} is an example of a robot which has wheels to move around. Furthermore it is equipped with a set of sensors. These sensors provide data about the location of obstacles as well as, for example, gaps in the floor the robot is moving on. To efficiently perform this task robots needs a map of its environment. For some tasks map data is available for the robot from the beginning. Provided a map the robot can locate itself using the incoming sensor data or, if available, GPS data. For tasks in unknown environments, however, the robot must make its own map of the environment.
+Nowadays mobile robots assist industry and society in a diverse set of problems. Transportation, search, rescue and, more specifically, automated vacuum cleaning are examples of such tasks. Typically, mobile robots can move through an environment using legs or wheels. In addition, they are able to gather information about their surrounding using sensors. Some even have devices similar to the human arm or hand which allow them to interact with the environment. The vacuum cleaning robot depicted in Figure \ref{fig:vacuum_cleaner} is an example of a robot which has wheels to move around. Furthermore it is equipped with a set of sensors. These sensors provide data about the location of obstacles as well as, for example, gaps in the floor the robot is moving on. To efficiently perform its task the robot needs a map of its environment. For some tasks map data is available to the robot from the beginning. Provided a map, the robot can locate itself using the incoming sensor data or, if available, external data like GPS. For tasks in unknown environments the robot must make its own map of the environment.
 
-The acquisition of these maps has been a major research focus in the robotics community \cite{ Grisetti, Montemerlo02, Montemerlo, Thrun}. Building or learning these maps under position uncertainty provided only sensor measurements is often referred to as the Simultaneous Localization And Mapping (SLAM) problem. A large variety of solutions is available to it.
+The acquisition of these maps is a major research focus in the robotics community \cite{ Grisetti, Montemerlo02, Montemerlo, Thrun}. Building these maps relying only on noisy sensor measurements is often referred to as the Simultaneous Localization And Mapping (SLAM) problem (Subsection \ref{subsec:sotaSlam}). A large variety of solutions is available to it.
 \begin{figure}[h]
 	\centering
 		\includegraphics[width=0.50\textwidth]{figures/vacuum_cleaner.jpg}
-	\caption{A vacuum cleaner robot \citep{VacuumRobot}.}
+	\caption{A vacuum cleaner robot \citep{VacuumRobot}}
 	\label{fig:vacuum_cleaner}
 \end{figure}
 
-The remainder of this paper is structured as follows. Section \ref{sec:sota} provides the state of the art of the discussed fields. Section \ref{sec:impl} is about the implementation details of the methods used. Section \ref{sec:exp} explains the experiments ran to validate and benchmark the implemented methods and also evaluate the obtained results. Section \ref{sec:disc} discusses the acquired results of the experiments and proposes future research based on those. And the last section wraps up the paper with the conclusions of this research.
+The remainder of this paper is structured as follows. Section \ref{sec:sota} provides the state of the art of the relevant aspects of this project. Section \ref{sec:impl} is about the implementation details of the methods used. Section \ref{sec:exp} explains the conducted experiments to validate and benchmark the implemented methods and also evaluates the obtained results. Section \ref{sec:disc} discusses the acquired results of the experiments and proposes future research based on those. And the last section wraps up the paper with the conclusion of this research.
 
 Subsection \ref{sec:problem} defines the problem statement for this project.
 \subsection{Problem Statement}
 \label{sec:problem}
-This paper accompanies a university group project. The project assignment is to implement both a graph-based SLAM algorithm and an autonomous exploration strategy. The hardware to be used is a mobile robot called TurtleBot. Thus the final product should allow the robot to autonomously navigate through an unknown environment and simultaneously build a map of it using a Graph SLAM.
-
-Information about the programming environment, the TurtleBot, autonomous exploration and SLAM methods are given in Section \ref{sec:sota}.  
+This article accompanies a university group project. The project assignment is to implement both a Graph SLAM algorithm and an autonomous exploration strategy (Subsection \ref{subsec:sotaExplore}). The hardware to be used is a mobile robot called TurtleBot (Subsection \ref{subsec:turtle}). The final product should allow the robot to autonomously navigate through an unknown environment and simultaneously build a map of it using a Graph SLAM.
 
 \section{State of the art}
 This section presents the state of the art of the hardware, software, and methods used for this project. Subsection \ref{subsec:ros} gives an outline about the operating system in which the product is implemented. Next, Subsection \ref{subsec:turtle} is about the TurtleBot. At last, autonomous exploration (Subsection \ref{subsec:sotaExplore}) and SLAM (Subsection \ref{subsec:sotaSlam}) 
@@ -108,7 +106,7 @@ The implemented Graph SLAM algorithm is based on \citep{Grisetti}. The graph con
 \begin{figure}[h]
 	\centering
 		\includegraphics[width=0.50\textwidth]{figures/graph.png}
-	\caption{An example of a simple graph (based on \citep{Grisetti}).}
+	\caption{An example of a simple graph (based on \citep{Grisetti})}
 	\label{fig:turtlebotexample_graph}
 \end{figure}
 When the graph is created the pose graph is optimized according to the constraints. This ``optimized" trajectory then determines the positions of obstacles on the map. The laser scan data are refined according to the poses they were obtained at. Each edge, thus, is labeled with the spatial difference between two poses \(x_i\) and \(x_j\). Let this error be denoted by \(e_{ij}(x_i, x_j)\). This information is obtained from a combination of odometry data and laser range sensor data. In fact, the raw odometry data is corrected using a laser scan matcher (see Subsection \ref{sec:scan}). 
@@ -242,7 +240,7 @@ The components of the pose graph and the environment are highlighted by the foll
 \begin{figure}[htbp]
 	\centering
 		\includegraphics[width=0.50\textwidth]{figures/Stage_and_rviz.jpg}
-	\caption{Robot and environment visualization with Stage (Left) and RViz (Right).}
+	\caption{Robot and environment visualization with Stage (Left) and RViz (Right)}
 	\label{fig:stage_and_rviz}
 \end{figure}
 
@@ -329,7 +327,7 @@ While testing it turned out that the algorithm's time complexity is too high for
 \end{tabular}
 }
 \end{center}
-\caption{The time the Graph SLAM implementation proposed by \citep{Thrun} needed using the specified number of laser beams after the specified number of steps.}
+\caption{The time the Graph SLAM implementation proposed by \citep{Thrun} needed using the specified number of laser beams after the specified number of steps}
 \label{tab:graphResults}
 \end{table}
 Note that the number of beams used for the other implementation greatly exceeds the ones in Table \ref{tab:graphResults}. While the working Graph SLAM method deals with roughly 390 laser beams, this one has major difficulties with not more than 30.
