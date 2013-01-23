@@ -19,7 +19,7 @@ To perform an assignment a robot needs a map of the environment, an added diffic
 \label{sec:intro}
 Nowadays mobile robots assist industry and society in a diverse set of problems. Transportation, search, rescue and, more specifically, automated vacuum cleaning are examples of such tasks. Typically, mobile robots can move through an environment using legs or wheels. In addition, they are able to gather information about their surrounding using sensors. Some even have devices similar to the human arm or hand which allow them to interact with the environment. The vacuum cleaning robot depicted in Figure \ref{fig:vacuum_cleaner} is an example of a robot which has wheels to move around. Furthermore it is equipped with a set of sensors. These sensors provide data about the location of obstacles as well as, for example, gaps in the floor the robot is moving on. To efficiently perform its task the robot needs a map of its environment. For some tasks map data is available to the robot from the beginning. Provided a map, the robot can locate itself using the incoming sensor data or, if available, external data like GPS. For tasks in unknown environments the robot must make its own map of the environment.
 
-The acquisition of these maps is a major research focus in the robotics community \cite{ Grisetti, Montemerlo02, Montemerlo, Thrun}. Building these maps relying only on noisy sensor measurements is often referred to as the Simultaneous Localization And Mapping (SLAM) problem (Subsection \ref{subsec:sotaSlam}). A large variety of solutions is available to it.
+The acquisition of these maps is a major research focus in the robotics community \citep{Grisetti, Montemerlo02, Montemerlo, Thrun}. Building these maps relying only on noisy sensor measurements is often referred to as the Simultaneous Localization And Mapping (SLAM) problem (Subsection \ref{subsec:sotaSlam}). A large variety of solutions is available to it.
 \begin{figure}[h]
 	\centering
 		\includegraphics[width=0.50\textwidth]{figures/vacuum_cleaner.jpg}
@@ -54,7 +54,7 @@ The product of this project is designed to run on a mobile robot called TurtleBo
 \begin{figure}[h]
 	\centering
 		\includegraphics[width=0.50\textwidth]{figures/turtlebot.png}
-	\caption{A TurtleBot \citep{turtlebot}
+	\caption{A TurtleBot \citep{turtlebot}}
 	\label{fig:turtlebot}
 \end{figure}
 
@@ -74,7 +74,7 @@ In general there are two interpretations it. The first estimates the current rob
 An example of such a an approach is Graph SLAM.
 
 \subsubsection{Graph SLAM}
-An intuitive way to formulate the SLAM problem is to view it as a pose graph optimization problem. Each pose along the trajectory of the robot is represented by one node. Edges are labeled with relative spatial information between the connecting nodes. This graph is built incrementally. While the robot is in motion, new nodes are added to the graph. Building up the graph, as explained above, is a straight forward procedure. The essence of the Graph SLAM method, however, is the optimization step. In this step the algorithm tries to find a spatial configuration of the trajectory which is maximally consistent with a system of constraints obtained from the edges. This problem is commonly solved using least-square error minimization techniques \citep{Grisetti}.
+An intuitive way to formulate the SLAM problem is to view it as a pose graph optimization problem. Each pose along the trajectory of the robot is represented by a node. Edges are labeled with relative spatial information between the connecting nodes. This graph is built incrementally. While the robot is in motion, new nodes are added to the graph. Building up the graph, as explained above, is a straight forward procedure. The essence of the Graph SLAM method, however, is the optimization step. In this step the algorithm tries to find a spatial configuration of the trajectory which is maximally consistent with a system of constraints obtained from the edges. This problem is commonly solved using least-square error minimization techniques \citep{Grisetti}.
 
 \section{Implementation}
 \label{sec:impl}
