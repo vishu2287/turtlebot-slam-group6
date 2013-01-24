@@ -266,6 +266,7 @@ protected:
 };
 
 int main(int argc, char **argv) {
+    std::cout << "MAIN EXPLORATION";
     ros::init(argc, argv, "Exploration");
     ros::NodeHandle n;
     Exploration walker(n); // Create new Exploration object

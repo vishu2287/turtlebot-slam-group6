@@ -65,7 +65,7 @@ bool initialised;
 bool loopDetected;
 
 // Distance after which a laser scan should be matched again
-double MATCH_DISTANCE = 0.5;
+double MATCH_DISTANCE = 0.3;
 void callback(const sensor_msgs::LaserScan::ConstPtr& msg) {
     /**
       Simply save the current scan.
